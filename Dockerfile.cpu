@@ -1,0 +1,38 @@
+# Use Python 3.11 slim base image for CPU
+FROM python:3.11-slim
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV APP_PORT=8000
+
+# Install git
+RUN apt-get update && \
+    apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install uv using pip
+RUN pip install uv
+
+# Set up the working directory
+WORKDIR /app
+
+# Copy all project files first
+COPY pyproject.toml poetry.lock* ./
+COPY README.md ./
+COPY src/ ./src/
+COPY config/ ./config/
+COPY locustfile.py .
+
+# Add potential binary paths to PATH
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Install dependencies using uv into the system environment
+# We install all dependencies including dev for locust
+RUN uv pip install -e .[dev] --system protobuf sentencepiece
+
+# Expose the application port
+EXPOSE 8000
+
+# Command to run the application using python -m gunicorn
+CMD ["python", "-m", "gunicorn", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "120", "src.app.main:app"]

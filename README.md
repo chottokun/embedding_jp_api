@@ -150,10 +150,26 @@ GPU（NVIDIA CUDA）対応のDockerfileが用意されています。
 docker build -t my-ruri-app .
 ```
 
-### 5.2. Dockerコンテナの起動
+### 5.2. Dockerコンテナの起動 (GPU版)
 
 ```bash
 docker run --gpus all -p 8000:8000 -e APP_PORT=8000 my-ruri-app
+```
+
+### 5.3. Docker (CPU版)での実行
+
+GPUがない環境やCPUでの実行を希望する場合は、`Dockerfile.cpu`を使用します。
+
+#### 5.3.1. Dockerイメージのビルド (CPU版)
+
+```bash
+docker build -f Dockerfile.cpu -t my-ruri-app-cpu .
+```
+
+#### 5.3.2. Dockerコンテナの起動 (CPU版)
+
+```bash
+docker run -p 8000:8000 -e APP_PORT=8000 my-ruri-app-cpu
 ```
 
 ## 6. 実際のモデルへの切り替えガイド
