@@ -128,9 +128,9 @@ poetry run uvicorn src.app.main:app --reload --port $APP_PORT
 Linuxベースの環境では、GunicornとUvicornワーカーを組み合わせて実行することが推奨されます。
 
 ```bash
-poetry run gunicorn --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --preload src.app.main:app
+poetry run gunicorn --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 300 src.app.main:app
 ```
-**注意**: `--preload` はモデルをワーカー間で共有するのに役立ちますが、GPU使用時にはCUDAコンテキストの問題を引き起こす可能性があります。GPU環境では `--preload` を外すか、単一ワーカーでの実行を検討してください。
+**注意**: GPU環境では `--preload` はCUDAコンテキストの問題を引き起こす可能性があるため、本番環境ではワーカー数を1に設定し、`--preload` を外すことを推奨します。また、モデルのロードに時間がかかる場合があるため、`--timeout` を適切に設定してください。
 
 ## 4. テストの実行
 
@@ -142,9 +142,9 @@ poetry run pytest
 
 ## 5. Dockerでの実行
 
-GPU（NVIDIA CUDA）対応のDockerfileが用意されています。
+### 5.1. Dockerイメージのビルド (GPU版)
 
-### 5.1. Dockerイメージのビルド
+GPU（NVIDIA CUDA）対応のDockerfileが用意されています。
 
 ```bash
 docker build -t my-ruri-app .
@@ -172,47 +172,20 @@ docker build -f Dockerfile.cpu -t my-ruri-app-cpu .
 docker run -p 8000:8000 -e APP_PORT=8000 my-ruri-app-cpu
 ```
 
-## 6. 実際のモデルへの切り替えガイド
+## 6. 負荷テストの実行
 
-現在の実装は、テストを容易にするための**モックモデル**を使用しています。実際のHugging Faceモデルを使用するには、以下の手順に従ってください。
+Locustを使用してAPIの負荷テストを実行できます。LocustはWebベースのUIを提供し、テストの進行状況をリアルタイムで確認できます。
 
-### 6.1. 追加ライブラリのインストール
+1.  **Locustの起動**
 
-`sentence-transformers`と、GPUを利用する場合は`torch`が必要です。
+    ```bash
+    locust -f locustfile.py --host http://localhost:8000
+    ```
 
-```bash
-poetry add sentence-transformers torch
-```
+    このコマンドを実行すると、LocustのWeb UIが `http://localhost:8089` で利用可能になります。
 
-### 6.2. モデルローダーの修正
+2.  **負荷テストの開始**
 
-`src/app/models.py` ファイルを以下のように修正します。
+    Web UIにアクセスし、テストユーザー数とRamp-up期間を設定してテストを開始します。
 
-1. **実際のモデルクラスをインポートします。**
-   ```python
-   from sentence_transformers import SentenceTransformer, CrossEncoder
-   import torch
-   ```
-
-2. **`get_model` 関数を修正し、モックの代わりに実際のモデルをロードするようにします。**
-
-   ```python
-   # 変更前
-   # model = MockSentenceTransformer(model_name=model_name)
-   # model = MockCrossEncoder(model_name=model_name)
-
-   # 変更後
-   device = "cuda" if torch.cuda.is_available() else "cpu"
-
-   if model_name in EMBEDDING_MODELS:
-       model = SentenceTransformer(model_name, device=device)
-       _model_cache[model_name] = model
-       return model
-
-   if model_name in RERANK_MODELS:
-       model = CrossEncoder(model_name, device=device)
-       _model_cache[model_name] = model
-       return model
-   ```
-
-これにより、APIはリクエストに応じて実際のHugging Faceモデルをダウンロードし、推論に使用するようになります。
+    `locustfile.py`には、EmbeddingとRerankのエンドポイントに対するテストシナリオが定義されています。
