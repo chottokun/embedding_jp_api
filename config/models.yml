@@ -1,0 +1,6 @@
+embedding_models:
+  - "cl-nagoya/ruri-v3-30m"
+  - "cl-nagoya/ruri-v3-310m"
+
+rerank_models:
+  - "cl-nagoya/ruri-v3-reranker-310m"
