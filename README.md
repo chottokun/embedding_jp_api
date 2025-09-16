@@ -3,9 +3,7 @@
 ## 1. 概要
 
 このプロジェクトは、日本語のテキスト埋め込み（Embedding）および再ランキング（Rerank）機能を提供する、OpenAI互換のFastAPIサーバーです。
-名古屋大学CL研究室が開発した[Ruri v3モデル](https://huggingface.co/cl-nagoya/ruri-v3-30m)などを利用することを想定しています。
-
-TDD（テスト駆動開発）のアプローチに基づき、モックモデルを使用してAPIのロジックを堅牢にテストしています。
+名古屋大学にて開発された[Ruri v3モデル](https://huggingface.co/cl-nagoya/ruri-v3-30m)などを利用することを想定しています。
 
 ## 2. API仕様
 
@@ -140,39 +138,66 @@ poetry run gunicorn --workers 1 --worker-class uvicorn.workers.UvicornWorker --b
 poetry run pytest
 ```
 
-## 5. Dockerでの実行
+## 5. 簡単実行 (Easy Run with Docker)
 
-### 5.1. Dockerイメージのビルド (GPU版)
-
-GPU（NVIDIA CUDA）対応のDockerfileが用意されています。
+`run.sh` スクリプトを使用することで、コンテナの起動とモデルのキャッシュを簡単に行えます。
 
 ```bash
-docker build -t my-ruri-app .
+# 実行権限を付与（初回のみ）
+chmod +x run.sh
+
+# スクリプトを実行 (デフォルトはCPUモード)
+./run.sh
+
+# GPUモードで実行する場合
+# ./run.sh gpu
 ```
 
-### 5.2. Dockerコンテナの起動 (GPU版)
+このスクリプトは、ホストの `~/.cache/models` をコンテナにマウントし、モデルをキャッシュすることで2回目以降の起動を高速化します。
+
+## 6. Dockerでの手動実行
+
+`run.sh` を使用せず、手動でDockerを操作する手順です。
+
+### 6.1. モデルキャッシュについて
+
+コンテナ起動時にホストのディレクトリをコンテナのキャッシュディレクトリ (`/root/.cache`) にマウントすると、モデルのダウンロードが一度で済み、再起動が高速になります。
 
 ```bash
-docker run --gpus all -p 8000:8000 -e APP_PORT=8000 my-ruri-app
+# キャッシュディレクトリをホスト上に作成
+mkdir -p ~/.cache/models
 ```
 
-### 5.3. Docker (CPU版)での実行
+### 6.2. Dockerイメージのビルド
 
-GPUがない環境やCPUでの実行を希望する場合は、`Dockerfile.cpu`を使用します。
-
-#### 5.3.1. Dockerイメージのビルド (CPU版)
-
+**GPU版:** 
 ```bash
-docker build -f Dockerfile.cpu -t my-ruri-app-cpu .
+docker build -t embedding_jp_api-gpu .
 ```
 
-#### 5.3.2. Dockerコンテナの起動 (CPU版)
-
+**CPU版:** 
 ```bash
-docker run -p 8000:8000 -e APP_PORT=8000 my-ruri-app-cpu
+docker build -f Dockerfile.cpu -t embedding_jp_api-cpu .
 ```
 
-## 6. 負荷テストの実行
+### 6.3. Dockerコンテナの起動
+
+**GPU版:** 
+```bash
+docker run --gpus all -p 8000:8000 \
+  -v ~/.cache/models:/root/.cache \
+  embedding_jp_api-gpu
+```
+
+**CPU版:** 
+```bash
+docker run -p 8000:8000 \
+  -v ~/.cache/models:/root/.cache \
+  embedding_jp_api-cpu
+```
+
+## 7. 負荷テストの実行
+
 
 Locustを使用してAPIの負荷テストを実行できます。LocustはWebベースのUIを提供し、テストの進行状況をリアルタイムで確認できます。
 
