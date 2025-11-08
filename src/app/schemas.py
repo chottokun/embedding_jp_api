@@ -7,6 +7,7 @@ class EmbeddingRequest(BaseModel):
     input: Union[str, List[str]]
     model: str
     user: Optional[str] = None
+    apply_ruri_prefix: bool = False
 
 class EmbeddingData(BaseModel):
     object: str = "embedding"

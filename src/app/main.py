@@ -22,14 +22,17 @@ async def create_embeddings(request: EmbeddingRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # Prepare input and apply prefixes as per the document
-    if isinstance(request.input, str):
-        prefixed_inputs = [f"検索クエリ: {request.input}"]
-    else:
-        prefixed_inputs = [f"検索文書: {text}" for text in request.input]
+    # Conditionally apply prefixes for ruri-v3 model
+    inputs_to_encode = request.input if isinstance(request.input, list) else [request.input]
 
-    # Get mock embeddings
-    vectors = model.encode(prefixed_inputs)
+    if "ruri-v3" in request.model and request.apply_ruri_prefix:
+        if isinstance(request.input, str):
+            inputs_to_encode = [f"検索クエリ: {request.input}"]
+        else:
+            inputs_to_encode = [f"検索文書: {text}" for text in request.input]
+
+    # Get embeddings
+    vectors = model.encode(inputs_to_encode)
 
     # Create response data
     response_data = [

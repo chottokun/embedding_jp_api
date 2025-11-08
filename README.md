@@ -24,12 +24,26 @@ curl -X POST "http://localhost:8000/v1/embeddings" \
 }'
 ```
 
-#### 特殊な前処理：プレフィックス
+#### `ruri-v3`モデルのオプショナルな前処理：プレフィックス
 
-`ruri-v3`モデルの性能を最大化するため、入力に応じて以下のプレフィックスが自動的に付与されます。
+`ruri-v3`モデルの性能を最大化するため、`apply_ruri_prefix: true` を設定することで、入力に応じて以下のプレフィックスを付与できます。
 
 - **単一文字列の場合**: `"検索クエリ: "` が先頭に付与されます。
 - **文字列の配列の場合**: 各要素に `"検索文書: "` が先頭に付与されます。
+
+この機能はデフォルトで無効になっており、`ruri-v3`以外のモデルではこの設定は無視されます。
+
+#### `apply_ruri_prefix` を有効にするリクエスト例
+
+```bash
+curl -X POST "http://localhost:8000/v1/embeddings" \
+-H "Content-Type: application/json" \
+-d '{
+  "input": "今日の天気は晴れです。",
+  "model": "cl-nagoya/ruri-v3-30m",
+  "apply_ruri_prefix": true
+}'
+```
 
 #### レスポンス形式
 
