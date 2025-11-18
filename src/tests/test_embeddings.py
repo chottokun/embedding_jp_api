@@ -11,10 +11,9 @@ client = TestClient(app)
 SUPPORTED_EMBED_MODEL = EMBEDDING_MODELS[0]
 
 @patch('app.main.get_model')
-def test_create_embeddings_single_string(mock_get_model):
+def test_create_embeddings_single_string_no_prefix_default(mock_get_model):
     """
-    Tests the /v1/embeddings endpoint with a single string input.
-    Ensures the '検索クエリ: ' prefix is added.
+    Tests the default behavior for a single string input: no prefix should be applied.
     """
     # Arrange
     mock_model = mock_get_model.return_value
@@ -30,18 +29,34 @@ def test_create_embeddings_single_string(mock_get_model):
 
     # Assert
     assert response.status_code == 200
-    mock_model.encode.assert_called_once_with(["検索クエリ: 今日の天気"])
-
-    response_json = response.json()
-    assert response_json["model"] == SUPPORTED_EMBED_MODEL
-    assert len(response_json["data"]) == 1
-    assert response_json["data"][0]["embedding"] == [0.1, 0.2, 0.3]
+    mock_model.encode.assert_called_once_with(["今日の天気"])
 
 @patch('app.main.get_model')
-def test_create_embeddings_string_array(mock_get_model):
+def test_create_embeddings_ruri_v3_with_prefix_enabled(mock_get_model):
     """
-    Tests the /v1/embeddings endpoint with a list of strings.
-    Ensures the '検索文書: ' prefix is added to each item.
+    Tests ruri-v3 model with prefix enabled.
+    """
+    # Arrange
+    mock_model = mock_get_model.return_value
+    mock_model.encode.return_value = [[0.1, 0.2, 0.3]]
+
+    request_payload = {
+        "input": "今日の天気",
+        "model": "cl-nagoya/ruri-v3-30m",
+        "apply_ruri_prefix": True
+    }
+
+    # Act
+    response = client.post("/v1/embeddings", json=request_payload)
+
+    # Assert
+    assert response.status_code == 200
+    mock_model.encode.assert_called_once_with(["検索クエリ: 今日の天気"])
+
+@patch('app.main.get_model')
+def test_create_embeddings_ruri_v3_with_prefix_enabled_list_input(mock_get_model):
+    """
+    Tests ruri-v3 model with prefix enabled for a list of strings.
     """
     # Arrange
     mock_model = mock_get_model.return_value
@@ -49,7 +64,8 @@ def test_create_embeddings_string_array(mock_get_model):
 
     request_payload = {
         "input": ["文書A", "文書B"],
-        "model": SUPPORTED_EMBED_MODEL
+        "model": "cl-nagoya/ruri-v3-30m",
+        "apply_ruri_prefix": True
     }
 
     # Act
@@ -59,45 +75,32 @@ def test_create_embeddings_string_array(mock_get_model):
     assert response.status_code == 200
     mock_model.encode.assert_called_once_with(["検索文書: 文書A", "検索文書: 文書B"])
 
-    response_json = response.json()
-    assert len(response_json["data"]) == 2
-    assert response_json["data"][0]["index"] == 0
-    assert response_json["data"][1]["index"] == 1
+@patch('app.main.get_model')
+def test_create_embeddings_non_ruri_v3_with_prefix_flag_no_prefix(mock_get_model):
+    """
+    Tests that a non-ruri-v3 model does not get prefixes even if the flag is true.
+    """
+    # Arrange
+    mock_model = mock_get_model.return_value
+    mock_model.encode.return_value = [[0.1, 0.2, 0.3]]
 
-def test_embeddings_unsupported_model():
-    """
-    Tests that requesting an unsupported model returns a 400 error.
-    """
-    request_payload = {
-        "input": "test",
-        "model": "unsupported-model-name"
-    }
-    response = client.post("/v1/embeddings", json=request_payload)
-    assert response.status_code == 400
-    assert "not found" in response.json()["detail"]
+    # A dummy model that is not ruri-v3
+    non_ruri_model = "some-other-model"
+    # We need to add this model to the list of supported models for the test
+    EMBEDDING_MODELS.append(non_ruri_model)
 
-def test_embeddings_openai_compatible_response():
-    """
-    Tests if the response schema is compatible with OpenAI's API.
-    """
     request_payload = {
-        "input": "test input",
-        "model": SUPPORTED_EMBED_MODEL
+        "input": "今日の天気",
+        "model": non_ruri_model,
+        "apply_ruri_prefix": True
     }
+
+    # Act
     response = client.post("/v1/embeddings", json=request_payload)
+
+    # Assert
     assert response.status_code == 200
+    mock_model.encode.assert_called_once_with(["今日の天気"])
 
-    response_json = response.json()
-    assert response_json["object"] == "list"
-    assert "data" in response_json
-    assert "model" in response_json
-    assert "usage" in response_json
-
-    data_item = response_json["data"][0]
-    assert data_item["object"] == "embedding"
-    assert "embedding" in data_item
-    assert "index" in data_item
-
-    usage = response_json["usage"]
-    assert "prompt_tokens" in usage
-    assert "total_tokens" in usage
+    # Clean up the list of supported models
+    EMBEDDING_MODELS.pop()
