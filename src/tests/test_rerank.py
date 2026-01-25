@@ -65,3 +65,49 @@ def test_rerank_unsupported_model():
     response = client.post("/v1/rerank", json=request_payload)
     assert response.status_code == 400
     assert "not found" in response.json()["detail"]
+
+@patch('app.main.get_model')
+def test_create_rerank_with_top_k(mock_get_model):
+    """
+    Tests that top_k correctly limits the number of results.
+    """
+    mock_model = mock_get_model.return_value
+    mock_model.predict.return_value = [0.1, 0.9, 0.5]
+
+    request_payload = {
+        "query": "AI",
+        "documents": ["doc0", "doc1", "doc2"],
+        "model": SUPPORTED_RERANK_MODEL,
+        "top_k": 2
+    }
+
+    response = client.post("/v1/rerank", json=request_payload)
+    assert response.status_code == 200
+    response_json = response.json()
+    assert len(response_json["data"]) == 2
+    # Should be the top 2: doc1 (0.9) and doc2 (0.5)
+    assert response_json["data"][0]["document"] == 1
+    assert response_json["data"][1]["document"] == 2
+
+@patch('app.main.get_model')
+def test_create_rerank_with_return_documents(mock_get_model):
+    """
+    Tests that return_documents correctly includes document text.
+    """
+    mock_model = mock_get_model.return_value
+    mock_model.predict.return_value = [0.1, 0.9]
+
+    documents = ["doc0", "doc1"]
+    request_payload = {
+        "query": "AI",
+        "documents": documents,
+        "model": SUPPORTED_RERANK_MODEL,
+        "return_documents": True
+    }
+
+    response = client.post("/v1/rerank", json=request_payload)
+    assert response.status_code == 200
+    response_json = response.json()
+    assert "text" in response_json["data"][0]
+    assert response_json["data"][0]["text"] == documents[1] # doc1 (0.9)
+    assert response_json["data"][1]["text"] == documents[0] # doc0 (0.1)

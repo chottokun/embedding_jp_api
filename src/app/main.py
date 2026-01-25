@@ -10,7 +10,7 @@ from .config import EMBEDDING_MODELS, RERANK_MODELS
 app = FastAPI(title="OpenAI-Compatible API")
 
 @app.post("/v1/embeddings", response_model=EmbeddingResponse)
-async def create_embeddings(request: EmbeddingRequest):
+def create_embeddings(request: EmbeddingRequest):
     """
     Creates embeddings for the given input, following OpenAI's API format.
     """
@@ -39,8 +39,14 @@ async def create_embeddings(request: EmbeddingRequest):
         EmbeddingData(embedding=vector, index=i) for i, vector in enumerate(vectors)
     ]
 
-    # Dummy usage data for now. In a real scenario, this would be calculated.
-    usage = Usage(prompt_tokens=0, total_tokens=0)
+    # Calculate token usage
+    total_tokens = 0
+    for text in inputs_to_encode:
+        # SentenceTransformer has a tokenizer property
+        tokens = model.tokenizer.encode(text, add_special_tokens=True)
+        total_tokens += len(tokens)
+
+    usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
 
     return EmbeddingResponse(
         data=response_data,
@@ -49,7 +55,7 @@ async def create_embeddings(request: EmbeddingRequest):
     )
 
 @app.post("/v1/rerank", response_model=RerankResponse)
-async def create_rerank(request: RerankRequest):
+def create_rerank(request: RerankRequest):
     """
     Reranks a list of documents for a given query.
     """
@@ -70,10 +76,17 @@ async def create_rerank(request: RerankRequest):
     # Combine documents with their scores
     results = []
     for i, score in enumerate(scores):
-        results.append({"document": i, "score": score})
+        result = {"document": i, "score": score}
+        if request.return_documents:
+            result["text"] = request.documents[i]
+        results.append(result)
 
     # Sort results by score in descending order
     sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
+
+    # Apply top_k if specified
+    if request.top_k is not None and request.top_k >= 0:
+        sorted_results = sorted_results[:request.top_k]
 
     # Format for response schema
     response_data = [RerankData(**result) for result in sorted_results]

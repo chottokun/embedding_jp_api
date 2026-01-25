@@ -104,3 +104,29 @@ def test_create_embeddings_non_ruri_v3_with_prefix_flag_no_prefix(mock_get_model
 
     # Clean up the list of supported models
     EMBEDDING_MODELS.pop()
+
+@patch('app.main.get_model')
+def test_create_embeddings_usage_calculation(mock_get_model):
+    """
+    Tests that the usage field returns non-zero token counts.
+    """
+    # Arrange
+    mock_model = mock_get_model.return_value
+    mock_model.encode.return_value = [[0.1, 0.2, 0.3]]
+    # Mock tokenizer to return some tokens
+    mock_model.tokenizer.encode.return_value = [1, 2, 3, 4, 5]
+
+    request_payload = {
+        "input": "今日の天気",
+        "model": SUPPORTED_EMBED_MODEL
+    }
+
+    # Act
+    response = client.post("/v1/embeddings", json=request_payload)
+
+    # Assert
+    assert response.status_code == 200
+    response_json = response.json()
+    usage = response_json["usage"]
+    assert usage["prompt_tokens"] > 0
+    assert usage["total_tokens"] == usage["prompt_tokens"]
