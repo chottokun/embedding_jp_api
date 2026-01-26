@@ -61,6 +61,8 @@ class ApiUser(HttpUser):
         payload = {
             "query": random.choice(RERANK_QUERIES),
             "documents": documents,
-            "model": RERANK_MODELS[0]
+            "model": RERANK_MODELS[0],
+            "top_k": random.choice([None, 1, 2]),
+            "return_documents": random.choice([True, False])
         }
         self.client.post("/v1/rerank", json=payload, name="/v1/rerank")

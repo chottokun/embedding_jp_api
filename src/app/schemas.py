@@ -36,6 +36,7 @@ class RerankRequest(BaseModel):
 class RerankData(BaseModel):
     document: int # As per the doc, this is the index
     score: float
+    text: Optional[str] = None
 
 class RerankResponse(BaseModel):
     query: str

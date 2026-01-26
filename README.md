@@ -59,11 +59,14 @@ curl -X POST "http://localhost:8000/v1/embeddings" \
   ],
   "model": "cl-nagoya/ruri-v3-30m",
   "usage": {
-    "prompt_tokens": 0,
-    "total_tokens": 0
+    "prompt_tokens": 12,
+    "total_tokens": 12
   }
 }
 ```
+
+> [!NOTE]
+> `usage` フィールドには、モデルのトークナイザーを使用して計算された実際の消費トークン数が返されます。
 
 ---
 
@@ -85,9 +88,21 @@ curl -X POST "http://localhost:8000/v1/rerank" \
     "人工知能は今後の社会を大きく変えるでしょう。",
     "日本の首都は東京です。"
   ],
-  "model": "cl-nagoya/ruri-v3-reranker-310m"
+  "model": "cl-nagoya/ruri-v3-reranker-310m",
+  "top_k": 2,
+  "return_documents": true
 }'
 ```
+
+#### リクエストパラメータ
+
+| パラメータ | 型 | 必須 | 説明 |
+| :--- | :--- | :--- | :--- |
+| `query` | string | Yes | 検索クエリ。 |
+| `documents` | array | Yes | 再ランキング対象のドキュメントのリスト。 |
+| `model` | string | Yes | 使用するモデル名。 |
+| `top_k` | integer | No | 返却する件数の上限。 |
+| `return_documents` | boolean | No | `true` の場合、レスポンスにドキュメント本文 (`text`) を含めます。 |
 
 #### レスポンス形式
 
@@ -97,15 +112,13 @@ curl -X POST "http://localhost:8000/v1/rerank" \
   "data": [
     {
       "document": 1,
-      "score": 0.9
+      "score": 0.9,
+      "text": "人工知能は今後の社会を大きく変えるでしょう。"
     },
     {
       "document": 2,
-      "score": 0.5
-    },
-    {
-      "document": 0,
-      "score": 0.1
+      "score": 0.5,
+      "text": "日本の首都は東京です。"
     }
   ],
   "model": "cl-nagoya/ruri-v3-reranker-310m"
@@ -143,6 +156,13 @@ Linuxベースの環境では、GunicornとUvicornワーカーを組み合わせ
 poetry run gunicorn --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 300 src.app.main:app
 ```
 **注意**: GPU環境では `--preload` はCUDAコンテキストの問題を引き起こす可能性があるため、本番環境ではワーカー数を1に設定し、`--preload` を外すことを推奨します。また、モデルのロードに時間がかかる場合があるため、`--timeout` を適切に設定してください。
+
+### 3.5. パフォーマンスとスレッドセーフティ
+
+このサーバーは、CPU負荷の高いモデル推論を効率的に処理するために以下の最適化が行われています。
+
+- **スレッドプールによる並列実行**: 推論処理を行うエンドポイントを `def` (同期) で定義することで、FastAPIが内部のスレッドプールを使用して並列にリクエストを処理できるようにしています。
+- **スレッドセーフなモデルロード**: `threading.Lock` を導入しており、並列リクエストが発生しても安全にモデルをロード・キャッシュできます。
 
 ## 4. テストの実行
 

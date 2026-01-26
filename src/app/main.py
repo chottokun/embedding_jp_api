@@ -10,7 +10,7 @@ from .config import EMBEDDING_MODELS, RERANK_MODELS
 app = FastAPI(title="OpenAI-Compatible API")
 
 @app.post("/v1/embeddings", response_model=EmbeddingResponse)
-async def create_embeddings(request: EmbeddingRequest):
+def create_embeddings(request: EmbeddingRequest):
     """
     Creates embeddings for the given input, following OpenAI's API format.
     """
@@ -31,6 +31,15 @@ async def create_embeddings(request: EmbeddingRequest):
         else:
             inputs_to_encode = [f"検索文書: {text}" for text in request.input]
 
+    # Calculate token usage
+    tokenizer = model.tokenizer
+    total_tokens = 0
+    for text in inputs_to_encode:
+        tokens = tokenizer.encode(text)
+        total_tokens += len(tokens)
+    
+    usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+
     # Get embeddings
     vectors = model.encode(inputs_to_encode)
 
@@ -39,9 +48,6 @@ async def create_embeddings(request: EmbeddingRequest):
         EmbeddingData(embedding=vector, index=i) for i, vector in enumerate(vectors)
     ]
 
-    # Dummy usage data for now. In a real scenario, this would be calculated.
-    usage = Usage(prompt_tokens=0, total_tokens=0)
-
     return EmbeddingResponse(
         data=response_data,
         model=request.model,
@@ -49,7 +55,7 @@ async def create_embeddings(request: EmbeddingRequest):
     )
 
 @app.post("/v1/rerank", response_model=RerankResponse)
-async def create_rerank(request: RerankRequest):
+def create_rerank(request: RerankRequest):
     """
     Reranks a list of documents for a given query.
     """
@@ -64,16 +70,23 @@ async def create_rerank(request: RerankRequest):
     # Prepare pairs for the cross-encoder
     pairs = [[request.query, doc] for doc in request.documents]
 
-    # Get scores from the mock model
+    # Get scores from the model
     scores = model.predict(pairs)
 
     # Combine documents with their scores
     results = []
     for i, score in enumerate(scores):
-        results.append({"document": i, "score": score})
+        result_item = {"document": i, "score": float(score)}
+        if request.return_documents:
+            result_item["text"] = request.documents[i]
+        results.append(result_item)
 
     # Sort results by score in descending order
     sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
+
+    # Apply top_k if specified
+    if request.top_k is not None:
+        sorted_results = sorted_results[:request.top_k]
 
     # Format for response schema
     response_data = [RerankData(**result) for result in sorted_results]
