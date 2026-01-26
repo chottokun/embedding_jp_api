@@ -22,30 +22,77 @@ def create_embeddings(request: EmbeddingRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # Conditionally apply prefixes for ruri-v3 model
-    inputs_to_encode = request.input if isinstance(request.input, list) else [request.input]
+    inputs = request.input if isinstance(request.input, list) else [request.input]
+    
+    # Prefix mapping for Ruri-v3
+    prefix_map = {
+        "query": "検索クエリ: ",
+        "document": "検索文書: ",
+        "classification": "トピック: ",
+        "clustering": "トピック: ",
+        "sts": "",
+    }
 
-    if "ruri-v3" in request.model and request.apply_ruri_prefix:
-        if isinstance(request.input, str):
-            inputs_to_encode = [f"検索クエリ: {request.input}"]
+    processed_inputs = []
+    max_seq_length = getattr(model, "max_seq_length", 8192)
+    tokenizer = model.tokenizer
+
+    for text in inputs:
+        prefix = ""
+        # 1. Determine prefix
+        if "ruri-v3" in request.model:
+            if request.input_type in prefix_map:
+                prefix = prefix_map[request.input_type]
+            elif request.apply_ruri_prefix:
+                # Fallback logic
+                if isinstance(request.input, str):
+                    prefix = prefix_map["query"]
+                else:
+                    prefix = prefix_map["document"]
+        
+        # 2. Prefix deduplication
+        if prefix and text.startswith(prefix):
+            final_text = text
         else:
-            inputs_to_encode = [f"検索文書: {text}" for text in request.input]
+            final_text = f"{prefix}{text}"
+
+        # 3. Truncation logic (8192 tokens)
+        # Tokenize prefix and text separately to ensure prefix is preserved
+        prefix_tokens = tokenizer.encode(prefix, add_special_tokens=False) if prefix else []
+        text_tokens = tokenizer.encode(text, add_special_tokens=False)
+        
+        # Safety margin for special tokens (e.g. [CLS], [SEP])
+        special_tokens_count = tokenizer.num_special_tokens_to_add(False) # Usually 2
+        available_for_text = max_seq_length - len(prefix_tokens) - special_tokens_count
+        
+        if len(text_tokens) > available_for_text:
+            text_tokens = text_tokens[:available_for_text]
+        
+        # Re-construct string or just encode tokens? 
+        # model.encode usually accepts strings. 
+        # If we truncated tokens, we should join them back carefully or use the model's internal encode on ids.
+        # For simplicity and accuracy with the tokenizer, we'll keep it as string if not truncated, 
+        # or decode if truncated.
+        if len(tokenizer.encode(text, add_special_tokens=False)) > available_for_text:
+             truncated_text = tokenizer.decode(text_tokens)
+             final_text = f"{prefix}{truncated_text}"
+        
+        processed_inputs.append(final_text)
 
     # Calculate token usage
-    tokenizer = model.tokenizer
     total_tokens = 0
-    for text in inputs_to_encode:
+    for text in processed_inputs:
         tokens = tokenizer.encode(text)
         total_tokens += len(tokens)
     
     usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
 
     # Get embeddings
-    vectors = model.encode(inputs_to_encode)
+    vectors = model.encode(processed_inputs)
 
     # Create response data
     response_data = [
-        EmbeddingData(embedding=vector, index=i) for i, vector in enumerate(vectors)
+        EmbeddingData(embedding=vector.tolist(), index=i) for i, vector in enumerate(vectors)
     ]
 
     return EmbeddingResponse(
@@ -84,9 +131,9 @@ def create_rerank(request: RerankRequest):
     # Sort results by score in descending order
     sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
 
-    # Apply top_k if specified
-    if request.top_k is not None:
-        sorted_results = sorted_results[:request.top_k]
+    # Apply top_n if specified
+    if request.top_n is not None:
+        sorted_results = sorted_results[:request.top_n]
 
     # Format for response schema
     response_data = [RerankData(**result) for result in sorted_results]

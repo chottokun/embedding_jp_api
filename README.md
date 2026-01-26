@@ -11,62 +11,51 @@
 
 `POST /v1/embeddings`
 
-OpenAIの[Embeddings API](https://platform.openai.com/docs/api-reference/embeddings)と互換性のあるエンドポイントです。
+OpenAI標準パラメータに加え、Ruri-v3等のモデル性能を最大限に引き出すための拡張パラメータをサポートしています。
 
-#### リクエスト例
+#### リクエストボディ (JSON)
 
-```bash
-curl -X POST "http://localhost:8000/v1/embeddings" \
--H "Content-Type: application/json" \
--d '{
-  "input": "今日の天気は晴れです。",
-  "model": "cl-nagoya/ruri-v3-30m"
-}'
-```
+| フィールド名 | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| `input` | string \| array | Yes | 埋め込み対象のテキストまたはテキストのリスト。 |
+| `model` | string | Yes | 使用するモデルID（例: `cl-nagoya/ruri-v3-310m`）。 |
+| `input_type` | string | No | タスクの種類を指定。Ruri-v3のプレフィックスに自動マッピングされます。 |
+| `instruction` | string | No | モデルへの具体的な指示文。将来的な指示ベースモデルへの対応用。 |
+| `apply_ruri_prefix` | boolean | No | `true`の場合、`input_type`が未指定でも入力形式に基づき自動でプレフィックスを付与します（互換性用）。 |
 
-#### `ruri-v3`モデルのオプショナルな前処理：プレフィックス
+#### `input_type` とプレフィックスのマッピング
 
-`ruri-v3`モデルの性能を最大化するため、`apply_ruri_prefix: true` を設定することで、入力に応じて以下のプレフィックスを付与できます。
+`input_type`を指定すると、Ruri-v3モデルに対して以下の日本語プレフィックスが自動挿入されます。
 
-- **単一文字列の場合**: `"検索クエリ: "` が先頭に付与されます。
-- **文字列の配列の場合**: 各要素に `"検索文書: "` が先頭に付与されます。
+* **`query`**: `"検索クエリ: "` （非対称検索の質問側）
+* **`document`**: `"検索文書: "` （非対称検索の回答・知識ベース側）
+* **`classification`**: `"トピック: "` （分類、クラスタリング用）
+* **`clustering`**: `"トピック: "` （同上）
+* **`sts`**: `""` (空文字) （文の類似度、対称的タスク用）
 
-この機能はデフォルトで無効になっており、`ruri-v3`以外のモデルではこの設定は無視されます。
+#### 処理ルール
 
-#### `apply_ruri_prefix` を有効にするリクエスト例
+- **プレフィックスの二重付与防止**: 入力テキストが既に指定のプレフィックスで始まっている場合、API側での重複付与は行われません。
+- **トークン切り詰め (Truncation)**: 入力がモデルの最大長（Ruri-v3は8,192トークン）を超える場合、プレフィックスを優先的に保持し、入力テキストの後方を切り詰めます。
 
-```bash
-curl -X POST "http://localhost:8000/v1/embeddings" \
--H "Content-Type: application/json" \
--d '{
-  "input": "今日の天気は晴れです。",
-  "model": "cl-nagoya/ruri-v3-30m",
-  "apply_ruri_prefix": true
-}'
-```
+#### Python SDK 利用例
 
-#### レスポンス形式
+OpenAI公式クライアントの `extra_body` を利用して拡張パラメータを渡せます。
 
-```json
-{
-  "object": "list",
-  "data": [
-    {
-      "object": "embedding",
-      "embedding": [0.1, 0.2, ...],
-      "index": 0
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8000/v1", api_key="sk-no-key")
+
+# input_typeを明示的に指定して埋め込みを生成
+response = client.embeddings.create(
+    model="cl-nagoya/ruri-v3-310m",
+    input="名古屋大学で開発されたモデルについて教えて。",
+    extra_body={
+        "input_type": "query"
     }
-  ],
-  "model": "cl-nagoya/ruri-v3-30m",
-  "usage": {
-    "prompt_tokens": 12,
-    "total_tokens": 12
-  }
-}
+)
 ```
-
-> [!NOTE]
-> `usage` フィールドには、モデルのトークナイザーを使用して計算された実際の消費トークン数が返されます。
 
 ---
 
@@ -74,9 +63,19 @@ curl -X POST "http://localhost:8000/v1/embeddings" \
 
 `POST /v1/rerank`
 
-クエリに対して、提供されたドキュメントのリストを関連性の高い順に並べ替えます。
+Jina/Cohere等の標準的な再ランキングAPIに準拠したスキーマを提供します。
 
-#### リクエスト例
+#### リクエストボディ (JSON)
+
+| フィールド名 | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| `query` | string | Yes | 検索クエリ。 |
+| `documents` | array | Yes | ランク付け対象の文書リスト。 |
+| `model` | string | Yes | 使用するモデルID（例: `cl-nagoya/ruri-v3-reranker-310m`）。 |
+| `top_n` | integer | No | 返却する上位件数（`top_k`も互換性のために受付可能）。 |
+| `return_documents` | boolean | No | レスポンスに文書の本文を含めるかどうか。 |
+
+#### リクエスト例 (curl)
 
 ```bash
 curl -X POST "http://localhost:8000/v1/rerank" \
@@ -84,45 +83,14 @@ curl -X POST "http://localhost:8000/v1/rerank" \
 -d '{
   "query": "AIの未来について",
   "documents": [
-    "これは猫についての文章です。",
-    "人工知能は今後の社会を大きく変えるでしょう。",
-    "日本の首都は東京です。"
+    "猫について",
+    "人工知能の進化",
+    "日本の首都"
   ],
   "model": "cl-nagoya/ruri-v3-reranker-310m",
-  "top_k": 2,
+  "top_n": 2,
   "return_documents": true
 }'
-```
-
-#### リクエストパラメータ
-
-| パラメータ | 型 | 必須 | 説明 |
-| :--- | :--- | :--- | :--- |
-| `query` | string | Yes | 検索クエリ。 |
-| `documents` | array | Yes | 再ランキング対象のドキュメントのリスト。 |
-| `model` | string | Yes | 使用するモデル名。 |
-| `top_k` | integer | No | 返却する件数の上限。 |
-| `return_documents` | boolean | No | `true` の場合、レスポンスにドキュメント本文 (`text`) を含めます。 |
-
-#### レスポンス形式
-
-```json
-{
-  "query": "AIの未来について",
-  "data": [
-    {
-      "document": 1,
-      "score": 0.9,
-      "text": "人工知能は今後の社会を大きく変えるでしょう。"
-    },
-    {
-      "document": 2,
-      "score": 0.5,
-      "text": "日本の首都は東京です。"
-    }
-  ],
-  "model": "cl-nagoya/ruri-v3-reranker-310m"
-}
 ```
 
 ## 3. セットアップと実行

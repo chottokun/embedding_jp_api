@@ -4,6 +4,7 @@ from unittest.mock import patch, MagicMock
 
 from app.main import app
 from app.config import RERANK_MODELS, EMBEDDING_MODELS
+import numpy as np
 
 client = TestClient(app)
 
@@ -49,9 +50,11 @@ def test_embedding_usage(mock_get_model):
     mock_model = mock_get_model.return_value
     # Mock tokenizer
     mock_tokenizer = MagicMock()
-    mock_tokenizer.encode.side_effect = lambda x: [1, 2, 3] # returns 3 tokens
+    mock_tokenizer.encode.side_effect = lambda *args, **kwargs: [1, 2, 3] # returns 3 tokens
+    mock_tokenizer.num_special_tokens_to_add.return_value = 2
     mock_model.tokenizer = mock_tokenizer
-    mock_model.encode.return_value = [[0.1] * 384]
+    mock_model.max_seq_length = 8192
+    mock_model.encode.return_value = np.array([[0.1] * 384])
 
     request_payload = {
         "input": "hello world",

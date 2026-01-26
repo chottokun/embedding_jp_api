@@ -43,12 +43,17 @@ class ApiUser(HttpUser):
     """
     wait_time = between(1, 5)  # Users wait 1-5 seconds between tasks
 
-    @task(1)
+    @task(3)
     def get_embeddings(self):
         """Task to call the /v1/embeddings endpoint."""
+        input_data = random.choice(EMBEDDING_INPUTS)
+        input_type = random.choice(["query", "document", "classification", "clustering", "sts", None])
+        
         payload = {
-            "input": random.choice(EMBEDDING_INPUTS),
-            "model": random.choice(EMBEDDING_MODELS)
+            "input": input_data,
+            "model": random.choice(EMBEDDING_MODELS),
+            "input_type": input_type,
+            "apply_ruri_prefix": random.choice([True, False])
         }
         self.client.post("/v1/embeddings", json=payload, name="/v1/embeddings")
 
@@ -62,7 +67,7 @@ class ApiUser(HttpUser):
             "query": random.choice(RERANK_QUERIES),
             "documents": documents,
             "model": RERANK_MODELS[0],
-            "top_k": random.choice([None, 1, 2]),
+            "top_n": random.choice([None, 1, 2]),
             "return_documents": random.choice([True, False])
         }
         self.client.post("/v1/rerank", json=payload, name="/v1/rerank")
