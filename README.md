@@ -75,6 +75,17 @@ Jina/Cohere等の標準的な再ランキングAPIに準拠したスキーマを
 | `top_n` | integer | No | 返却する上位件数（`top_k`も互換性のために受付可能）。 |
 | `return_documents` | boolean | No | レスポンスに文書の本文を含めるかどうか。 |
 
+#### レスポンスボディ (JSON)
+
+レスポンスには、クエリとドキュメントのペアの合計トークン消費量を示す `usage` フィールドが含まれます。
+
+| フィールド名 | 型 | 説明 |
+| --- | --- | --- |
+| `query` | string | 検索クエリ。 |
+| `data` | array | ランク付けされた文書とそのスコア。 |
+| `model` | string | 使用されたモデルID。 |
+| `usage` | object | トークン使用量（`prompt_tokens`, `total_tokens`）。 |
+
 #### リクエスト例 (curl)
 
 ```bash
@@ -96,23 +107,34 @@ curl -X POST "http://localhost:8000/v1/rerank" \
 ## 3. セットアップと実行
 
 ### 3.1. 必要なツール
-- [Poetry](https://python-poetry.org/)
+- [uv](https://docs.astral.sh/uv/) (推奨) または [Poetry](https://python-poetry.org/)
 - Python 3.11+
 
 ### 3.2. 環境のセットアップ
 
-1. リポジトリをクローンします。
-2. 依存関係をインストールします。
-   ```bash
-   poetry install
-   ```
+uvを使用する場合：
+```bash
+uv sync
+```
+
+Poetryを使用する場合：
+```bash
+poetry install
+```
 
 ### 3.3. 開発サーバーの実行
 
 Uvicornを使用して開発サーバーを起動します。ポートは環境変数 `APP_PORT` で変更可能です（デフォルト: 8000）。
 
+uvを使用する場合：
 ```bash
-export APP_PORT=8080
+export APP_PORT=8000
+uv run uvicorn src.app.main:app --reload --port $APP_PORT
+```
+
+Poetryを使用する場合：
+```bash
+export APP_PORT=8000
 poetry run uvicorn src.app.main:app --reload --port $APP_PORT
 ```
 
@@ -127,15 +149,20 @@ poetry run gunicorn --workers 1 --worker-class uvicorn.workers.UvicornWorker --b
 
 ### 3.5. パフォーマンスとスレッドセーフティ
 
-このサーバーは、CPU負荷の高いモデル推論を効率的に処理するために以下の最適化が行われています。
+このサーバーは、高負荷なモデル推論を効率的に処理するために以下の最適化が行われています。
 
+- **Embeddings処理の高速化**: トークン数の計算を入力処理と同時に行うことで、冗長なトークナイズ（lengthチェック、usage計算、モデルエンコード）を削減し、O(N)パスを最小化しています。
 - **スレッドプールによる並列実行**: 推論処理を行うエンドポイントを `def` (同期) で定義することで、FastAPIが内部のスレッドプールを使用して並列にリクエストを処理できるようにしています。
 - **スレッドセーフなモデルロード**: `threading.Lock` を導入しており、並列リクエストが発生しても安全にモデルをロード・キャッシュできます。
 
 ## 4. テストの実行
 
-プロジェクトのテストスイートはPytestを使用して実行します。
+uvを使用する場合：
+```bash
+uv run pytest
+```
 
+Poetryを使用する場合：
 ```bash
 poetry run pytest
 ```
