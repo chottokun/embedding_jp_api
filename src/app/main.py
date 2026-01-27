@@ -5,7 +5,7 @@ from .schemas import (
     RerankRequest, RerankResponse, RerankData
 )
 from .models import get_model
-from .config import EMBEDDING_MODELS, RERANK_MODELS
+from .config import EMBEDDING_MODELS, RERANK_MODELS, RURI_PREFIX_MAP
 
 app = FastAPI(title="OpenAI-Compatible API")
 
@@ -24,31 +24,24 @@ def create_embeddings(request: EmbeddingRequest):
 
     inputs = request.input if isinstance(request.input, list) else [request.input]
     
-    # Prefix mapping for Ruri-v3
-    prefix_map = {
-        "query": "検索クエリ: ",
-        "document": "検索文書: ",
-        "classification": "トピック: ",
-        "clustering": "トピック: ",
-        "sts": "",
-    }
-
     processed_inputs = []
     max_seq_length = getattr(model, "max_seq_length", 8192)
     tokenizer = model.tokenizer
+
+    total_tokens = 0
 
     for text in inputs:
         prefix = ""
         # 1. Determine prefix
         if "ruri-v3" in request.model:
-            if request.input_type in prefix_map:
-                prefix = prefix_map[request.input_type]
+            if request.input_type in RURI_PREFIX_MAP:
+                prefix = RURI_PREFIX_MAP[request.input_type]
             elif request.apply_ruri_prefix:
                 # Fallback logic
                 if isinstance(request.input, str):
-                    prefix = prefix_map["query"]
+                    prefix = RURI_PREFIX_MAP["query"]
                 else:
-                    prefix = prefix_map["document"]
+                    prefix = RURI_PREFIX_MAP["document"]
         
         # 2. Prefix deduplication
         if prefix and text.startswith(prefix):
@@ -67,24 +60,15 @@ def create_embeddings(request: EmbeddingRequest):
         
         if len(text_tokens) > available_for_text:
             text_tokens = text_tokens[:available_for_text]
-        
-        # Re-construct string or just encode tokens? 
-        # model.encode usually accepts strings. 
-        # If we truncated tokens, we should join them back carefully or use the model's internal encode on ids.
-        # For simplicity and accuracy with the tokenizer, we'll keep it as string if not truncated, 
-        # or decode if truncated.
-        if len(tokenizer.encode(text, add_special_tokens=False)) > available_for_text:
-             truncated_text = tokenizer.decode(text_tokens)
-             final_text = f"{prefix}{truncated_text}"
+            truncated_text = tokenizer.decode(text_tokens)
+            final_text = f"{prefix}{truncated_text}"
         
         processed_inputs.append(final_text)
 
-    # Calculate token usage
-    total_tokens = 0
-    for text in processed_inputs:
-        tokens = tokenizer.encode(text)
-        total_tokens += len(tokens)
-    
+        # Calculate usage based on the tokens we already have (approximate but efficient)
+        # Note: This ignores potential subword merging at the prefix-text boundary.
+        total_tokens += (len(prefix_tokens) + len(text_tokens) + special_tokens_count)
+
     usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
 
     # Get embeddings
@@ -117,6 +101,15 @@ def create_rerank(request: RerankRequest):
     # Prepare pairs for the cross-encoder
     pairs = [[request.query, doc] for doc in request.documents]
 
+    # Calculate token usage
+    tokenizer = model.tokenizer
+    total_tokens = 0
+    for query_text, doc_text in pairs:
+        tokens = tokenizer.encode(query_text, doc_text)
+        total_tokens += len(tokens)
+
+    usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+
     # Get scores from the model
     scores = model.predict(pairs)
 
@@ -141,5 +134,6 @@ def create_rerank(request: RerankRequest):
     return RerankResponse(
         query=request.query,
         data=response_data,
-        model=request.model
+        model=request.model,
+        usage=usage
     )

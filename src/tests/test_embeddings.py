@@ -39,6 +39,8 @@ def test_create_embeddings_single_string_no_prefix_default(mock_get_model):
 
     assert response.status_code == 200
     mock_model.encode.assert_called_once_with(["今日の天気"])
+    # 3 tokens (mock) + 2 special tokens = 5
+    assert response.json()["usage"]["total_tokens"] == 5
 
 @patch('app.main.get_model')
 def test_create_embeddings_ruri_v3_with_prefix_enabled(mock_get_model):
@@ -57,6 +59,8 @@ def test_create_embeddings_ruri_v3_with_prefix_enabled(mock_get_model):
 
     assert response.status_code == 200
     mock_model.encode.assert_called_once_with(["検索クエリ: 今日の天気"])
+    # 3 tokens (prefix) + 3 tokens (text) + 2 special tokens = 8
+    assert response.json()["usage"]["total_tokens"] == 8
 
 @patch('app.main.get_model')
 def test_create_embeddings_ruri_v3_with_prefix_enabled_list_input(mock_get_model):
@@ -75,6 +79,8 @@ def test_create_embeddings_ruri_v3_with_prefix_enabled_list_input(mock_get_model
 
     assert response.status_code == 200
     mock_model.encode.assert_called_once_with(["検索文書: 文書A", "検索文書: 文書B"])
+    # 2 inputs * (3 prefix + 3 text + 2 special) = 16
+    assert response.json()["usage"]["total_tokens"] == 16
 
 @patch('app.main.get_model')
 def test_create_embeddings_non_ruri_v3_with_prefix_flag_no_prefix(mock_get_model):

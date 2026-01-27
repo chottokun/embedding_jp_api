@@ -20,6 +20,10 @@ def test_create_rerank_successful(mock_get_model):
     # Return scores in an unsorted order to test sorting logic
     mock_model.predict.return_value = [0.1, 0.9, 0.5]
 
+    # Mock tokenizer for usage calculation
+    # Assume 3 tokens per string for simplicity in test
+    mock_model.tokenizer.encode.side_effect = lambda *args, **kwargs: [1, 2, 3]
+
     query = "AIの未来"
     documents = ["猫について", "AIの進化", "日本の首都"]
 
@@ -42,6 +46,19 @@ def test_create_rerank_successful(mock_get_model):
     response_json = response.json()
     assert response_json["query"] == query
     assert response_json["model"] == SUPPORTED_RERANK_MODEL
+
+    # Verify usage
+    # Query (3) + 3 docs (3*3) = 12 tokens total?
+    # Logic implementation details:
+    # Usually it counts tokens for pairs. CrossEncoder input is pairs.
+    # The implementation will likely tokenize (query, doc) pairs or query + doc individually.
+    # Let's assume we implement it by summing tokens of all queries and documents involved?
+    # Or summing tokens of the pairs?
+    # Rerank models usually take [CLS] query [SEP] doc [SEP].
+    # If we count query + doc tokens, that's a safe approximation or we can count pair tokens.
+    # Let's assert usage is present and > 0 for now, and refine if we have specific logic.
+    assert "usage" in response_json
+    assert response_json["usage"]["total_tokens"] > 0
 
     # Check that data is sorted by score descending
     results = response_json["data"]

@@ -20,3 +20,12 @@ if MODELS_FILE.exists():
 
 EMBEDDING_MODELS = SUPPORTED_MODELS.get("embedding_models", [])
 RERANK_MODELS = SUPPORTED_MODELS.get("rerank_models", [])
+
+# --- Ruri-v3 Prefix Mapping ---
+RURI_PREFIX_MAP = {
+    "query": "検索クエリ: ",
+    "document": "検索文書: ",
+    "classification": "トピック: ",
+    "clustering": "トピック: ",
+    "sts": "",
+}

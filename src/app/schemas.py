@@ -55,3 +55,4 @@ class RerankResponse(BaseModel):
     query: str
     data: List[RerankData]
     model: str
+    usage: Optional[Usage] = None

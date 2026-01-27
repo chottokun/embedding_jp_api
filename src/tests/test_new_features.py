@@ -63,5 +63,5 @@ def test_embedding_usage(mock_get_model):
     response = client.post("/v1/embeddings", json=request_payload)
     assert response.status_code == 200
     usage = response.json()["usage"]
-    assert usage["prompt_tokens"] == 3
-    assert usage["total_tokens"] == 3
+    assert usage["prompt_tokens"] == 5
+    assert usage["total_tokens"] == 5
