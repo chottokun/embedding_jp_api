@@ -1,4 +1,3 @@
-import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 
@@ -9,7 +8,8 @@ client = TestClient(app)
 
 SUPPORTED_RERANK_MODEL = RERANK_MODELS[0]
 
-@patch('app.main.get_model')
+
+@patch("app.main.get_model")
 def test_create_rerank_successful(mock_get_model):
     """
     Tests a successful rerank request.
@@ -30,7 +30,7 @@ def test_create_rerank_successful(mock_get_model):
     request_payload = {
         "query": query,
         "documents": documents,
-        "model": SUPPORTED_RERANK_MODEL
+        "model": SUPPORTED_RERANK_MODEL,
     }
 
     # Act
@@ -64,11 +64,12 @@ def test_create_rerank_successful(mock_get_model):
     results = response_json["data"]
     assert len(results) == 3
     assert results[0]["score"] == 0.9
-    assert results[0]["document"] == 1 # 'AIの進化'
+    assert results[0]["document"] == 1  # 'AIの進化'
     assert results[1]["score"] == 0.5
-    assert results[1]["document"] == 2 # '日本の首都'
+    assert results[1]["document"] == 2  # '日本の首都'
     assert results[2]["score"] == 0.1
-    assert results[2]["document"] == 0 # '猫について'
+    assert results[2]["document"] == 0  # '猫について'
+
 
 def test_rerank_unsupported_model():
     """
@@ -77,7 +78,7 @@ def test_rerank_unsupported_model():
     request_payload = {
         "query": "test",
         "documents": ["doc1"],
-        "model": "unsupported-rerank-model"
+        "model": "unsupported-rerank-model",
     }
     response = client.post("/v1/rerank", json=request_payload)
     assert response.status_code == 400
