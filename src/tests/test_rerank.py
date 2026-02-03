@@ -21,8 +21,12 @@ def test_create_rerank_successful(mock_get_model):
     mock_model.predict.return_value = [0.1, 0.9, 0.5]
 
     # Mock tokenizer for usage calculation
-    # Assume 3 tokens per string for simplicity in test
-    mock_model.tokenizer.encode.side_effect = lambda *args, **kwargs: [1, 2, 3]
+    # The new logic calls tokenizer(queries, docs, ...) instead of tokenizer.encode
+    # Return a dict with 'input_ids' which is a list of lists (one per pair)
+    # 3 pairs, so 3 lists of tokens. Let's say 5 tokens per pair.
+    mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
+        "input_ids": [[1, 2, 3, 4, 5] for _ in range(len(queries))]
+    }
 
     query = "AIの未来"
     documents = ["猫について", "AIの進化", "日本の首都"]
