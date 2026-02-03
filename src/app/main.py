@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
-from typing import List, Union, Tuple
+from typing import Tuple
+import heapq
 
 from .schemas import (
     EmbeddingRequest,
@@ -14,6 +15,7 @@ from .models import get_model
 from .config import EMBEDDING_MODELS, RERANK_MODELS, RURI_PREFIX_MAP
 
 app = FastAPI(title="OpenAI-Compatible API")
+
 
 def _prepare_embedding_input(
     text: str, request: EmbeddingRequest, tokenizer, max_seq_length: int
@@ -69,6 +71,7 @@ def _prepare_embedding_input(
     total_tokens = len(prefix_tokens) + len(text_tokens) + special_tokens_count
 
     return final_text, total_tokens
+
 
 @app.post("/v1/embeddings", response_model=EmbeddingResponse)
 def create_embeddings(request: EmbeddingRequest):
@@ -144,13 +147,9 @@ def create_rerank(request: RerankRequest):
         batch_queries = [p[0] for p in batch_pairs]
         batch_docs = [p[1] for p in batch_pairs]
 
-        encodings = tokenizer(
-            batch_queries,
-            batch_docs,
-            add_special_tokens=True
-        )
+        encodings = tokenizer(batch_queries, batch_docs, add_special_tokens=True)
 
-        for input_ids in encodings['input_ids']:
+        for input_ids in encodings["input_ids"]:
             total_tokens += len(input_ids)
 
     usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
@@ -167,11 +166,15 @@ def create_rerank(request: RerankRequest):
         results.append(result_item)
 
     # Sort results by score in descending order
-    sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
-
-    # Apply top_n if specified
+    # Optimization: Use heapq.nlargest for top_n which is O(N log k) instead of O(N log N)
     if request.top_n is not None:
-        sorted_results = sorted_results[: request.top_n]
+        # Use (score, -index) tuple key to ensure stability (deterministic tie-breaking)
+        # matching Python's stable sort behavior where earlier indices come first for same score.
+        sorted_results = heapq.nlargest(
+            request.top_n, results, key=lambda x: (x["score"], -x["document"])
+        )
+    else:
+        sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
 
     # Format for response schema
     response_data = [RerankData(**result) for result in sorted_results]
