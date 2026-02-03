@@ -104,9 +104,23 @@ def create_rerank(request: RerankRequest):
     # Calculate token usage
     tokenizer = model.tokenizer
     total_tokens = 0
-    for query_text, doc_text in pairs:
-        tokens = tokenizer.encode(query_text, doc_text)
-        total_tokens += len(tokens)
+
+    # Batch processing for token counting to improve performance and manage memory
+    batch_size = 256
+
+    for i in range(0, len(pairs), batch_size):
+        batch_pairs = pairs[i : i + batch_size]
+        batch_queries = [p[0] for p in batch_pairs]
+        batch_docs = [p[1] for p in batch_pairs]
+
+        encodings = tokenizer(
+            batch_queries,
+            batch_docs,
+            add_special_tokens=True
+        )
+
+        for input_ids in encodings['input_ids']:
+            total_tokens += len(input_ids)
 
     usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
 
