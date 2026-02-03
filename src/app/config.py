@@ -13,7 +13,7 @@ MODELS_FILE = CONFIG_DIR / "models.yml"
 
 SUPPORTED_MODELS = {}
 if MODELS_FILE.exists():
-    with open(MODELS_FILE, 'r') as f:
+    with open(MODELS_FILE, "r") as f:
         data = yaml.safe_load(f)
         if data:
             SUPPORTED_MODELS = data

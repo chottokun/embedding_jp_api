@@ -1,6 +1,5 @@
-import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import numpy as np
 
 # Corrected imports for a 'src' layout
@@ -11,29 +10,28 @@ client = TestClient(app)
 
 SUPPORTED_EMBED_MODEL = EMBEDDING_MODELS[0]
 
+
 def setup_mock_model(mock_get_model, encode_return=None):
     mock_model = mock_get_model.return_value
     if encode_return is None:
         mock_model.encode.return_value = np.array([[0.1, 0.2, 0.3]])
     else:
         mock_model.encode.return_value = np.array(encode_return)
-        
+
     mock_model.tokenizer.encode.side_effect = lambda *args, **kwargs: [1, 2, 3]
     mock_model.tokenizer.num_special_tokens_to_add.return_value = 2
     mock_model.max_seq_length = 8192
     return mock_model
 
-@patch('app.main.get_model')
+
+@patch("app.main.get_model")
 def test_create_embeddings_single_string_no_prefix_default(mock_get_model):
     """
     Tests the default behavior for a single string input: no prefix should be applied.
     """
     mock_model = setup_mock_model(mock_get_model)
 
-    request_payload = {
-        "input": "今日の天気",
-        "model": SUPPORTED_EMBED_MODEL
-    }
+    request_payload = {"input": "今日の天気", "model": SUPPORTED_EMBED_MODEL}
 
     response = client.post("/v1/embeddings", json=request_payload)
 
@@ -42,7 +40,8 @@ def test_create_embeddings_single_string_no_prefix_default(mock_get_model):
     # 3 tokens (mock) + 2 special tokens = 5
     assert response.json()["usage"]["total_tokens"] == 5
 
-@patch('app.main.get_model')
+
+@patch("app.main.get_model")
 def test_create_embeddings_ruri_v3_with_prefix_enabled(mock_get_model):
     """
     Tests ruri-v3 model with prefix enabled.
@@ -52,7 +51,7 @@ def test_create_embeddings_ruri_v3_with_prefix_enabled(mock_get_model):
     request_payload = {
         "input": "今日の天気",
         "model": "cl-nagoya/ruri-v3-30m",
-        "apply_ruri_prefix": True
+        "apply_ruri_prefix": True,
     }
 
     response = client.post("/v1/embeddings", json=request_payload)
@@ -62,17 +61,20 @@ def test_create_embeddings_ruri_v3_with_prefix_enabled(mock_get_model):
     # 3 tokens (prefix) + 3 tokens (text) + 2 special tokens = 8
     assert response.json()["usage"]["total_tokens"] == 8
 
-@patch('app.main.get_model')
+
+@patch("app.main.get_model")
 def test_create_embeddings_ruri_v3_with_prefix_enabled_list_input(mock_get_model):
     """
     Tests ruri-v3 model with prefix enabled for a list of strings.
     """
-    mock_model = setup_mock_model(mock_get_model, encode_return=[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
+    mock_model = setup_mock_model(
+        mock_get_model, encode_return=[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
+    )
 
     request_payload = {
         "input": ["文書A", "文書B"],
         "model": "cl-nagoya/ruri-v3-30m",
-        "apply_ruri_prefix": True
+        "apply_ruri_prefix": True,
     }
 
     response = client.post("/v1/embeddings", json=request_payload)
@@ -82,7 +84,8 @@ def test_create_embeddings_ruri_v3_with_prefix_enabled_list_input(mock_get_model
     # 2 inputs * (3 prefix + 3 text + 2 special) = 16
     assert response.json()["usage"]["total_tokens"] == 16
 
-@patch('app.main.get_model')
+
+@patch("app.main.get_model")
 def test_create_embeddings_non_ruri_v3_with_prefix_flag_no_prefix(mock_get_model):
     """
     Tests that a non-ruri-v3 model does not get prefixes even if the flag is true.
@@ -97,7 +100,7 @@ def test_create_embeddings_non_ruri_v3_with_prefix_flag_no_prefix(mock_get_model
     request_payload = {
         "input": "今日の天気",
         "model": non_ruri_model,
-        "apply_ruri_prefix": True
+        "apply_ruri_prefix": True,
     }
 
     response = client.post("/v1/embeddings", json=request_payload)

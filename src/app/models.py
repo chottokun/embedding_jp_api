@@ -1,4 +1,3 @@
-import numpy as np
 from .config import EMBEDDING_MODELS, RERANK_MODELS
 from sentence_transformers import SentenceTransformer, CrossEncoder
 import torch
@@ -9,6 +8,7 @@ import threading
 
 _model_cache = {}
 _model_lock = threading.Lock()
+
 
 def get_model(model_name: str):
     """
