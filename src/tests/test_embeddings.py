@@ -18,7 +18,24 @@ def setup_mock_model(mock_get_model, encode_return=None):
     else:
         mock_model.encode.return_value = np.array(encode_return)
 
+    # Legacy encode mock for backward compatibility (if any)
     mock_model.tokenizer.encode.side_effect = lambda *args, **kwargs: [1, 2, 3]
+
+    # Batch tokenizer mock
+    def mock_tokenizer_call(text, **kwargs):
+        if isinstance(text, str):
+            # If prefix is present (simple check for test strings), return 6 tokens, else 3
+            tokens = [1] * 6 if "検索" in text else [1, 2, 3]
+            return {"input_ids": tokens}
+        elif isinstance(text, list):
+            ids = []
+            for t in text:
+                tokens = [1] * 6 if "検索" in t else [1, 2, 3]
+                ids.append(tokens)
+            return {"input_ids": ids}
+        return {"input_ids": []}
+
+    mock_model.tokenizer.side_effect = mock_tokenizer_call
     mock_model.tokenizer.num_special_tokens_to_add.return_value = 2
     mock_model.max_seq_length = 8192
     return mock_model

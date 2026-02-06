@@ -57,6 +57,10 @@ def test_embedding_usage(mock_get_model):
         2,
         3,
     ]  # returns 3 tokens
+
+    # Mock batch call
+    mock_tokenizer.side_effect = lambda text, **kwargs: {"input_ids": [1, 2, 3] if isinstance(text, str) else [[1, 2, 3]] * len(text)}
+
     mock_tokenizer.num_special_tokens_to_add.return_value = 2
     mock_model.tokenizer = mock_tokenizer
     mock_model.max_seq_length = 8192

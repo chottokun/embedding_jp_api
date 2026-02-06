@@ -21,6 +21,17 @@ def setup_mock_model(mock_get_model):
     )
     mock_model.tokenizer.num_special_tokens_to_add.return_value = 0  # Simplify
     mock_model.max_seq_length = 100  # Default to large enough for basic tests
+
+    def mock_tokenizer_call(text, **kwargs):
+        if isinstance(text, str):
+            ids = [ord(c) for c in text]
+            return {"input_ids": ids}
+        elif isinstance(text, list):
+            ids = [[ord(c) for c in t] for t in text]
+            return {"input_ids": ids}
+        return {"input_ids": []}
+
+    mock_model.tokenizer.side_effect = mock_tokenizer_call
     return mock_model
 
 

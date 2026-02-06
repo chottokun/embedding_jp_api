@@ -20,6 +20,16 @@ def mock_embedding_model():
         # Mock tokenizer
         tokenizer = MagicMock()
         tokenizer.encode.side_effect = lambda *args, **kwargs: [1, 2, 3]  # dummy tokens
+
+        # Batch call support
+        def mock_tokenizer_call(text, **kwargs):
+            if isinstance(text, str):
+                return {"input_ids": [1, 2, 3]}
+            elif isinstance(text, list):
+                return {"input_ids": [[1, 2, 3] for _ in text]}
+            return {"input_ids": []}
+
+        tokenizer.side_effect = mock_tokenizer_call
         tokenizer.decode.side_effect = lambda *args, **kwargs: "truncated text"
         tokenizer.num_special_tokens_to_add.return_value = 2
 
@@ -98,14 +108,18 @@ def test_truncation_logic(mock_embedding_model):
 
     # prefix tokens = 3, special tokens = 2, available for text = 5
     # total tokens for "long text" > 5
-    def mock_encode(text, **kwargs):
-        if "long" in text:
-            return [1] * 20
-        return [1] * 3
+    def mock_tokenizer_call(text, **kwargs):
+        if isinstance(text, str):
+            ids = [1] * 20 if "long" in text else [1] * 3
+            return {"input_ids": ids}
+        elif isinstance(text, list):
+            ids = [[1] * 20 if "long" in t else [1] * 3 for t in text]
+            return {"input_ids": ids}
+        return {"input_ids": []}
 
-    mock_embedding_model.tokenizer.encode.side_effect = mock_encode
+    mock_embedding_model.tokenizer.side_effect = mock_tokenizer_call
     mock_embedding_model.tokenizer.decode.side_effect = (
-        lambda *args, **kwargs: "truncated"
+        lambda *args, **kwargs: "検索クエリ: truncated"
     )
 
     response = client.post(
