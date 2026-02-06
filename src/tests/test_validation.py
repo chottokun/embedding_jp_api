@@ -11,6 +11,11 @@ def test_embedding_request_valid():
     # Boundary check: exact limits should be allowed
     EmbeddingRequest(input="a" * MAX_INPUT_LENGTH, model="model")
 
+    # Boundary check: exact number of items should be allowed
+    # Use a small string to avoid memory issues in test
+    items = ["a"] * MAX_INPUT_ITEMS
+    EmbeddingRequest(input=items, model="model")
+
 def test_embedding_request_string_too_long():
     """Test EmbeddingRequest with input string exceeding max length."""
     # We construct a string slightly longer than the limit
@@ -39,6 +44,10 @@ def test_rerank_request_valid():
     # Boundary check
     RerankRequest(query="a" * MAX_INPUT_LENGTH, documents=["doc"], model="model")
     RerankRequest(query="hello", documents=["a" * MAX_INPUT_LENGTH], model="model")
+
+    # Boundary check: exact number of items
+    items = ["doc"] * MAX_INPUT_ITEMS
+    RerankRequest(query="hello", documents=items, model="model")
 
 def test_rerank_request_query_too_long():
     """Test RerankRequest with query exceeding max length."""

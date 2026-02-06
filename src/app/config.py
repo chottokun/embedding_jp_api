@@ -37,4 +37,8 @@ RURI_PREFIX_MAP = {
 # 65536 chars provides a safe margin (approx 8 chars/token) to cover the context window
 # while preventing excessive resource consumption during tokenization.
 MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", "65536"))
-MAX_INPUT_ITEMS = int(os.getenv("MAX_INPUT_ITEMS", "2048"))
+
+# MAX_INPUT_ITEMS is set to 256.
+# Processing too many items in a single request can lead to timeouts and resource exhaustion (DoS).
+# Clients should batch requests if they need to process more items.
+MAX_INPUT_ITEMS = int(os.getenv("MAX_INPUT_ITEMS", "256"))
