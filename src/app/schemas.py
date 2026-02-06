@@ -52,7 +52,13 @@ class EmbeddingResponse(BaseModel):
 # Schemas for the rerank endpoint will be added in the corresponding step.
 class RerankRequest(BaseModel):
     query: LimitedString
-    documents: Annotated[List[LimitedString], Field(max_length=MAX_INPUT_ITEMS)]
+    documents: Annotated[
+        List[LimitedString],
+        Field(
+            max_length=MAX_INPUT_ITEMS,
+            description="List of documents to rerank. Limited to MAX_INPUT_ITEMS to prevent DoS.",
+        ),
+    ]
     model: str
     top_n: Optional[int] = Field(
         None, validation_alias="top_k", ge=0, le=MAX_INPUT_ITEMS
