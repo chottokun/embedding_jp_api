@@ -1,6 +1,8 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from typing import Tuple, List
 import heapq
+import logging
 
 from .schemas import (
     EmbeddingRequest,
@@ -17,62 +19,15 @@ from .config import EMBEDDING_MODELS, RERANK_MODELS, RURI_PREFIX_MAP
 app = FastAPI(title="OpenAI-Compatible API")
 
 
-def _prepare_embedding_input(
-    text: str,
-    prefix: str,
-    prefix_tokens: List[int],
-    tokenizer,
-    max_seq_length: int,
-) -> Tuple[str, int]:
-    """
-    Prepares the input text for embedding:
-    1. Determines if prefix should be applied (checks if text already starts with it).
-    2. Truncates the text if it exceeds the model's maximum sequence length, preserving the prefix.
-    3. Calculates token usage.
-
-    Args:
-        text: The input text to process.
-        prefix: The candidate prefix string to potentially prepend.
-        prefix_tokens: The pre-calculated tokens for the candidate prefix.
-        tokenizer: The tokenizer instance.
-        max_seq_length: The maximum sequence length for the model.
-
-    Returns:
-        Tuple[str, int]: The processed text and the total token count.
-    """
-    # Prefix processing
-    # If the text already starts with the prefix, we don't add it again.
-    if prefix and text.startswith(prefix):
-        effective_prefix = ""
-        effective_prefix_tokens = []
-    else:
-        effective_prefix = prefix
-        effective_prefix_tokens = prefix_tokens
-
-    text_tokens = tokenizer.encode(text, add_special_tokens=False)
-
-    special_tokens_count = tokenizer.num_special_tokens_to_add(False)
-
-    available_for_text = (
-        max_seq_length - len(effective_prefix_tokens) - special_tokens_count
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    # Log the full error with stack trace
+    logging.error(f"Unhandled exception: {exc}", exc_info=True)
+    # Return a generic error message to the client to avoid leaking internal details
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error"},
     )
-
-    # Ensure available_for_text is non-negative to avoid negative slicing
-    available_for_text = max(0, available_for_text)
-
-    if len(text_tokens) > available_for_text:
-        # Truncate text
-        text_tokens = text_tokens[:available_for_text]
-        truncated_text = tokenizer.decode(text_tokens)
-        final_text = f"{effective_prefix}{truncated_text}"
-    else:
-        final_text = f"{effective_prefix}{text}"
-
-    total_tokens = (
-        len(effective_prefix_tokens) + len(text_tokens) + special_tokens_count
-    )
-
-    return final_text, total_tokens
 
 
 @app.post("/v1/embeddings", response_model=EmbeddingResponse)
@@ -92,11 +47,10 @@ def create_embeddings(request: EmbeddingRequest):
 
     inputs = request.input if isinstance(request.input, list) else [request.input]
 
-    processed_inputs = []
     max_seq_length = getattr(model, "max_seq_length", 8192)
     tokenizer = model.tokenizer
 
-    # Optimization: Determine prefix and calculate its tokens once per request
+    # Optimization: Determine prefix once per request
     prefix = ""
     if "ruri-v3" in request.model:
         if request.input_type in RURI_PREFIX_MAP:
@@ -108,18 +62,38 @@ def create_embeddings(request: EmbeddingRequest):
             else:
                 prefix = RURI_PREFIX_MAP["document"]
 
-    prefix_tokens = (
-        tokenizer.encode(prefix, add_special_tokens=False) if prefix else []
-    )
+    # 1. Prepare strings with prefixes
+    # If the text already starts with the prefix, we don't add it again.
+    if prefix:
+        processed_inputs = [
+            text if text.startswith(prefix) else f"{prefix}{text}" for text in inputs
+        ]
+    else:
+        processed_inputs = inputs
 
+    # 2. Batch tokenize to calculate usage and truncate if necessary
+    # We use batch_encode_plus (tokenizer call) which is much faster than looping
     total_tokens = 0
+    special_tokens_count = tokenizer.num_special_tokens_to_add(False)
+    limit = max_seq_length - special_tokens_count
 
-    for text in inputs:
-        final_text, tokens = _prepare_embedding_input(
-            text, prefix, prefix_tokens, tokenizer, max_seq_length
-        )
-        processed_inputs.append(final_text)
-        total_tokens += tokens
+    # Process in batches to avoid OOM on huge payloads
+    batch_size = 256
+    for i in range(0, len(processed_inputs), batch_size):
+        batch = processed_inputs[i : i + batch_size]
+        # add_special_tokens=False so we get raw tokens of the content
+        encodings = tokenizer(batch, add_special_tokens=False)
+
+        for j, ids in enumerate(encodings["input_ids"]):
+            if len(ids) > limit:
+                # Truncate input to avoid double tokenization of long tails in model.encode
+                # and to ensure the model sees exactly what we counted.
+                truncated_ids = ids[:limit]
+                truncated_text = tokenizer.decode(truncated_ids)
+                processed_inputs[i + j] = truncated_text
+                total_tokens += len(truncated_ids) + special_tokens_count
+            else:
+                total_tokens += len(ids) + special_tokens_count
 
     usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
 
