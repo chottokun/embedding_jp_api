@@ -29,3 +29,8 @@ RURI_PREFIX_MAP = {
     "clustering": "トピック: ",
     "sts": "",
 }
+
+# --- Security Configuration ---
+# Limits for input validation to prevent DoS attacks.
+MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", "65536"))
+MAX_INPUT_ITEMS = int(os.getenv("MAX_INPUT_ITEMS", "2048"))

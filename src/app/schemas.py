@@ -1,11 +1,19 @@
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Union, Optional
+from pydantic import BaseModel, Field, ConfigDict, StringConstraints
+from typing import List, Union, Optional, Annotated
+
+from .config import MAX_INPUT_LENGTH, MAX_INPUT_ITEMS
+
+# --- Security Types ---
+LimitedString = Annotated[str, StringConstraints(max_length=MAX_INPUT_LENGTH)]
 
 # --- For /v1/embeddings ---
 
 
 class EmbeddingRequest(BaseModel):
-    input: Union[str, List[str]]
+    input: Union[
+        LimitedString,
+        Annotated[List[LimitedString], Field(max_length=MAX_INPUT_ITEMS)]
+    ]
     model: str
     user: Optional[str] = None
     input_type: Optional[str] = Field(
@@ -43,8 +51,8 @@ class EmbeddingResponse(BaseModel):
 # --- For /v1/rerank ---
 # Schemas for the rerank endpoint will be added in the corresponding step.
 class RerankRequest(BaseModel):
-    query: str
-    documents: List[str]
+    query: LimitedString
+    documents: Annotated[List[LimitedString], Field(max_length=MAX_INPUT_ITEMS)]
     model: str
     top_n: Optional[int] = Field(None, validation_alias="top_k")
     return_documents: Optional[bool] = None
