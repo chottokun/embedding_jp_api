@@ -1,0 +1,119 @@
+diff --git a/src/app/main.py b/src/app/main.py
+index ec45ee5..9f5c28b 100644
+--- a/src/app/main.py
++++ b/src/app/main.py
+@@ -1,5 +1,5 @@
+ from fastapi import FastAPI, HTTPException
+-from typing import Tuple
++from typing import Tuple, List
+ import heapq
+ 
+ from .schemas import (
+@@ -18,44 +18,44 @@ app = FastAPI(title="OpenAI-Compatible API")
+ 
+ 
+ def _prepare_embedding_input(
+-    text: str, request: EmbeddingRequest, tokenizer, max_seq_length: int
++    text: str,
++    prefix: str,
++    prefix_tokens: List[int],
++    tokenizer,
++    max_seq_length: int,
+ ) -> Tuple[str, int]:
+     """
+     Prepares the input text for embedding:
+-    1. Determines and applies prefix (if applicable).
++    1. Determines if prefix should be applied (checks if text already starts with it).
+     2. Truncates the text if it exceeds the model's maximum sequence length, preserving the prefix.
+     3. Calculates token usage.
+ 
++    Args:
++        text: The input text to process.
++        prefix: The candidate prefix string to potentially prepend.
++        prefix_tokens: The pre-calculated tokens for the candidate prefix.
++        tokenizer: The tokenizer instance.
++        max_seq_length: The maximum sequence length for the model.
++
+     Returns:
+         Tuple[str, int]: The processed text and the total token count.
+     """
+-    prefix = ""
+-
+-    # 1. Determine prefix
+-    if "ruri-v3" in request.model:
+-        if request.input_type in RURI_PREFIX_MAP:
+-            prefix = RURI_PREFIX_MAP[request.input_type]
+-        elif request.apply_ruri_prefix:
+-            # Fallback logic based on input shape (compatibility mode)
+-            if isinstance(request.input, str):
+-                prefix = RURI_PREFIX_MAP["query"]
+-            else:
+-                prefix = RURI_PREFIX_MAP["document"]
+-
+-    # 2. Prefix processing
++    # Prefix processing
+     # If the text already starts with the prefix, we don't add it again.
+-    effective_prefix = prefix if (prefix and not text.startswith(prefix)) else ""
++    if prefix and text.startswith(prefix):
++        effective_prefix = ""
++        effective_prefix_tokens = []
++    else:
++        effective_prefix = prefix
++        effective_prefix_tokens = prefix_tokens
+ 
+-    prefix_tokens = (
+-        tokenizer.encode(effective_prefix, add_special_tokens=False)
+-        if effective_prefix
+-        else []
+-    )
+     text_tokens = tokenizer.encode(text, add_special_tokens=False)
+ 
+     special_tokens_count = tokenizer.num_special_tokens_to_add(False)
+ 
+-    available_for_text = max_seq_length - len(prefix_tokens) - special_tokens_count
++    available_for_text = (
++        max_seq_length - len(effective_prefix_tokens) - special_tokens_count
++    )
+ 
+     # Ensure available_for_text is non-negative to avoid negative slicing
+     available_for_text = max(0, available_for_text)
+@@ -68,7 +68,9 @@ def _prepare_embedding_input(
+     else:
+         final_text = f"{effective_prefix}{text}"
+ 
+-    total_tokens = len(prefix_tokens) + len(text_tokens) + special_tokens_count
++    total_tokens = (
++        len(effective_prefix_tokens) + len(text_tokens) + special_tokens_count
++    )
+ 
+     return final_text, total_tokens
+ 
+@@ -94,11 +96,27 @@ def create_embeddings(request: EmbeddingRequest):
+     max_seq_length = getattr(model, "max_seq_length", 8192)
+     tokenizer = model.tokenizer
+ 
++    # Optimization: Determine prefix and calculate its tokens once per request
++    prefix = ""
++    if "ruri-v3" in request.model:
++        if request.input_type in RURI_PREFIX_MAP:
++            prefix = RURI_PREFIX_MAP[request.input_type]
++        elif request.apply_ruri_prefix:
++            # Fallback logic based on input shape (compatibility mode)
++            if isinstance(request.input, str):
++                prefix = RURI_PREFIX_MAP["query"]
++            else:
++                prefix = RURI_PREFIX_MAP["document"]
++
++    prefix_tokens = (
++        tokenizer.encode(prefix, add_special_tokens=False) if prefix else []
++    )
++
+     total_tokens = 0
+ 
+     for text in inputs:
+         final_text, tokens = _prepare_embedding_input(
+-            text, request, tokenizer, max_seq_length
++            text, prefix, prefix_tokens, tokenizer, max_seq_length
+         )
+         processed_inputs.append(final_text)
+         total_tokens += tokens

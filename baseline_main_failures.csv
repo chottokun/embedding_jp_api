@@ -1,0 +1,3 @@
+Method,Name,Error,Occurrences
+POST,/v1/embeddings,HTTPError('500 Server Error: Internal Server Error for url: /v1/embeddings'),1
+POST,/v1/rerank,RemoteDisconnected('Remote end closed connection without response'),1
