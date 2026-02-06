@@ -54,9 +54,17 @@ class EmbeddingResponse(BaseModel):
 class RerankRequest(BaseModel):
     query: LimitedString
     # Limit list size to prevent memory exhaustion (DoS)
-    documents: Annotated[List[LimitedString], Field(max_length=MAX_INPUT_ITEMS)]
+    documents: Annotated[
+        List[LimitedString],
+        Field(
+            max_length=MAX_INPUT_ITEMS,
+            description="List of documents to rerank. Limited to MAX_INPUT_ITEMS to prevent DoS.",
+        ),
+    ]
     model: str
-    top_n: Optional[int] = Field(None, validation_alias="top_k")
+    top_n: Optional[int] = Field(
+        None, validation_alias="top_k", ge=0, le=MAX_INPUT_ITEMS
+    )
     return_documents: Optional[bool] = None
 
     model_config = ConfigDict(populate_by_name=True)
