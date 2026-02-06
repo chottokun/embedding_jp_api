@@ -54,7 +54,9 @@ class RerankRequest(BaseModel):
     query: LimitedString
     documents: Annotated[List[LimitedString], Field(max_length=MAX_INPUT_ITEMS)]
     model: str
-    top_n: Optional[int] = Field(None, validation_alias="top_k")
+    top_n: Optional[int] = Field(
+        None, validation_alias="top_k", ge=0, le=MAX_INPUT_ITEMS
+    )
     return_documents: Optional[bool] = None
 
     model_config = ConfigDict(populate_by_name=True)

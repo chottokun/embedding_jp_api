@@ -69,3 +69,10 @@ def test_rerank_request_documents_too_many_items():
     with pytest.raises(ValidationError) as excinfo:
         RerankRequest(query="hello", documents=items, model="model")
     assert "List should have at most" in str(excinfo.value)
+
+def test_rerank_request_top_n_too_large():
+    """Test RerankRequest with top_n exceeding MAX_INPUT_ITEMS."""
+    with pytest.raises(ValidationError) as excinfo:
+        RerankRequest(query="hello", documents=["doc"], model="model", top_n=MAX_INPUT_ITEMS + 1)
+    # Pydantic v2 error message for 'le'
+    assert "Input should be less than or equal to" in str(excinfo.value)
