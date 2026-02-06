@@ -32,8 +32,9 @@ RURI_PREFIX_MAP = {
 
 # --- Security Configuration ---
 # Limits for input validation to prevent DoS attacks.
-# MAX_INPUT_LENGTH is set to 1,000,000 characters to allow for long documents
-# that will be truncated by the model (embedding use case), while still preventing
-# massive abuse (e.g. 1GB strings).
-MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", "1000000"))
+# MAX_INPUT_LENGTH is set to 65536 characters.
+# The model supports up to 8192 tokens.
+# 65536 chars provides a safe margin (approx 8 chars/token) to cover the context window
+# while preventing excessive resource consumption during tokenization.
+MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", "65536"))
 MAX_INPUT_ITEMS = int(os.getenv("MAX_INPUT_ITEMS", "2048"))

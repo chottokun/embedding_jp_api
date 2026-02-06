@@ -63,11 +63,11 @@ class RerankRequest(BaseModel):
 class RerankData(BaseModel):
     document: int  # As per the doc, this is the index
     score: float
-    text: Optional[str] = None
+    text: Optional[LimitedString] = None
 
 
 class RerankResponse(BaseModel):
-    query: str
+    query: LimitedString
     data: List[RerankData]
     model: str
     usage: Optional[Usage] = None
