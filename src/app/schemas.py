@@ -12,6 +12,7 @@ LimitedString = Annotated[str, StringConstraints(max_length=MAX_INPUT_LENGTH)]
 class EmbeddingRequest(BaseModel):
     input: Union[
         LimitedString,
+        # Limit list size to prevent memory exhaustion (DoS)
         Annotated[List[LimitedString], Field(max_length=MAX_INPUT_ITEMS)]
     ]
     model: str
@@ -52,6 +53,7 @@ class EmbeddingResponse(BaseModel):
 # Schemas for the rerank endpoint will be added in the corresponding step.
 class RerankRequest(BaseModel):
     query: LimitedString
+    # Limit list size to prevent memory exhaustion (DoS)
     documents: Annotated[List[LimitedString], Field(max_length=MAX_INPUT_ITEMS)]
     model: str
     top_n: Optional[int] = Field(None, validation_alias="top_k")
