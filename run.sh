@@ -32,11 +32,13 @@ echo "コンテナ内のポート8000をホストのポート8000にマッピン
 if [ "$MODE" = "gpu" ]; then
     echo "GPUモードでコンテナを起動します (イメージ: $GPU_IMAGE)..."
     docker run --gpus all -p 8000:8000 \
+      -e GUNICORN_WORKERS="${GUNICORN_WORKERS:-2}" \
       -v "$CACHE_DIR:/root/.cache" \
       "$GPU_IMAGE"
 else
     echo "CPUモードでコンテナを起動します (イメージ: $CPU_IMAGE)..."
     docker run -p 8000:8000 \
+      -e GUNICORN_WORKERS="${GUNICORN_WORKERS:-2}" \
       -v "$CACHE_DIR:/root/.cache" \
       "$CPU_IMAGE"
 fi

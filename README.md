@@ -143,9 +143,10 @@ poetry run uvicorn src.app.main:app --reload --port $APP_PORT
 Linuxベースの環境では、GunicornとUvicornワーカーを組み合わせて実行することが推奨されます。
 
 ```bash
-poetry run gunicorn --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 300 src.app.main:app
+export GUNICORN_WORKERS=2
+poetry run gunicorn --workers $GUNICORN_WORKERS --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 300 src.app.main:app
 ```
-**注意**: GPU環境では `--preload` はCUDAコンテキストの問題を引き起こす可能性があるため、本番環境ではワーカー数を1に設定し、`--preload` を外すことを推奨します。また、モデルのロードに時間がかかる場合があるため、`--timeout` を適切に設定してください。
+**注意**: GPU環境では `--preload` はCUDAコンテキストの問題を引き起こす可能性があるため、`--preload` を外すことを推奨します。また、複数ワーカーを使用する場合、今回のアップデートによりモデルごとの排他的ロックが自動的に有効になり、スレッド安全性が確保されます。
 
 ### 3.5. パフォーマンスとスレッドセーフティ
 
@@ -183,7 +184,24 @@ Poetryを使用する場合：
 poetry run pytest
 ```
 
-## 5. 簡単実行 (Easy Run with Docker)
+## 5. 詳細設定 (Environment Variables)
+
+APIサーバーの動作は以下の環境変数で調整可能です。これらは `.env` ファイルに記述するか、実行時に直接指定できます。
+
+| 変数名 | デフォルト値 | 説明 |
+| --- | --- | --- |
+| `GUNICORN_WORKERS` | `2` | Gunicornのワーカープロセス数。CPUコア数やメモリに合わせて調整してください。 |
+| `APP_PORT` | `8000` | APIサーバーが待機するポート番号（ローカル実行時）。 |
+
+### 5.1. .env ファイルでの設定
+プロジェクト直下に `.env` ファイルを作成して設定を記述できます。
+```bash
+GUNICORN_WORKERS=4
+```
+
+---
+
+## 6. 簡単実行 (Easy Run with Docker)
 
 `run.sh` スクリプトを使用することで、コンテナの起動とモデルのキャッシュを簡単に行えます。
 
@@ -197,10 +215,14 @@ chmod +x run.sh
 # GPUモードで実行する場合
 # ./run.sh gpu
 ```
+```bash
+# ワーカー数を指定して起動する例
+GUNICORN_WORKERS=4 ./run.sh
+```
 
 このスクリプトは、ホストの `~/.cache/models` をコンテナにマウントし、モデルをキャッシュすることで2回目以降の起動を高速化します。
 
-## 6. Dockerでの手動実行
+## 7. Dockerでの手動実行
 
 `run.sh` を使用せず、手動でDockerを操作する手順です。
 
