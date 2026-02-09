@@ -37,4 +37,4 @@ RUN uv pip install -e .[dev] --system protobuf sentencepiece
 EXPOSE 8000
 
 # Command to run the application using python -m gunicorn
-CMD ["python", "-m", "gunicorn", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "300", "src.app.main:app"]
+CMD ["python", "-m", "gunicorn", "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "300", "src.app.main:app"]
