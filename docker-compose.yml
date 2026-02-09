@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  api-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    image: embedding_jp_api-cpu
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
+      - OFFLINE_MODE=${OFFLINE_MODE:-false}
+      - HF_HOME=/root/.cache/huggingface
+    volumes:
+      - ./.cache/models:/root/.cache/huggingface
+    restart: always
+
+  api-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: embedding_jp_api-gpu
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
+      - OFFLINE_MODE=${OFFLINE_MODE:-false}
+      - HF_HOME=/root/.cache/huggingface
+    volumes:
+      - ./.cache/models:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    restart: always
