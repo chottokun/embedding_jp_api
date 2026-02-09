@@ -24,14 +24,13 @@ def get_model(model_name: str):
 
         if model_name in EMBEDDING_MODELS:
             model = SentenceTransformer(model_name, device=device)
-            _model_cache[model_name] = model
-            print(f"Model '{model_name}' loaded successfully.")
-            return model
-
-        if model_name in RERANK_MODELS:
+        elif model_name in RERANK_MODELS:
             model = CrossEncoder(model_name, device=device)
-            _model_cache[model_name] = model
-            print(f"Model '{model_name}' loaded successfully.")
-            return model
+        else:
+            raise ValueError(f"Model '{model_name}' is not supported.")
 
-    raise ValueError(f"Model '{model_name}' is not supported.")
+        # Add a lock to the model instance for thread-safe usage
+        model.lock = threading.Lock()
+        _model_cache[model_name] = model
+        print(f"Model '{model_name}' loaded successfully.")
+        return model
