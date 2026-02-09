@@ -17,19 +17,20 @@ RUN pip install uv
 # Set up the working directory
 WORKDIR /app
 
-# Copy all project files first
+# Copy dependency manifests first to leverage Docker cache
 COPY pyproject.toml poetry.lock* ./
+
+# Install dependencies using uv into the system environment
+RUN uv pip install . --system protobuf sentencepiece
+
+# Copy the rest of the project files
 COPY README.md ./
 COPY src/ ./src/
 COPY config/ ./config/
 COPY locustfile.py .
 
-# Add potential binary paths to PATH
-ENV PATH="/root/.local/bin:${PATH}"
-
-# Install dependencies using uv into the system environment
-# We install all dependencies including dev for locust
-RUN uv pip install -e .[dev] --system protobuf sentencepiece
+# Install the project in editable mode
+RUN uv pip install -e . --system
 
 # Expose the application port
 EXPOSE 8000

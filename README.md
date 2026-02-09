@@ -201,83 +201,75 @@ GUNICORN_WORKERS=4
 
 ---
 
-## 6. 簡単実行 (Easy Run with Docker)
+## 6. Dockerによる実行
 
-`run.sh` スクリプトを使用することで、コンテナの起動とモデルのキャッシュを簡単に行えます。
+`run.sh` スクリプトを使用することで、コンテナの起動、モデルの管理、オフラインモードの設定を簡単に行えます。
 
-```bash
-# 実行権限を付与（初回のみ）
-chmod +x run.sh
+### 6.1. モデルの事前ダウンロード
 
-# スクリプトを実行 (デフォルトはCPUモード)
-./run.sh
-
-# GPUモードで実行する場合
-# ./run.sh gpu
-```
-```bash
-# ワーカー数を指定して起動する例
-GUNICORN_WORKERS=4 ./run.sh
-```
-
-このスクリプトは、ホストの `~/.cache/models` をコンテナにマウントし、モデルをキャッシュすることで2回目以降の起動を高速化します。
-
-## 7. Dockerでの手動実行
-
-`run.sh` を使用せず、手動でDockerを操作する手順です。
-
-### 6.1. モデルキャッシュについて
-
-コンテナ起動時にホストのディレクトリをコンテナのキャッシュディレクトリ (`/root/.cache`) にマウントすると、モデルのダウンロードが一度で済み、再起動が高速になります。
+起動時間を短縮するため、およびオフライン環境で利用するために、あらかじめモデルをダウンロードすることができます。ダウンロードされたモデルはプロジェクトルートの `.cache/models` に保存されます。
 
 ```bash
-# キャッシュディレクトリをホスト上に作成
-mkdir -p ~/.cache/models
+# CPU版イメージを使用してダウンロード
+./run.sh download cpu
+
+# GPU版イメージを使用してダウンロード
+./run.sh download gpu
 ```
 
-### 6.2. Dockerイメージのビルド
+### 6.2. サーバーの起動と停止
 
-**GPU版:** 
 ```bash
-docker build -t embedding_jp_api-gpu .
+# サーバーを起動 (デフォルトはCPUモード)
+./run.sh run cpu
+
+# GPUモードで起動
+./run.sh run gpu
+
+# サーバーを停止
+./run.sh stop
 ```
 
-**CPU版:** 
+### 6.3. オフラインモード
+
+環境変数 `OFFLINE_MODE=true` を設定して起動すると、Hugging Face Hubへのアクセスが発生しなくなります。事前に `download` コマンドでモデルを取得済みである必要があります。
+
 ```bash
-docker build -f Dockerfile.cpu -t embedding_jp_api-cpu .
+export OFFLINE_MODE=true
+./run.sh run cpu
 ```
 
-### 6.3. Dockerコンテナの起動
+## 7. Docker Composeによる管理
 
-**GPU版:** 
+より詳細な管理（ポート変更やワーカー数調整）を行う場合は、`docker-compose.yml` を直接利用または `run.sh` と環境変数を組み合わせて使用します。
+
 ```bash
-docker run --gpus all -p 8000:8000 \
-  -v ~/.cache/models:/root/.cache \
-  embedding_jp_api-gpu
+# ポート8080、ワーカー数4で起動する例
+APP_PORT=8080 GUNICORN_WORKERS=4 ./run.sh run cpu
 ```
 
-**CPU版:** 
-```bash
-docker run -p 8000:8000 \
-  -v ~/.cache/models:/root/.cache \
-  embedding_jp_api-cpu
-```
+### サービス名
+- **`api-cpu`**: CPU専用イメージ
+- **`api-gpu`**: NVIDIA GPU対応イメージ
 
-## 7. 負荷テストの実行
+## 8. 負荷テストの実行
 
-
-Locustを使用してAPIの負荷テストを実行できます。LocustはWebベースのUIを提供し、テストの進行状況をリアルタイムで確認できます。
+Locustを使用してAPIの負荷テストを実行できます。
 
 1.  **Locustの起動**
 
     ```bash
-    locust -f locustfile.py --host http://localhost:8000
+    ./.venv/bin/locust -f locustfile.py --host http://localhost:8000
     ```
 
-    このコマンドを実行すると、LocustのWeb UIが `http://localhost:8089` で利用可能になります。
+2.  **ヘッドレスモードでの実行（30秒間）**
 
-2.  **負荷テストの開始**
+    ```bash
+    ./.venv/bin/locust -f locustfile.py --headless -u 5 -r 1 --run-time 30s --host http://localhost:8000
+    ```
 
-    Web UIにアクセスし、テストユーザー数とRamp-up期間を設定してテストを開始します。
+## 9. ビルドパフォーマンスの最適化
 
-    `locustfile.py`には、EmbeddingとRerankのエンドポイントに対するテストシナリオが定義されています。
+本プロジェクトのDockerイメージは `torch` などの巨大なライブラリを含むため、ビルドに時間がかかる場合があります。
+最新の `Dockerfile` では、依存関係のインストールレイヤーを分離し、ソースコードのみを変更した場合にはキャッシュが再利用されるように最適化されています。
+これにより、開発サイクル中のビルド時間を大幅に短縮しています。

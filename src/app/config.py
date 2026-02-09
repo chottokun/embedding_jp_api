@@ -1,5 +1,6 @@
 import os
 import yaml
+import logging
 from pathlib import Path
 
 # --- Port Configuration ---
@@ -42,3 +43,12 @@ MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", "65536"))
 # Processing too many items in a single request can lead to timeouts and resource exhaustion (DoS).
 # Clients should batch requests if they need to process more items.
 MAX_INPUT_ITEMS = int(os.getenv("MAX_INPUT_ITEMS", "256"))
+
+# --- Offline Mode Configuration ---
+OFFLINE_MODE = os.getenv("OFFLINE_MODE", "false").lower() == "true"
+if OFFLINE_MODE:
+    os.environ["HF_HUB_OFFLINE"] = "1"
+    os.environ["TRANSFORMERS_OFFLINE"] = "1"
+    logging.info("Offline mode is enabled. Hugging Face Hub access is disabled.")
+else:
+    logging.info("Offline mode is disabled. Hugging Face Hub access is enabled if needed.")

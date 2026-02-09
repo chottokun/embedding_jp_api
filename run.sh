@@ -1,45 +1,53 @@
 #!/bin/bash
 
-# このスクリプトは、Dockerコンテナを起動してAPIサーバーを実行します。
-#
-# 機能:
-# - ホストPCの~/.cache/modelsをコンテナ内の/root/.cacheにマウントします。
-#   これにより、モデルファイルがキャッシュされ、2回目以降の起動が高速になります。
-# - ポート8000をホストのポート80にマッピングします。
-#
-# 使用法:
-# ./run.sh [cpu|gpu]
-#
-# 引数:
-#   cpu (デフォルト): CPU版のDockerイメージ (embedding_jp_api-cpu) を使用します。
-#   gpu:             GPU版のDockerイメージ (embedding_jp_api-gpu) を使用します。
+# このスクリプトは、Dockerを使用してAPIサーバーの管理（起動、停止、モデルのダウンロード）を行います。
 
-# デフォルトはCPUモード
-MODE=${1:-cpu}
-
-# Dockerイメージ名
-CPU_IMAGE="embedding_jp_api-cpu"
-GPU_IMAGE="embedding_jp_api-gpu"
-
-# モデルキャッシュ用のホスト側ディレクトリ
-# 存在しない場合は作成する
-CACHE_DIR="$HOME/.cache/models"
+# デフォルト設定
+MODE=${2:-cpu} # cpu or gpu
+COMMAND=${1:-run} # run, stop, download
+CACHE_DIR="$(pwd)/.cache/models"
 mkdir -p "$CACHE_DIR"
 
-echo "モデルキャッシュディレクトリ: $CACHE_DIR"
-echo "コンテナ内のポート8000をホストのポート8000にマッピングします。"
+# Dockerイメージ/サービス名
+SERVICE_NAME="api-$MODE"
 
-if [ "$MODE" = "gpu" ]; then
-    echo "GPUモードでコンテナを起動します (イメージ: $GPU_IMAGE)..."
-    docker run --gpus all -p 8000:8000 \
-      -e GUNICORN_WORKERS="${GUNICORN_WORKERS:-2}" \
-      -v "$CACHE_DIR:/root/.cache" \
-      "$GPU_IMAGE"
-else
-    echo "CPUモードでコンテナを起動します (イメージ: $CPU_IMAGE)..."
-    docker run -p 8000:8000 \
-      -e GUNICORN_WORKERS="${GUNICORN_WORKERS:-2}" \
-      -v "$CACHE_DIR:/root/.cache" \
-      "$CPU_IMAGE"
+function usage() {
+    echo "使用法: $0 [run|stop|download] [cpu|gpu]"
+    echo ""
+    echo "コマンド:"
+    echo "  run      : サーバーを起動します（デフォルト）"
+    echo "  stop     : サーバーを停止します"
+    echo "  download : config/models.yml に記載されたモデルを事前にダウンロードします"
+    echo ""
+    echo "引数:"
+    echo "  cpu     : CPUモードを使用します（デフォルト）"
+    echo "  gpu     : GPUモードを使用します"
+    exit 1
+}
+
+if [[ "$COMMAND" == "help" || "$COMMAND" == "-h" ]]; then
+    usage
 fi
 
+case "$COMMAND" in
+    run)
+        echo "$MODE モードでサーバーを起動します..."
+        # オフラインモードの設定を確認（環境変数がセットされていれば引き継ぐ）
+        export OFFLINE_MODE=${OFFLINE_MODE:-false}
+        docker compose up -d "$SERVICE_NAME"
+        echo "サーバーが起動しました。ログを確認するには 'docker compose logs -f $SERVICE_NAME' を実行してください。"
+        ;;
+    stop)
+        echo "サーバーを停止します..."
+        docker compose stop
+        ;;
+    download)
+        echo "モデルをダウンロードします..."
+        # ダウンロードは常にCPU版のイメージを使用して実行
+        docker compose run --rm -e HF_HUB_OFFLINE=0 "$SERVICE_NAME" python -m src.app.download_models
+        echo "モデルのダウンロードが完了しました。"
+        ;;
+    *)
+        usage
+        ;;
+esac
