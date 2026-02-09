@@ -120,3 +120,10 @@ uv.lock
 
 # Locust
 locust_report*
+
+# Test and log files
+*.csv
+nohup.out
+server.log
+diff_output.txt
+.cache/models/
