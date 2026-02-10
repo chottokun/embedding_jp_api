@@ -1,13 +1,16 @@
+import os
+
+# Disable tokenizer parallelism to prevent "Already Borrowed" errors and deadlocks
+# in multi-process/multi-threaded environments.
+# Set at the very beginning to ensure libraries read this correctly during import.
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from typing import Tuple, List
 import heapq
 import logging
-import os
-
-# Disable tokenizer parallelism to prevent "Already Borrowed" errors and deadlocks
-# in multi-process/multi-threaded environments.
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+import anyio
 
 from .schemas import (
     EmbeddingRequest,
@@ -27,7 +30,11 @@ app = FastAPI(title="OpenAI-Compatible API")
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     # Log the full error with stack trace
-    logging.error(f"Unhandled exception: {exc}", exc_info=True)
+    # We use run_sync in a thread pool to avoid blocking the event loop
+    # during potentially slow logging operations.
+    await anyio.to_thread.run_sync(
+        lambda: logging.error(f"Unhandled exception: {exc}", exc_info=True)
+    )
     # Return a generic error message to the client to avoid leaking internal details
     return JSONResponse(
         status_code=500,

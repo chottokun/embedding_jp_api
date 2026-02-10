@@ -5,6 +5,10 @@ FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV APP_PORT=8000
+# Optimize for ML workloads: prevent over-subscription and deadlocks
+ENV OMP_NUM_THREADS=1
+ENV MKL_NUM_THREADS=1
+ENV TOKENIZERS_PARALLELISM=false
 
 # Install Python 3.11, pip, git, and set it as the default python
 RUN apt-get update && \
@@ -41,4 +45,7 @@ EXPOSE 8000
 ENV GUNICORN_WORKERS=2
 
 # Command to run the application using python -m gunicorn
-CMD ["sh", "-c", "python -m gunicorn --workers ${GUNICORN_WORKERS} --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 300 src.app.main:app"]
+# Best practices for Docker and ML:
+# - --worker-tmp-dir /dev/shm: Avoids heartbeat delays on slow filesystems
+# - --keep-alive 5: Better handles connection reuse under load
+CMD ["sh", "-c", "python -m gunicorn --workers ${GUNICORN_WORKERS} --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 300 --worker-tmp-dir /dev/shm --keep-alive 5 src.app.main:app"]
