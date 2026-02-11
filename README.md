@@ -106,11 +106,26 @@ curl -X POST "http://localhost:8000/v1/rerank" \
 
 ## 3. セットアップと実行
 
-### 3.1. 必要なツール
+### 3.1. モデル設定 (`config/models.yml`)
+
+利用可能なモデルは `config/models.yml` で管理されています。**このファイルに記載されていないモデルはAPIで使用できません。**リクエスト時に未登録のモデルを指定するとエラーが返されます。
+
+```yaml
+embedding_models:
+  - "cl-nagoya/ruri-v3-30m"
+  - "cl-nagoya/ruri-v3-310m"
+
+rerank_models:
+  - "cl-nagoya/ruri-v3-reranker-310m"
+```
+
+モデルを追加・変更する場合はこのファイルを編集し、サーバーを再起動してください。Docker環境では、事前に `./run.sh download` でモデルをダウンロードしておくことを推奨します。
+
+### 3.2. 必要なツール
 - [uv](https://docs.astral.sh/uv/) (推奨) または [Poetry](https://python-poetry.org/)
 - Python 3.11+
 
-### 3.2. 環境のセットアップ
+### 3.3. 環境のセットアップ
 
 uvを使用する場合：
 ```bash
@@ -122,7 +137,7 @@ Poetryを使用する場合：
 poetry install
 ```
 
-### 3.3. 開発サーバーの実行
+### 3.4. 開発サーバーの実行
 
 Uvicornを使用して開発サーバーを起動します。ポートは環境変数 `APP_PORT` で変更可能です（デフォルト: 8000）。
 
@@ -138,7 +153,7 @@ export APP_PORT=8000
 poetry run uvicorn src.app.main:app --reload --port $APP_PORT
 ```
 
-### 3.4. 本番環境での実行 (Gunicorn)
+### 3.5. 本番環境での実行 (Gunicorn)
 
 Linuxベースの環境では、GunicornとUvicornワーカーを組み合わせて実行することが推奨されます。
 
@@ -153,7 +168,7 @@ poetry run gunicorn --workers $GUNICORN_WORKERS --worker-class uvicorn.workers.U
 - GPU環境では `--preload` はCUDAコンテキストの問題を引き起こす可能性があるため、`--preload` を外すことを推奨します。
 - 複数ワーカーを使用する場合、モデルごとの排他的ロックが自動的に有効になり、スレッド安全性が確保されます。
 
-### 3.5. パフォーマンスとスレッドセーフティ
+### 3.6. パフォーマンスとスレッドセーフティ
 
 このサーバーは、高負荷なモデル推論を効率的に処理するために以下の最適化が行われています。
 
@@ -162,7 +177,7 @@ poetry run gunicorn --workers $GUNICORN_WORKERS --worker-class uvicorn.workers.U
 - **スレッドセーフなモデルロード**: `threading.Lock` を導入しており、並列リクエストが発生しても安全にモデルをロード・キャッシュできます。
 - **バッチ処理時のプレフィックス計算最適化**: Ruri-v3モデル等のプレフィックスが必要なモデルにおいて、同一リクエスト内の複数入力に対してプレフィックスのトークン計算を1回に集約し、CPU負荷を軽減しています。
 
-### 3.6. 性能評価とキャパシティ
+### 3.7. 性能評価とキャパシティ
 
 #### CPUモード（Locust、10同時ユーザー）
 
