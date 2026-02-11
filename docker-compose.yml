@@ -12,6 +12,9 @@ services:
       - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
       - OFFLINE_MODE=${OFFLINE_MODE:-false}
       - HF_HOME=/root/.cache/huggingface
+      - OMP_NUM_THREADS=1
+      - MKL_NUM_THREADS=1
+      - TOKENIZERS_PARALLELISM=false
     volumes:
       - ./.cache/models:/root/.cache/huggingface
     restart: always
@@ -27,6 +30,9 @@ services:
       - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
       - OFFLINE_MODE=${OFFLINE_MODE:-false}
       - HF_HOME=/root/.cache/huggingface
+      - OMP_NUM_THREADS=1
+      - MKL_NUM_THREADS=1
+      - TOKENIZERS_PARALLELISM=false
     volumes:
       - ./.cache/models:/root/.cache/huggingface
     deploy:

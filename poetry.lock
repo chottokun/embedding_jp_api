@@ -847,15 +847,14 @@ test = ["objgraph", "psutil", "setuptools"]
 
 [[package]]
 name = "gunicorn"
-version = "24.1.1"
+version = "25.0.3"
 description = "WSGI HTTP Server for UNIX"
-optional = true
+optional = false
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"dev\""
 files = [
-    {file = "gunicorn-24.1.1-py3-none-any.whl", hash = "sha256:757f6b621fc4f7581a90600b2cd9df593461f06a41d7259cb9b94499dc4095a8"},
-    {file = "gunicorn-24.1.1.tar.gz", hash = "sha256:f006d110e5cb3102859b4f5cd48335dbd9cc28d0d27cd24ddbdafa6c60929408"},
+    {file = "gunicorn-25.0.3-py3-none-any.whl", hash = "sha256:aca364c096c81ca11acd4cede0aaeea91ba76ca74e2c0d7f879154db9d890f35"},
+    {file = "gunicorn-25.0.3.tar.gz", hash = "sha256:b53a7fff1a07b825b962af320554de44ae77a26abfa373711ff3f83d57d3506d"},
 ]
 
 [package.dependencies]
@@ -864,8 +863,9 @@ packaging = "*"
 [package.extras]
 eventlet = ["eventlet (>=0.40.3)"]
 gevent = ["gevent (>=24.10.1)"]
+http2 = ["h2 (>=4.1.0)"]
 setproctitle = ["setproctitle"]
-testing = ["coverage", "eventlet (>=0.40.3)", "gevent (>=24.10.1)", "pytest", "pytest-asyncio", "pytest-cov"]
+testing = ["coverage", "eventlet (>=0.40.3)", "gevent (>=24.10.1)", "h2 (>=4.1.0)", "httpx[http2]", "pytest", "pytest-asyncio", "pytest-cov", "uvloop (>=0.19.0)"]
 tornado = ["tornado (>=6.5.0)"]
 
 [[package]]
@@ -3565,4 +3565,4 @@ dev = ["gunicorn", "httpx", "locust", "pytest"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "29d80a4af64709665b88dd881d8247a175c0f089ed0eb29f646ef7dd60ae0f67"
+content-hash = "3826498176ac07107786365e28d9232f675b8122e43ef61059af4e42579aaec9"
