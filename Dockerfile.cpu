@@ -1,48 +1,50 @@
-# Use Python 3.11 slim base image for CPU
-FROM python:3.11-slim
+# Stage 1: Builder
+FROM python:3.11-slim AS builder
 
-# Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
-ENV APP_PORT=8000
-# Optimize for ML workloads: prevent over-subscription and deadlocks
-ENV OMP_NUM_THREADS=1
-ENV MKL_NUM_THREADS=1
-ENV TOKENIZERS_PARALLELISM=false
+ENV PYTHONUNBUFFERED=1 \
+    UV_SYSTEM_PYTHON=1
 
-# Install git
 RUN apt-get update && \
     apt-get install -y git && \
     rm -rf /var/lib/apt/lists/*
 
-# Install uv using pip
 RUN pip install uv
 
-# Set up the working directory
 WORKDIR /app
 
-# Copy dependency manifests first to leverage Docker cache
-COPY pyproject.toml poetry.lock* ./
+# Copy only dependency manifests
+COPY pyproject.toml poetry.lock* README.md ./
 
-# Install dependencies using uv into the system environment
+# Create a dummy structure to allow installing dependencies
+RUN mkdir -p src/app && touch src/app/__init__.py
+
+# Install dependencies only
 RUN uv pip install . --system protobuf sentencepiece
 
-# Copy the rest of the project files
-COPY README.md ./
+# Stage 2: Final Image
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    APP_PORT=8000 \
+    OMP_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    TOKENIZERS_PARALLELISM=false
+
+WORKDIR /app
+
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy source code and other necessary files
 COPY src/ ./src/
 COPY config/ ./config/
-COPY locustfile.py .
+COPY README.md locustfile.py ./
 
-# Install the project in editable mode
-RUN uv pip install -e . --system
-
-# Expose the application port
+# Expose port
 EXPOSE 8000
 
 ENV GUNICORN_WORKERS=2
 
-# Command to run the application using python -m gunicorn
-# Best practices for Docker and ML:
-# - --worker-tmp-dir /dev/shm: Avoids heartbeat delays on slow filesystems
-# - --keep-alive 5: Better handles connection reuse under load
+# Command to run the application
 CMD ["sh", "-c", "python -m gunicorn --workers ${GUNICORN_WORKERS} --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 120 --worker-tmp-dir /dev/shm --keep-alive 5 src.app.main:app"]
