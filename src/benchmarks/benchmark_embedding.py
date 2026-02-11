@@ -2,7 +2,7 @@ import time
 import sys
 import os
 import numpy as np
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 # Ensure src is in path

@@ -7,7 +7,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-from typing import Tuple, List
 import heapq
 import logging
 import anyio
