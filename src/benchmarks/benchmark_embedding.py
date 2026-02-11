@@ -13,6 +13,7 @@ from app.config import EMBEDDING_MODELS
 
 # --- Mocking ---
 
+
 class MockTokenizer:
     def __init__(self):
         pass
@@ -27,7 +28,15 @@ class MockTokenizer:
     def num_special_tokens_to_add(self, pair):
         return 0
 
-    def __call__(self, text, padding=False, truncation=False, max_length=None, add_special_tokens=False, return_tensors=None):
+    def __call__(
+        self,
+        text,
+        padding=False,
+        truncation=False,
+        max_length=None,
+        add_special_tokens=False,
+        return_tensors=None,
+    ):
         # Supports both single string and list of strings (batch)
         if isinstance(text, str):
             input_ids = self.encode(text)
@@ -38,6 +47,7 @@ class MockTokenizer:
 
         # Simple dict-like object
         return {"input_ids": input_ids}
+
 
 class MockModel:
     def __init__(self):
@@ -50,7 +60,9 @@ class MockModel:
         # Return fake embeddings
         return np.random.rand(len(inputs), 10)
 
+
 # --- Benchmark ---
+
 
 def run_benchmark():
     # Setup
@@ -63,10 +75,7 @@ def run_benchmark():
     # Payload
     # 100 inputs, each ~1000 chars
     input_texts = ["A" * 1000 for _ in range(100)]
-    payload = {
-        "input": input_texts,
-        "model": model_name
-    }
+    payload = {"input": input_texts, "model": model_name}
 
     # Patch get_model to return our mock
     with patch("app.main.get_model", return_value=MockModel()):
@@ -75,13 +84,14 @@ def run_benchmark():
 
         # Measure
         start_time = time.time()
-        for _ in range(50): # 50 iterations
+        for _ in range(50):  # 50 iterations
             response = client.post("/v1/embeddings", json=payload)
             assert response.status_code == 200
         end_time = time.time()
 
     total_time = end_time - start_time
     print(f"Benchmark Result: {total_time:.4f} seconds for 50 batches of 100 items.")
+
 
 if __name__ == "__main__":
     run_benchmark()

@@ -8,6 +8,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 CONFIG_DIR = PROJECT_ROOT / "config"
 MODELS_FILE = CONFIG_DIR / "models.yml"
 
+
 def download_models():
     """
     config/models.yml に記述された全モデルをダウンロードします。
@@ -45,6 +46,7 @@ def download_models():
             print(f"完了: {model_id}")
         except Exception as e:
             print(f"エラー: {model_id} のダウンロードに失敗しました: {e}")
+
 
 if __name__ == "__main__":
     download_models()
