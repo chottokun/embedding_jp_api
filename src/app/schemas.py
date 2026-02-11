@@ -13,7 +13,7 @@ class EmbeddingRequest(BaseModel):
     input: Union[
         LimitedString,
         # Limit list size to prevent memory exhaustion (DoS)
-        Annotated[List[LimitedString], Field(max_length=MAX_INPUT_ITEMS)]
+        Annotated[List[LimitedString], Field(max_length=MAX_INPUT_ITEMS)],
     ]
     model: str
     user: Optional[str] = None

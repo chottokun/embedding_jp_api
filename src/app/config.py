@@ -51,4 +51,6 @@ if OFFLINE_MODE:
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
     logging.info("Offline mode is enabled. Hugging Face Hub access is disabled.")
 else:
-    logging.info("Offline mode is disabled. Hugging Face Hub access is enabled if needed.")
+    logging.info(
+        "Offline mode is disabled. Hugging Face Hub access is enabled if needed."
+    )
