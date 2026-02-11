@@ -27,6 +27,25 @@ from .config import EMBEDDING_MODELS, RERANK_MODELS, RURI_PREFIX_MAP
 app = FastAPI(title="OpenAI-Compatible API")
 
 
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """
+    Middleware that adds security headers to every response.
+    """
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = (
+        "max-age=31536000; includeSubDomains"
+    )
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; frame-ancestors 'none';"
+    )
+    return response
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     # Log the full error with stack trace
