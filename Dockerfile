@@ -58,4 +58,4 @@ EXPOSE 8000
 ENV GUNICORN_WORKERS=2
 
 # Command to run the application
-CMD ["sh", "-c", "python -m gunicorn --workers ${GUNICORN_WORKERS} --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 300 --worker-tmp-dir /dev/shm --keep-alive 5 src.app.main:app"]
+CMD ["sh", "-c", "python -m gunicorn --workers ${GUNICORN_WORKERS} --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 600 --worker-tmp-dir /dev/shm --keep-alive 5 src.app.main:app"]

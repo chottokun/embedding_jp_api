@@ -101,34 +101,32 @@ def create_embeddings(request: EmbeddingRequest):
     else:
         processed_inputs = inputs
 
-    # 2. Batch tokenize to calculate usage and truncate if necessary
-    # We use batch_encode_plus (tokenizer call) which is much faster than looping
-    total_tokens = 0
-    special_tokens_count = tokenizer.num_special_tokens_to_add(False)
-    limit = max_seq_length - special_tokens_count
-
-    # Process in batches to avoid OOM on huge payloads
-    batch_size = 256
-    for i in range(0, len(processed_inputs), batch_size):
-        batch = processed_inputs[i : i + batch_size]
-        # add_special_tokens=False so we get raw tokens of the content
-        encodings = tokenizer(batch, add_special_tokens=False)
-
-        for j, ids in enumerate(encodings["input_ids"]):
-            if len(ids) > limit:
-                # Truncate input to avoid double tokenization of long tails in model.encode
-                # and to ensure the model sees exactly what we counted.
-                truncated_ids = ids[:limit]
-                truncated_text = tokenizer.decode(truncated_ids)
-                processed_inputs[i + j] = truncated_text
-                total_tokens += len(truncated_ids) + special_tokens_count
-            else:
-                total_tokens += len(ids) + special_tokens_count
-
-    usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
-
-    # Get embeddings
+    # Get embeddings and process tokens under a single lock to avoid "Already borrowed" inside library calls
     with model.lock:
+        # 2. Batch tokenize to calculate usage and truncate if necessary
+        # Doing this inside model.lock ensures the tokenizer state is safe
+        total_tokens = 0
+        special_tokens_count = tokenizer.num_special_tokens_to_add(False)
+        limit = max_seq_length - special_tokens_count
+
+        # Process in batches to avoid OOM on huge payloads
+        batch_size = 256
+        for i in range(0, len(processed_inputs), batch_size):
+            batch = processed_inputs[i : i + batch_size]
+            encodings = tokenizer(batch, add_special_tokens=False)
+
+            for j, ids in enumerate(encodings["input_ids"]):
+                if len(ids) > limit:
+                    truncated_ids = ids[:limit]
+                    truncated_text = tokenizer.decode(truncated_ids)
+                    processed_inputs[i + j] = truncated_text
+                    total_tokens += len(truncated_ids) + special_tokens_count
+                else:
+                    total_tokens += len(ids) + special_tokens_count
+
+        usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+
+        # 3. Model inference
         vectors = model.encode(processed_inputs)
 
     # Create response data
@@ -155,30 +153,25 @@ def create_rerank(request: RerankRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # Prepare pairs for the cross-encoder
-    pairs = [[request.query, doc] for doc in request.documents]
-
-    # Calculate token usage
-    tokenizer = model.tokenizer
-    total_tokens = 0
-
-    # Batch processing for token counting to improve performance and manage memory
-    batch_size = 256
-
-    for i in range(0, len(pairs), batch_size):
-        batch_pairs = pairs[i : i + batch_size]
-        batch_queries = [p[0] for p in batch_pairs]
-        batch_docs = [p[1] for p in batch_pairs]
-
-        encodings = tokenizer(batch_queries, batch_docs, add_special_tokens=True)
-
-        for input_ids in encodings["input_ids"]:
-            total_tokens += len(input_ids)
-
-    usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
-
-    # Get scores from the model
+    # Reranking and token count within the same lock
     with model.lock:
+        # Prepare pairs for the cross-encoder
+        pairs = [[request.query, doc] for doc in request.documents]
+
+        # Calculate token usage
+        tokenizer = model.tokenizer
+        total_tokens = 0
+        for pair in pairs:
+            # For cross-encoders, we usually count both parts
+            q_tokens = len(tokenizer.encode(pair[0], add_special_tokens=False))
+            d_tokens = len(tokenizer.encode(pair[1], add_special_tokens=False))
+            total_tokens += (
+                q_tokens + d_tokens + tokenizer.num_special_tokens_to_add(True)
+            )
+
+        usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+
+        # Get scores
         scores = model.predict(pairs)
 
     # Combine documents with their scores

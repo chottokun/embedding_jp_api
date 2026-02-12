@@ -29,8 +29,9 @@ def get_model(model_name: str):
         else:
             raise ValueError(f"Model '{model_name}' is not supported.")
 
-        # Add a lock to the model instance for thread-safe usage
+        # Add locks to the model instance for thread-safe usage
         model.lock = threading.Lock()
+        model.tokenizer_lock = threading.Lock()
         _model_cache[model_name] = model
         print(f"Model '{model_name}' loaded successfully.")
         return model
