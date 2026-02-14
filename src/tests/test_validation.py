@@ -87,3 +87,11 @@ def test_rerank_request_top_n_too_large():
         )
     # Pydantic v2 error message for 'le'
     assert "Input should be less than or equal to" in str(excinfo.value)
+
+
+def test_rerank_request_top_n_negative():
+    """Test RerankRequest with negative top_n."""
+    with pytest.raises(ValidationError) as excinfo:
+        RerankRequest(query="hello", documents=["doc"], model="model", top_n=-1)
+    # Pydantic v2 error message for 'ge'
+    assert "Input should be greater than or equal to 0" in str(excinfo.value)
