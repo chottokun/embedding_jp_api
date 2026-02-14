@@ -4,7 +4,9 @@ from typing import List, Union, Optional, Annotated
 from .config import MAX_INPUT_LENGTH, MAX_INPUT_ITEMS
 
 # --- Security Types ---
-LimitedString = Annotated[str, StringConstraints(max_length=MAX_INPUT_LENGTH)]
+LimitedString = Annotated[
+    str, StringConstraints(min_length=1, max_length=MAX_INPUT_LENGTH)
+]
 
 # --- For /v1/embeddings ---
 
@@ -13,7 +15,9 @@ class EmbeddingRequest(BaseModel):
     input: Union[
         LimitedString,
         # Limit list size to prevent memory exhaustion (DoS)
-        Annotated[List[LimitedString], Field(max_length=MAX_INPUT_ITEMS)],
+        Annotated[
+            List[LimitedString], Field(min_length=1, max_length=MAX_INPUT_ITEMS)
+        ],
     ]
     model: str
     user: Optional[str] = None
@@ -57,6 +61,7 @@ class RerankRequest(BaseModel):
     documents: Annotated[
         List[LimitedString],
         Field(
+            min_length=1,
             max_length=MAX_INPUT_ITEMS,
             description="List of documents to rerank. Limited to MAX_INPUT_ITEMS to prevent DoS.",
         ),

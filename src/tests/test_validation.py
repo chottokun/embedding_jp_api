@@ -43,6 +43,21 @@ def test_embedding_request_list_too_many_items():
     assert "List should have at most" in str(excinfo.value)
 
 
+def test_embedding_request_empty_string():
+    """Test EmbeddingRequest with empty input string."""
+    with pytest.raises(ValidationError) as excinfo:
+        EmbeddingRequest(input="", model="model")
+    assert "String should have at least 1 character" in str(excinfo.value)
+
+
+def test_embedding_request_empty_list():
+    """Test EmbeddingRequest with empty input list."""
+    with pytest.raises(ValidationError) as excinfo:
+        EmbeddingRequest(input=[], model="model")
+    # Pydantic v2 error message for 'min_length' on lists
+    assert "List should have at least 1 item" in str(excinfo.value)
+
+
 def test_rerank_request_valid():
     """Test valid RerankRequest inputs."""
     RerankRequest(query="hello", documents=["doc"], model="model")
@@ -77,6 +92,20 @@ def test_rerank_request_documents_too_many_items():
     with pytest.raises(ValidationError) as excinfo:
         RerankRequest(query="hello", documents=items, model="model")
     assert "List should have at most" in str(excinfo.value)
+
+
+def test_rerank_request_empty_query():
+    """Test RerankRequest with empty query."""
+    with pytest.raises(ValidationError) as excinfo:
+        RerankRequest(query="", documents=["doc"], model="model")
+    assert "String should have at least 1 character" in str(excinfo.value)
+
+
+def test_rerank_request_empty_documents():
+    """Test RerankRequest with empty documents list."""
+    with pytest.raises(ValidationError) as excinfo:
+        RerankRequest(query="hello", documents=[], model="model")
+    assert "List should have at least 1 item" in str(excinfo.value)
 
 
 def test_rerank_request_top_n_too_large():

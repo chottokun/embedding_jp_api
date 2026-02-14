@@ -127,3 +127,21 @@ def test_create_embeddings_non_ruri_v3_with_prefix_flag_no_prefix(mock_get_model
 
     # Clean up the list of supported models
     EMBEDDING_MODELS.pop()
+
+
+def test_create_embeddings_empty_list():
+    """
+    Tests that an empty list input returns 422 Unprocessable Entity.
+    """
+    request_payload = {"input": [], "model": SUPPORTED_EMBED_MODEL}
+    response = client.post("/v1/embeddings", json=request_payload)
+    assert response.status_code == 422
+
+
+def test_create_embeddings_empty_string():
+    """
+    Tests that an empty string input returns 422 Unprocessable Entity.
+    """
+    request_payload = {"input": "", "model": SUPPORTED_EMBED_MODEL}
+    response = client.post("/v1/embeddings", json=request_payload)
+    assert response.status_code == 422
