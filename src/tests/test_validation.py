@@ -54,6 +54,9 @@ def test_rerank_request_valid():
     items = ["doc"] * MAX_INPUT_ITEMS
     RerankRequest(query="hello", documents=items, model="model")
 
+    # Boundary check: top_n=0
+    RerankRequest(query="hello", documents=["doc"], model="model", top_n=0)
+
 
 def test_rerank_request_query_too_long():
     """Test RerankRequest with query exceeding max length."""
@@ -94,4 +97,18 @@ def test_rerank_request_top_n_negative():
     with pytest.raises(ValidationError) as excinfo:
         RerankRequest(query="hello", documents=["doc"], model="model", top_n=-1)
     # Pydantic v2 error message for 'ge'
+    assert "Input should be greater than or equal to 0" in str(excinfo.value)
+
+def test_rerank_request_top_k_alias_validation():
+    """Test RerankRequest with invalid values passed via top_k alias."""
+    # Too large
+    with pytest.raises(ValidationError) as excinfo:
+        RerankRequest(
+            query="hello", documents=["doc"], model="model", top_k=MAX_INPUT_ITEMS + 1
+        )
+    assert "Input should be less than or equal to" in str(excinfo.value)
+
+    # Negative
+    with pytest.raises(ValidationError) as excinfo:
+        RerankRequest(query="hello", documents=["doc"], model="model", top_k=-1)
     assert "Input should be greater than or equal to 0" in str(excinfo.value)
