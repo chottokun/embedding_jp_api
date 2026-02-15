@@ -199,3 +199,29 @@ def test_rerank_unsupported_model():
     response = client.post("/v1/rerank", json=request_payload)
     assert response.status_code == 400
     assert "not found" in response.json()["detail"]
+
+
+def test_create_rerank_empty_documents():
+    """
+    Tests that an empty documents list returns 422 Unprocessable Entity.
+    """
+    request_payload = {
+        "query": "hello",
+        "documents": [],
+        "model": SUPPORTED_RERANK_MODEL,
+    }
+    response = client.post("/v1/rerank", json=request_payload)
+    assert response.status_code == 422
+
+
+def test_create_rerank_empty_query():
+    """
+    Tests that an empty query returns 422 Unprocessable Entity.
+    """
+    request_payload = {
+        "query": "",
+        "documents": ["doc"],
+        "model": SUPPORTED_RERANK_MODEL,
+    }
+    response = client.post("/v1/rerank", json=request_payload)
+    assert response.status_code == 422
