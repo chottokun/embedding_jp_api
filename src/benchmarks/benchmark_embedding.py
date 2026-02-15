@@ -1,6 +1,7 @@
 import time
 import sys
 import os
+import threading
 import numpy as np
 from unittest.mock import patch
 from fastapi.testclient import TestClient
@@ -53,6 +54,7 @@ class MockModel:
     def __init__(self):
         self.tokenizer = MockTokenizer()
         self.max_seq_length = 8192
+        self.lock = threading.Lock()
 
     def encode(self, inputs):
         # Simulate encoding time (lightweight)
