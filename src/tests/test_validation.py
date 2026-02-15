@@ -99,7 +99,6 @@ def test_rerank_request_top_n_negative():
     # Pydantic v2 error message for 'ge'
     assert "Input should be greater than or equal to 0" in str(excinfo.value)
 
-
 def test_rerank_request_top_k_alias_validation():
     """Test RerankRequest with invalid values passed via top_k alias."""
     # Too large

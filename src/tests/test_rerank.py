@@ -161,6 +161,35 @@ def test_rerank_stability(mock_get_model):
     assert results[1]["document"] == 1
 
 
+@patch("app.main.get_model")
+def test_rerank_top_n_zero(mock_get_model):
+    """
+    Tests that top_n=0 correctly returns an empty list of results.
+    """
+    mock_model = mock_get_model.return_value
+    scores = [0.1, 0.9, 0.5]
+    mock_model.predict.return_value = scores
+
+    mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
+        "input_ids": [[1] for _ in range(len(queries))]
+    }
+
+    request_payload = {
+        "query": "test query",
+        "documents": ["doc1", "doc2", "doc3"],
+        "model": SUPPORTED_RERANK_MODEL,
+        "top_n": 0,
+    }
+
+    response = client.post("/v1/rerank", json=request_payload)
+    assert response.status_code == 200
+
+    response_json = response.json()
+    results = response_json["data"]
+    assert len(results) == 0
+    assert response_json["query"] == "test query"
+
+
 def test_rerank_unsupported_model():
     request_payload = {
         "query": "test",
