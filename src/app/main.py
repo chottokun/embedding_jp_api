@@ -10,6 +10,18 @@ from fastapi.responses import JSONResponse
 import heapq
 import logging
 import anyio
+import re
+import traceback
+
+def redact_pii(text: str) -> str:
+    """
+    Redacts common PII from a string.
+    Currently masks email addresses.
+    """
+    # Simple email regex
+    email_pattern = r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
+    return re.sub(email_pattern, "[REDACTED]", text)
+
 
 from .schemas import (
     EmbeddingRequest,
@@ -47,11 +59,20 @@ async def add_security_headers(request: Request, call_next):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    # Log the full error with stack trace
+    # Obtain the full traceback as a string
+    tb_str = traceback.format_exc()
+
+    # Redact PII from the exception message and traceback
+    redacted_exc = redact_pii(str(exc))
+    redacted_tb = redact_pii(tb_str)
+
+    # Log the redacted error details
     # We use run_sync in a thread pool to avoid blocking the event loop
     # during potentially slow logging operations.
     await anyio.to_thread.run_sync(
-        lambda: logging.error(f"Unhandled exception: {exc}", exc_info=True)
+        lambda: logging.error(
+            f"Unhandled exception: {redacted_exc}\n{redacted_tb}", exc_info=False
+        )
     )
     # Return a generic error message to the client to avoid leaking internal details
     return JSONResponse(
