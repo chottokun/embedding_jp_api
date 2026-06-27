@@ -32,6 +32,9 @@ RURI_PREFIX_MAP = {
 }
 
 # --- Security Configuration ---
+# API Key for authentication. If set, all requests must include a valid API key.
+API_KEY = os.getenv("API_KEY")
+
 # Limits for input validation to prevent DoS attacks.
 # MAX_INPUT_LENGTH is set to 65536 characters.
 # The model supports up to 8192 tokens.

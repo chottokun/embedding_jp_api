@@ -3,6 +3,7 @@ from app.main import app
 
 client = TestClient(app)
 
+
 def test_security_headers():
     # Let's try a simple GET on a non-existent route to check headers
     # The middleware should apply to all responses, including 404s.
@@ -27,4 +28,7 @@ def test_security_headers():
     assert headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
 
     assert "Content-Security-Policy" in headers
-    assert headers["Content-Security-Policy"] == "default-src 'self'; frame-ancestors 'none';"
+    assert (
+        headers["Content-Security-Policy"]
+        == "default-src 'self'; frame-ancestors 'none';"
+    )
