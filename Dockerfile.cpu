@@ -41,6 +41,13 @@ COPY src/ ./src/
 COPY config/ ./config/
 COPY README.md locustfile.py ./
 
+# Create a non-root user and change ownership
+RUN groupadd -r appuser && useradd -r -g appuser -m -d /home/appuser appuser && \
+    chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
 # Expose port
 EXPOSE 8000
 
