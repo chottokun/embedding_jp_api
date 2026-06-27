@@ -54,10 +54,23 @@ async def global_exception_handler(request: Request, exc: Exception):
         lambda: logging.error(f"Unhandled exception: {exc}", exc_info=True)
     )
     # Return a generic error message to the client to avoid leaking internal details
-    return JSONResponse(
+    response = JSONResponse(
         status_code=500,
         content={"detail": "Internal Server Error"},
     )
+    # Security headers for error responses
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    # Note: Use standard header name
+    response.headers["Strict-Transport-Security"] = (
+        "max-age=31536000; includeSubDomains"
+    )
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; frame-ancestors 'none';"
+    )
+    return response
 
 
 @app.post("/v1/embeddings", response_model=EmbeddingResponse)
