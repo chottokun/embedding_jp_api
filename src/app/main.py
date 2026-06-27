@@ -153,26 +153,76 @@ def create_rerank(request: RerankRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # Reranking and token count within the same lock
-    with model.lock:
-        # Prepare pairs for the cross-encoder
-        pairs = [[request.query, doc] for doc in request.documents]
+    import torch
 
-        # Calculate token usage
+    # Prepare pairs for the cross-encoder
+    documents = request.documents
+    query = request.query
+
+    # 1. Tokenization and token counting outside the main model lock
+    # Use tokenizer_lock to protect thread-unsafe tokenizers if necessary
+    with model.tokenizer_lock:
         tokenizer = model.tokenizer
         total_tokens = 0
-        for pair in pairs:
-            # For cross-encoders, we usually count both parts
-            q_tokens = len(tokenizer.encode(pair[0], add_special_tokens=False))
-            d_tokens = len(tokenizer.encode(pair[1], add_special_tokens=False))
-            total_tokens += (
-                q_tokens + d_tokens + tokenizer.num_special_tokens_to_add(True)
+        all_features = []
+        batch_size = 256  # Manage memory for large document lists
+
+        for i in range(0, len(documents), batch_size):
+            batch_docs = documents[i : i + batch_size]
+            batch_queries = [query] * len(batch_docs)
+
+            # Batch tokenize to improve performance and avoid double tokenization
+            batch_encodings = tokenizer(
+                batch_queries,
+                batch_docs,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
             )
 
-        usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+            # Ensure all values are tensors (for compatibility with mocks in tests)
+            tensor_batch = {}
+            for k, v in batch_encodings.items():
+                if not torch.is_tensor(v):
+                    tensor_batch[k] = torch.tensor(v)
+                else:
+                    tensor_batch[k] = v
 
-        # Get scores
-        scores = model.predict(pairs)
+            # Calculate tokens (using attention_mask to exclude padding)
+            total_tokens += int(torch.sum(tensor_batch["attention_mask"]).item())
+
+            all_features.append(tensor_batch)
+
+    usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+
+    # 2. Model inference inside the main lock
+    scores = []
+    with model.lock:
+        model.model.eval()
+        for features in all_features:
+            # Move features to the same device as the model
+            target_device = getattr(model, "_target_device", "cpu")
+            # Handle possible MagicMock in tests without explicit isinstance check if possible
+            # But since .to() on tensor fails with MagicMock, we still need some check.
+            # Using a more standard check for MagicMock or a duck-typing approach.
+            if hasattr(target_device, "_spec_class"):  # common for MagicMocks
+                features = {k: v for k, v in features.items()}
+            else:
+                features = {k: v.to(target_device) for k, v in features.items()}
+
+            with torch.no_grad():
+                output = model.model(**features)
+                logits = output.logits
+                # Apply activation function (e.g., Sigmoid for single-label, Identity for others)
+                if (
+                    hasattr(model, "default_activation_function")
+                    and model.default_activation_function is not None
+                ):
+                    logits = model.default_activation_function(logits)
+
+                if logits.shape[-1] == 1:
+                    logits = logits.view(-1)
+                scores.extend(logits.cpu().detach().numpy())
 
     # Combine documents with their scores
     results = []

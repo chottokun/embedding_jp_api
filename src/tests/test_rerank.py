@@ -1,5 +1,7 @@
 from fastapi.testclient import TestClient
 from unittest.mock import patch
+import torch
+import pytest
 
 from app.main import app
 from app.config import RERANK_MODELS
@@ -19,9 +21,14 @@ def test_create_rerank_successful(mock_get_model):
     mock_model = mock_get_model.return_value
     # Return scores in an unsorted order to test sorting logic
     mock_model.predict.return_value = [0.1, 0.9, 0.5]
+    mock_model.model.eval.return_value = None
+    mock_model.model.return_value.logits = torch.tensor([[0.1], [0.9], [0.5]])
+    mock_model._target_device = "cpu"
+    mock_model.default_activation_function = None
 
     mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
-        "input_ids": [[1, 2, 3, 4, 5] for _ in range(len(queries))]
+        "input_ids": [[1, 2, 3, 4, 5] for _ in range(len(queries))],
+        "attention_mask": [[1, 1, 1, 1, 1] for _ in range(len(queries))],
     }
 
     query = "AIの未来"
@@ -39,8 +46,9 @@ def test_create_rerank_successful(mock_get_model):
     # Assert
     assert response.status_code == 200
 
-    expected_pairs = [[query, doc] for doc in documents]
-    mock_model.predict.assert_called_once_with(expected_pairs)
+    # mock_model.predict is no longer called in the optimized version
+    # expected_pairs = [[query, doc] for doc in documents]
+    # mock_model.predict.assert_called_once_with(expected_pairs)
 
     response_json = response.json()
     assert response_json["query"] == query
@@ -50,11 +58,11 @@ def test_create_rerank_successful(mock_get_model):
 
     results = response_json["data"]
     assert len(results) == 3
-    assert results[0]["score"] == 0.9
+    assert results[0]["score"] == pytest.approx(0.9)
     assert results[0]["document"] == 1
-    assert results[1]["score"] == 0.5
+    assert results[1]["score"] == pytest.approx(0.5)
     assert results[1]["document"] == 2
-    assert results[2]["score"] == 0.1
+    assert results[2]["score"] == pytest.approx(0.1)
     assert results[2]["document"] == 0
 
 
@@ -68,9 +76,14 @@ def test_rerank_top_n(mock_get_model):
     # 5 documents with distinct scores
     scores = [0.1, 0.9, 0.5, 0.8, 0.2]
     mock_model.predict.return_value = scores
+    mock_model.model.eval.return_value = None
+    mock_model.model.return_value.logits = torch.tensor([[s] for s in scores])
+    mock_model._target_device = "cpu"
+    mock_model.default_activation_function = None
 
     mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
-        "input_ids": [[1] for _ in range(len(queries))]
+        "input_ids": [[1] for _ in range(len(queries))],
+        "attention_mask": [[1] for _ in range(len(queries))],
     }
 
     query = "Query"
@@ -92,13 +105,13 @@ def test_rerank_top_n(mock_get_model):
     # Expected top 3:
     # Doc1 (0.9), Doc3 (0.8), Doc2 (0.5)
     assert results[0]["document"] == 1
-    assert results[0]["score"] == 0.9
+    assert results[0]["score"] == pytest.approx(0.9)
 
     assert results[1]["document"] == 3
-    assert results[1]["score"] == 0.8
+    assert results[1]["score"] == pytest.approx(0.8)
 
     assert results[2]["document"] == 2
-    assert results[2]["score"] == 0.5
+    assert results[2]["score"] == pytest.approx(0.5)
 
 
 @patch("app.main.get_model")
@@ -110,9 +123,14 @@ def test_rerank_top_n_larger_than_docs(mock_get_model):
     mock_model = mock_get_model.return_value
     scores = [0.1, 0.2]
     mock_model.predict.return_value = scores
+    mock_model.model.eval.return_value = None
+    mock_model.model.return_value.logits = torch.tensor([[s] for s in scores])
+    mock_model._target_device = "cpu"
+    mock_model.default_activation_function = None
 
     mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
-        "input_ids": [[1] for _ in range(len(queries))]
+        "input_ids": [[1] for _ in range(len(queries))],
+        "attention_mask": [[1] for _ in range(len(queries))],
     }
 
     request_payload = {
@@ -126,8 +144,8 @@ def test_rerank_top_n_larger_than_docs(mock_get_model):
     assert response.status_code == 200
     results = response.json()["data"]
     assert len(results) == 2
-    assert results[0]["score"] == 0.2
-    assert results[1]["score"] == 0.1
+    assert results[0]["score"] == pytest.approx(0.2)
+    assert results[1]["score"] == pytest.approx(0.1)
 
 
 @patch("app.main.get_model")
@@ -139,9 +157,14 @@ def test_rerank_stability(mock_get_model):
     # All scores are identical
     scores = [0.5, 0.5, 0.5]
     mock_model.predict.return_value = scores
+    mock_model.model.eval.return_value = None
+    mock_model.model.return_value.logits = torch.tensor([[s] for s in scores])
+    mock_model._target_device = "cpu"
+    mock_model.default_activation_function = None
 
     mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
-        "input_ids": [[1] for _ in range(len(queries))]
+        "input_ids": [[1] for _ in range(len(queries))],
+        "attention_mask": [[1] for _ in range(len(queries))],
     }
 
     request_payload = {
@@ -169,9 +192,14 @@ def test_rerank_top_n_zero(mock_get_model):
     mock_model = mock_get_model.return_value
     scores = [0.1, 0.9, 0.5]
     mock_model.predict.return_value = scores
+    mock_model.model.eval.return_value = None
+    mock_model.model.return_value.logits = torch.tensor([[s] for s in scores])
+    mock_model._target_device = "cpu"
+    mock_model.default_activation_function = None
 
     mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
-        "input_ids": [[1] for _ in range(len(queries))]
+        "input_ids": [[1] for _ in range(len(queries))],
+        "attention_mask": [[1] for _ in range(len(queries))],
     }
 
     request_payload = {
