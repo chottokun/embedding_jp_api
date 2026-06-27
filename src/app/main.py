@@ -101,11 +101,11 @@ def create_embeddings(request: EmbeddingRequest):
     else:
         processed_inputs = inputs
 
-    # Get embeddings and process tokens under a single lock to avoid "Already borrowed" inside library calls
-    with model.lock:
-        # 2. Batch tokenize to calculate usage and truncate if necessary
-        # Doing this inside model.lock ensures the tokenizer state is safe
-        total_tokens = 0
+    # 2. Batch tokenize to calculate usage and truncate if necessary
+    # Doing this outside model.lock allows other requests to use the GPU/Model concurrently
+    # while this request is performing CPU-bound tokenization.
+    total_tokens = 0
+    with model.tokenizer_lock:
         special_tokens_count = tokenizer.num_special_tokens_to_add(False)
         limit = max_seq_length - special_tokens_count
 
@@ -124,9 +124,10 @@ def create_embeddings(request: EmbeddingRequest):
                 else:
                     total_tokens += len(ids) + special_tokens_count
 
-        usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+    usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
 
-        # 3. Model inference
+    # 3. Model inference
+    with model.lock:
         vectors = model.encode(processed_inputs)
 
     # Create response data
@@ -153,14 +154,14 @@ def create_rerank(request: RerankRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # Reranking and token count within the same lock
-    with model.lock:
-        # Prepare pairs for the cross-encoder
-        pairs = [[request.query, doc] for doc in request.documents]
+    # Prepare pairs for the cross-encoder
+    pairs = [[request.query, doc] for doc in request.documents]
 
-        # Calculate token usage
-        tokenizer = model.tokenizer
-        total_tokens = 0
+    # Calculate token usage
+    # Doing this outside model.lock allows other requests to use the GPU/Model concurrently
+    tokenizer = model.tokenizer
+    total_tokens = 0
+    with model.tokenizer_lock:
         for pair in pairs:
             # For cross-encoders, we usually count both parts
             q_tokens = len(tokenizer.encode(pair[0], add_special_tokens=False))
@@ -169,9 +170,10 @@ def create_rerank(request: RerankRequest):
                 q_tokens + d_tokens + tokenizer.num_special_tokens_to_add(True)
             )
 
-        usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+    usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
 
-        # Get scores
+    # Get scores
+    with model.lock:
         scores = model.predict(pairs)
 
     # Combine documents with their scores
