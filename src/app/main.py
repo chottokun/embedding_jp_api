@@ -138,43 +138,33 @@ def create_embeddings(request: EmbeddingRequest):
     return EmbeddingResponse(data=response_data, model=request.model, usage=usage)
 
 
-@app.post("/v1/rerank", response_model=RerankResponse)
-def create_rerank(request: RerankRequest):
+def _prepare_rerank_pairs(query: str, documents: list[str]) -> list[list[str]]:
     """
-    Reranks a list of documents for a given query.
+    Prepares query-document pairs for the cross-encoder.
     """
-    if request.model not in RERANK_MODELS:
-        raise HTTPException(
-            status_code=400, detail=f"Model '{request.model}' not found for reranking."
-        )
+    return [[query, doc] for doc in documents]
 
-    try:
-        model = get_model(request.model)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
-    # Reranking and token count within the same lock
-    with model.lock:
-        # Prepare pairs for the cross-encoder
-        pairs = [[request.query, doc] for doc in request.documents]
+def _calculate_rerank_usage(tokenizer, pairs: list[list[str]]) -> Usage:
+    """
+    Calculates token usage for reranking pairs.
+    """
+    total_tokens = 0
+    for pair in pairs:
+        # For cross-encoders, we usually count both parts
+        q_tokens = len(tokenizer.encode(pair[0], add_special_tokens=False))
+        d_tokens = len(tokenizer.encode(pair[1], add_special_tokens=False))
+        total_tokens += q_tokens + d_tokens + tokenizer.num_special_tokens_to_add(True)
 
-        # Calculate token usage
-        tokenizer = model.tokenizer
-        total_tokens = 0
-        for pair in pairs:
-            # For cross-encoders, we usually count both parts
-            q_tokens = len(tokenizer.encode(pair[0], add_special_tokens=False))
-            d_tokens = len(tokenizer.encode(pair[1], add_special_tokens=False))
-            total_tokens += (
-                q_tokens + d_tokens + tokenizer.num_special_tokens_to_add(True)
-            )
+    return Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
 
-        usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
 
-        # Get scores
-        scores = model.predict(pairs)
-
-    # Combine documents with their scores
+def _format_rerank_results(
+    request: RerankRequest, scores: list[float], usage: Usage
+) -> RerankResponse:
+    """
+    Combines documents with scores, sorts them, and formats the final response.
+    """
     results = []
     for i, score in enumerate(scores):
         result_item = {"document": i, "score": float(score)}
@@ -199,3 +189,32 @@ def create_rerank(request: RerankRequest):
     return RerankResponse(
         query=request.query, data=response_data, model=request.model, usage=usage
     )
+
+
+@app.post("/v1/rerank", response_model=RerankResponse)
+def create_rerank(request: RerankRequest):
+    """
+    Reranks a list of documents for a given query.
+    """
+    if request.model not in RERANK_MODELS:
+        raise HTTPException(
+            status_code=400, detail=f"Model '{request.model}' not found for reranking."
+        )
+
+    try:
+        model = get_model(request.model)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Reranking and token count within the same lock
+    with model.lock:
+        # Prepare pairs for the cross-encoder
+        pairs = _prepare_rerank_pairs(request.query, request.documents)
+
+        # Calculate token usage
+        usage = _calculate_rerank_usage(model.tokenizer, pairs)
+
+        # Get scores
+        scores = model.predict(pairs)
+
+    return _format_rerank_results(request, scores, usage)
