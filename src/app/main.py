@@ -1,15 +1,15 @@
 import os
+import heapq
+import logging
 
 # Disable tokenizer parallelism to prevent "Already Borrowed" errors and deadlocks
 # in multi-process/multi-threaded environments.
 # Set at the very beginning to ensure libraries read this correctly during import.
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+import anyio
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-import heapq
-import logging
-import anyio
 
 from .schemas import (
     EmbeddingRequest,

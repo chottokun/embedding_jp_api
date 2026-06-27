@@ -45,7 +45,7 @@ def benchmark_rerank(num_requests=10, concurrency=5):
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as executor:
             futures = [executor.submit(client.post, "/v1/rerank", json=payload) for _ in range(num_requests)]
-            results = [f.result() for f in futures]
+            _ = [f.result() for f in futures]
 
         end_time = time.perf_counter()
 
