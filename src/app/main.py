@@ -138,7 +138,7 @@ def create_embeddings(request: EmbeddingRequest):
     return EmbeddingResponse(data=response_data, model=request.model, usage=usage)
 
 
-@app.post("/v1/rerank", response_model=RerankResponse)
+@app.post("/v1/rerank", response_model=RerankResponse, response_model_exclude_none=True)
 def create_rerank(request: RerankRequest):
     """
     Reranks a list of documents for a given query.
