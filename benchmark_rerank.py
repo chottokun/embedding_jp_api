@@ -1,4 +1,3 @@
-
 import time
 import threading
 import concurrent.futures
@@ -10,6 +9,7 @@ import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 from src.app.main import app
+
 
 def benchmark_rerank(num_requests=10, concurrency=5):
     client = TestClient(app)
@@ -38,20 +38,26 @@ def benchmark_rerank(num_requests=10, concurrency=5):
         payload = {
             "query": "test query",
             "documents": ["doc1", "doc2", "doc3"],
-            "model": "cl-nagoya/ruri-v3-reranker-310m"
+            "model": "cl-nagoya/ruri-v3-reranker-310m",
         }
 
         start_time = time.perf_counter()
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as executor:
-            futures = [executor.submit(client.post, "/v1/rerank", json=payload) for _ in range(num_requests)]
-            results = [f.result() for f in futures]
+            futures = [
+                executor.submit(client.post, "/v1/rerank", json=payload)
+                for _ in range(num_requests)
+            ]
+            [f.result() for f in futures]
 
         end_time = time.perf_counter()
 
     total_time = end_time - start_time
-    print(f"Total time for {num_requests} requests with concurrency {concurrency}: {total_time:.4f} seconds")
+    print(
+        f"Total time for {num_requests} requests with concurrency {concurrency}: {total_time:.4f} seconds"
+    )
     return total_time
+
 
 if __name__ == "__main__":
     print("Starting baseline benchmark...")
