@@ -60,73 +60,127 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
+def _get_model_or_400(model_name: str, allowed_models: list[str], task_name: str):
+    """
+    Helper to validate and retrieve a model, raising 400 if it's missing or invalid.
+    """
+    if model_name not in allowed_models:
+        raise HTTPException(
+            status_code=400, detail=f"Model '{model_name}' not found for {task_name}."
+        )
+
+    try:
+        return get_model(model_name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+def _calculate_rerank_usage(tokenizer, pairs) -> Usage:
+    """
+    Calculates token usage for a list of query-document pairs.
+    """
+    total_tokens = 0
+    for pair in pairs:
+        # For cross-encoders, we usually count both parts
+        q_tokens = len(tokenizer.encode(pair[0], add_special_tokens=False))
+        d_tokens = len(tokenizer.encode(pair[1], add_special_tokens=False))
+        total_tokens += q_tokens + d_tokens + tokenizer.num_special_tokens_to_add(True)
+
+    return Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+
+
+def _sort_rerank_results(results: list[dict], top_n: int | None) -> list[dict]:
+    """
+    Sorts rerank results by score in descending order, using heapq.nlargest for efficiency if top_n is set.
+    """
+    if top_n is not None:
+        # Use (score, -index) tuple key to ensure stability (deterministic tie-breaking)
+        # matching Python's stable sort behavior where earlier indices come first for same score.
+        return heapq.nlargest(
+            top_n, results, key=lambda x: (x["score"], -x["document"])
+        )
+    return sorted(results, key=lambda x: x["score"], reverse=True)
+
+
+def _determine_ruri_prefix(request: EmbeddingRequest) -> str:
+    """
+    Determines the appropriate prefix for ruri-v3 models based on request parameters.
+    """
+    if "ruri-v3" not in request.model:
+        return ""
+
+    if request.input_type in RURI_PREFIX_MAP:
+        return RURI_PREFIX_MAP[request.input_type]
+    elif request.apply_ruri_prefix:
+        # Fallback logic based on input shape (compatibility mode)
+        if isinstance(request.input, str):
+            return RURI_PREFIX_MAP["query"]
+        else:
+            return RURI_PREFIX_MAP["document"]
+    return ""
+
+
+def _apply_prefix(inputs: list[str], prefix: str) -> list[str]:
+    """
+    Applies a prefix to a list of input strings, avoiding double-prefixing.
+    """
+    if not prefix:
+        return inputs
+    return [text if text.startswith(prefix) else f"{prefix}{text}" for text in inputs]
+
+
+def _tokenize_and_truncate_embeddings(
+    tokenizer, inputs: list[str], max_seq_length: int
+) -> tuple[list[str], Usage]:
+    """
+    Tokenizes inputs to calculate usage and truncates if they exceed max_seq_length.
+    """
+    total_tokens = 0
+    special_tokens_count = tokenizer.num_special_tokens_to_add(False)
+    limit = max_seq_length - special_tokens_count
+    processed_inputs = list(inputs)
+
+    # Process in batches to avoid OOM on huge payloads
+    batch_size = 256
+    for i in range(0, len(processed_inputs), batch_size):
+        batch = processed_inputs[i : i + batch_size]
+        encodings = tokenizer(batch, add_special_tokens=False)
+
+        for j, ids in enumerate(encodings["input_ids"]):
+            if len(ids) > limit:
+                truncated_ids = ids[:limit]
+                truncated_text = tokenizer.decode(truncated_ids)
+                processed_inputs[i + j] = truncated_text
+                total_tokens += len(truncated_ids) + special_tokens_count
+            else:
+                total_tokens += len(ids) + special_tokens_count
+
+    return processed_inputs, Usage(
+        prompt_tokens=total_tokens, total_tokens=total_tokens
+    )
+
+
 @app.post("/v1/embeddings", response_model=EmbeddingResponse)
 def create_embeddings(request: EmbeddingRequest):
     """
     Creates embeddings for the given input, following OpenAI's API format.
     """
-    if request.model not in EMBEDDING_MODELS:
-        raise HTTPException(
-            status_code=400, detail=f"Model '{request.model}' not found for embeddings."
-        )
-
-    try:
-        model = get_model(request.model)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    model = _get_model_or_400(request.model, EMBEDDING_MODELS, "embeddings")
 
     inputs = request.input if isinstance(request.input, list) else [request.input]
 
-    max_seq_length = getattr(model, "max_seq_length", 8192)
-    tokenizer = model.tokenizer
-
-    # Optimization: Determine prefix once per request
-    prefix = ""
-    if "ruri-v3" in request.model:
-        if request.input_type in RURI_PREFIX_MAP:
-            prefix = RURI_PREFIX_MAP[request.input_type]
-        elif request.apply_ruri_prefix:
-            # Fallback logic based on input shape (compatibility mode)
-            if isinstance(request.input, str):
-                prefix = RURI_PREFIX_MAP["query"]
-            else:
-                prefix = RURI_PREFIX_MAP["document"]
-
-    # 1. Prepare strings with prefixes
-    # If the text already starts with the prefix, we don't add it again.
-    if prefix:
-        processed_inputs = [
-            text if text.startswith(prefix) else f"{prefix}{text}" for text in inputs
-        ]
-    else:
-        processed_inputs = inputs
+    # Optimization: Determine and apply prefix
+    prefix = _determine_ruri_prefix(request)
+    processed_inputs = _apply_prefix(inputs, prefix)
 
     # Get embeddings and process tokens under a single lock to avoid "Already borrowed" inside library calls
     with model.lock:
-        # 2. Batch tokenize to calculate usage and truncate if necessary
-        # Doing this inside model.lock ensures the tokenizer state is safe
-        total_tokens = 0
-        special_tokens_count = tokenizer.num_special_tokens_to_add(False)
-        limit = max_seq_length - special_tokens_count
+        # Batch tokenize to calculate usage and truncate if necessary
+        processed_inputs, usage = _tokenize_and_truncate_embeddings(
+            model.tokenizer, processed_inputs, getattr(model, "max_seq_length", 8192)
+        )
 
-        # Process in batches to avoid OOM on huge payloads
-        batch_size = 256
-        for i in range(0, len(processed_inputs), batch_size):
-            batch = processed_inputs[i : i + batch_size]
-            encodings = tokenizer(batch, add_special_tokens=False)
-
-            for j, ids in enumerate(encodings["input_ids"]):
-                if len(ids) > limit:
-                    truncated_ids = ids[:limit]
-                    truncated_text = tokenizer.decode(truncated_ids)
-                    processed_inputs[i + j] = truncated_text
-                    total_tokens += len(truncated_ids) + special_tokens_count
-                else:
-                    total_tokens += len(ids) + special_tokens_count
-
-        usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
-
-        # 3. Model inference
+        # Model inference
         vectors = model.encode(processed_inputs)
 
     # Create response data
@@ -143,34 +197,14 @@ def create_rerank(request: RerankRequest):
     """
     Reranks a list of documents for a given query.
     """
-    if request.model not in RERANK_MODELS:
-        raise HTTPException(
-            status_code=400, detail=f"Model '{request.model}' not found for reranking."
-        )
+    model = _get_model_or_400(request.model, RERANK_MODELS, "reranking")
 
-    try:
-        model = get_model(request.model)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    # Prepare pairs for the cross-encoder
+    pairs = [[request.query, doc] for doc in request.documents]
 
-    # Reranking and token count within the same lock
+    # Reranking and token count within the same lock to avoid "Already borrowed" errors
     with model.lock:
-        # Prepare pairs for the cross-encoder
-        pairs = [[request.query, doc] for doc in request.documents]
-
-        # Calculate token usage
-        tokenizer = model.tokenizer
-        total_tokens = 0
-        for pair in pairs:
-            # For cross-encoders, we usually count both parts
-            q_tokens = len(tokenizer.encode(pair[0], add_special_tokens=False))
-            d_tokens = len(tokenizer.encode(pair[1], add_special_tokens=False))
-            total_tokens += (
-                q_tokens + d_tokens + tokenizer.num_special_tokens_to_add(True)
-            )
-
-        usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
-
+        usage = _calculate_rerank_usage(model.tokenizer, pairs)
         # Get scores
         scores = model.predict(pairs)
 
@@ -182,16 +216,8 @@ def create_rerank(request: RerankRequest):
             result_item["text"] = request.documents[i]
         results.append(result_item)
 
-    # Sort results by score in descending order
-    # Optimization: Use heapq.nlargest for top_n which is O(N log k) instead of O(N log N)
-    if request.top_n is not None:
-        # Use (score, -index) tuple key to ensure stability (deterministic tie-breaking)
-        # matching Python's stable sort behavior where earlier indices come first for same score.
-        sorted_results = heapq.nlargest(
-            request.top_n, results, key=lambda x: (x["score"], -x["document"])
-        )
-    else:
-        sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
+    # Sort results
+    sorted_results = _sort_rerank_results(results, request.top_n)
 
     # Format for response schema
     response_data = [RerankData(**result) for result in sorted_results]
