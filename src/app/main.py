@@ -131,8 +131,8 @@ def create_embeddings(request: EmbeddingRequest):
 
     # Create response data
     response_data = [
-        EmbeddingData(embedding=vector.tolist(), index=i)
-        for i, vector in enumerate(vectors)
+        EmbeddingData(embedding=vector, index=i)
+        for i, vector in enumerate(vectors.tolist())
     ]
 
     return EmbeddingResponse(data=response_data, model=request.model, usage=usage)
