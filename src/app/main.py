@@ -5,11 +5,13 @@ import os
 # Set at the very beginning to ensure libraries read this correctly during import.
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends, Security
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import heapq
 import logging
 import anyio
+from typing import Optional
 
 from .schemas import (
     EmbeddingRequest,
@@ -21,9 +23,25 @@ from .schemas import (
     RerankData,
 )
 from .models import get_model
-from .config import EMBEDDING_MODELS, RERANK_MODELS, RURI_PREFIX_MAP
+from .config import EMBEDDING_MODELS, RERANK_MODELS, RURI_PREFIX_MAP, API_KEY
 
 app = FastAPI(title="OpenAI-Compatible API")
+
+# Authentication dependency
+security = HTTPBearer(auto_error=False)
+
+
+async def verify_api_key(
+    auth: Optional[HTTPAuthorizationCredentials] = Security(security),
+):
+    if API_KEY:
+        if auth is None or auth.credentials != API_KEY:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or missing API Key",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    return auth
 
 
 @app.middleware("http")
@@ -60,7 +78,11 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-@app.post("/v1/embeddings", response_model=EmbeddingResponse)
+@app.post(
+    "/v1/embeddings",
+    response_model=EmbeddingResponse,
+    dependencies=[Depends(verify_api_key)],
+)
 def create_embeddings(request: EmbeddingRequest):
     """
     Creates embeddings for the given input, following OpenAI's API format.
@@ -138,7 +160,9 @@ def create_embeddings(request: EmbeddingRequest):
     return EmbeddingResponse(data=response_data, model=request.model, usage=usage)
 
 
-@app.post("/v1/rerank", response_model=RerankResponse)
+@app.post(
+    "/v1/rerank", response_model=RerankResponse, dependencies=[Depends(verify_api_key)]
+)
 def create_rerank(request: RerankRequest):
     """
     Reranks a list of documents for a given query.
