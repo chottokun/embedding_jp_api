@@ -145,3 +145,18 @@ def test_create_embeddings_empty_string():
     request_payload = {"input": "", "model": SUPPORTED_EMBED_MODEL}
     response = client.post("/v1/embeddings", json=request_payload)
     assert response.status_code == 422
+
+
+@patch("app.main.get_model")
+def test_create_embeddings_get_model_value_error(mock_get_model):
+    """
+    Tests that a ValueError during model loading returns a 400 error.
+    """
+    mock_get_model.side_effect = ValueError("Mocked ValueError")
+
+    request_payload = {"input": "test", "model": SUPPORTED_EMBED_MODEL}
+
+    response = client.post("/v1/embeddings", json=request_payload)
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Mocked ValueError"

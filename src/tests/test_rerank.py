@@ -201,6 +201,23 @@ def test_rerank_unsupported_model():
     assert "not found" in response.json()["detail"]
 
 
+@patch("app.main.get_model")
+def test_create_rerank_get_model_value_error(mock_get_model):
+    """
+    Tests that a ValueError during model loading returns a 400 error.
+    """
+    mock_get_model.side_effect = ValueError("Mocked ValueError")
+
+    request_payload = {
+        "query": "test",
+        "documents": ["doc1"],
+        "model": SUPPORTED_RERANK_MODEL,
+    }
+    response = client.post("/v1/rerank", json=request_payload)
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Mocked ValueError"
+
+
 def test_create_rerank_empty_documents():
     """
     Tests that an empty documents list returns 422 Unprocessable Entity.
