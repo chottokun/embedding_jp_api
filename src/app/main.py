@@ -13,6 +13,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import heapq
 import logging
 import anyio
+import httpx
 from typing import Optional
 import re
 import traceback
@@ -38,7 +39,14 @@ from .schemas import (
     RerankData,
 )
 from .models import get_model
-from .config import EMBEDDING_MODELS, RERANK_MODELS, RURI_PREFIX_MAP, API_KEY
+from .config import (
+    EMBEDDING_MODELS,
+    RERANK_MODELS,
+    RURI_PREFIX_MAP,
+    API_KEY,
+    EMBEDDING_TEI_URL,
+    RERANK_TEI_URL,
+)
 
 app = FastAPI(title="OpenAI-Compatible API")
 
@@ -113,6 +121,27 @@ async def global_exception_handler(request: Request, exc: Exception):
         "default-src 'self'; frame-ancestors 'none';"
     )
     return response
+
+
+def _proxy_to_tei(tei_url: str, path: str, json_data: dict) -> Any:
+    """
+    Helper to send a POST request to TEI and return the JSON response.
+    """
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            response = client.post(f"{tei_url}{path}", json=json_data)
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"TEI Proxy Error ({response.status_code}): {response.text}",
+                )
+            return response.json()
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(
+            status_code=500, detail=f"Failed to proxy request to TEI: {str(e)}"
+        )
 
 
 def _get_model_or_400(model_name: str, model_type: str) -> Any:
@@ -201,12 +230,26 @@ def create_embeddings(request: EmbeddingRequest):
     """
     Creates embeddings for the given input, following OpenAI's API format.
     """
-    model = _get_model_or_400(request.model, "embedding")
+    if request.model not in EMBEDDING_MODELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model '{request.model}' not found for embeddings.",
+        )
 
     inputs = request.input if isinstance(request.input, list) else [request.input]
-
     prefix = _determine_ruri_prefix(request)
     processed_inputs = _apply_prefix(inputs, prefix)
+
+    # Proxy to TEI if URL is configured
+    if EMBEDDING_TEI_URL:
+        data = _proxy_to_tei(
+            EMBEDDING_TEI_URL,
+            "/v1/embeddings",
+            {"input": processed_inputs, "model": request.model},
+        )
+        return EmbeddingResponse(**data)
+
+    model = _get_model_or_400(request.model, "embedding")
 
     # 1. Tokenize, truncate and calculate usage
     # This runs under model.tokenizer_lock but outside model.lock to improve concurrency
@@ -235,6 +278,43 @@ def create_rerank(request: RerankRequest):
     """
     Reranks a list of documents for a given query.
     """
+    if request.model not in RERANK_MODELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model '{request.model}' not found for reranks.",
+        )
+
+    # Proxy to TEI if URL is configured
+    if RERANK_TEI_URL:
+        tei_results = _proxy_to_tei(
+            RERANK_TEI_URL,
+            "/rerank",
+            {"query": request.query, "texts": request.documents},
+        )
+
+        results = []
+        for item in tei_results:
+            idx = item["index"]
+            score = item["score"]
+            result_item = {"document": idx, "score": float(score)}
+            if request.return_documents:
+                result_item["text"] = request.documents[idx]
+            results.append(result_item)
+
+        # Sort and filter by top_n
+        if request.top_n is not None:
+            sorted_results = heapq.nlargest(
+                request.top_n, results, key=lambda x: (x["score"], -x["document"])
+            )
+        else:
+            sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
+
+        response_data = [RerankData(**result) for result in sorted_results]
+        usage = Usage(prompt_tokens=0, total_tokens=0)
+        return RerankResponse(
+            query=request.query, data=response_data, model=request.model, usage=usage
+        )
+
     model = _get_model_or_400(request.model, "rerank")
 
     # Reranking and token count within the same lock

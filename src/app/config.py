@@ -47,6 +47,11 @@ MAX_INPUT_ITEMS = int(os.getenv("MAX_INPUT_ITEMS", "256"))
 # API Key for authentication. If not set, authentication is disabled.
 API_KEY = os.getenv("API_KEY")
 
+# --- TEI Integration Configuration ---
+# If these environment variables are set, the API will proxy requests to TEI.
+EMBEDDING_TEI_URL = os.getenv("EMBEDDING_TEI_URL")
+RERANK_TEI_URL = os.getenv("RERANK_TEI_URL")
+
 # --- Offline Mode Configuration ---
 OFFLINE_MODE = os.getenv("OFFLINE_MODE", "false").lower() == "true"
 if OFFLINE_MODE:
