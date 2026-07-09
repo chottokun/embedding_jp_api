@@ -33,12 +33,15 @@ ENV DEBIAN_FRONTEND=noninteractive \
     APP_PORT=8000 \
     OMP_NUM_THREADS=1 \
     MKL_NUM_THREADS=1 \
-    TOKENIZERS_PARALLELISM=false
+    TOKENIZERS_PARALLELISM=false \
+    HF_HOME=/home/appuser/.cache/huggingface
 
 RUN apt-get update && \
     apt-get install -y python3.11 python3-pip && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
     update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
+    # Create a non-root user
+    useradd -m -u 1000 appuser && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -51,6 +54,12 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY src/ ./src/
 COPY config/ ./config/
 COPY README.md locustfile.py ./
+
+# Ensure the appuser owns the application directory and HF_HOME
+RUN chown -R appuser:appuser /app /home/appuser
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8000
