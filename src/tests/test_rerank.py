@@ -190,6 +190,66 @@ def test_rerank_top_n_zero(mock_get_model):
     assert response_json["query"] == "test query"
 
 
+@patch("app.main.get_model")
+def test_rerank_return_documents(mock_get_model):
+    """
+    Tests that return_documents=True correctly includes the document text in the response.
+    """
+    mock_model = mock_get_model.return_value
+    mock_model.predict.return_value = [0.5, 0.8]
+
+    mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
+        "input_ids": [[1] for _ in range(len(queries))]
+    }
+
+    query = "test query"
+    documents = ["doc1", "doc2"]
+
+    request_payload = {
+        "query": query,
+        "documents": documents,
+        "model": SUPPORTED_RERANK_MODEL,
+        "return_documents": True,
+    }
+
+    response = client.post("/v1/rerank", json=request_payload)
+    assert response.status_code == 200
+
+    results = response.json()["data"]
+    assert len(results) == 2
+    # Sorted by score: doc2 (0.8), then doc1 (0.5)
+    assert results[0]["document"] == 1
+    assert results[0]["text"] == "doc2"
+    assert results[1]["document"] == 0
+    assert results[1]["text"] == "doc1"
+
+
+@patch("app.main.get_model")
+def test_rerank_no_return_documents(mock_get_model):
+    """
+    Tests that return_documents=False (or omitted) does not include the document text.
+    """
+    mock_model = mock_get_model.return_value
+    mock_model.predict.return_value = [0.5]
+
+    mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
+        "input_ids": [[1] for _ in range(len(queries))]
+    }
+
+    request_payload = {
+        "query": "query",
+        "documents": ["doc1"],
+        "model": SUPPORTED_RERANK_MODEL,
+        "return_documents": False,
+    }
+
+    response = client.post("/v1/rerank", json=request_payload)
+    assert response.status_code == 200
+
+    results = response.json()["data"]
+    assert "text" not in results[0]
+
+
 def test_rerank_unsupported_model():
     request_payload = {
         "query": "test",
