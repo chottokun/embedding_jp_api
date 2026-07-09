@@ -335,3 +335,19 @@ docker run -d --gpus all \
   ghcr.io/huggingface/text-embeddings-inference:latest \
   --model-id /data/hub/models--cl-nagoya--ruri-v3-30m/snapshots/24899e5de370b56d179604a007c0d727bf144504
 ```
+
+### 10.4. トラブルシューティング & 重要な注意点 (罠)
+
+TEI を用いた本番運用において、以下の重大な「技術的制約（罠）」が存在するため、必ずご確認ください。
+
+1. **ModernBERT モデル (ruri-v3-30m等) をロードする際のバージョン制約**
+   TEI 1.5 以前のコンテナイメージを使用した場合、ModernBERT アーキテクチャのモデルをロードしようとすると `unknown variant modernbert` エラーが発生してコンテナが異常終了します。
+   * **対策**: 必ず最新（ModernBERT をネイティブサポートした `ghcr.io/huggingface/text-embeddings-inference:latest` または `2.0+`）のイメージを使用してください。
+
+2. **オフラインモード (`HF_HUB_OFFLINE=1`) 時のモデルパス指定**
+   コンテナをオフライン（ローカルキャッシュマウント）で動作させる際、`--model-id` にモデルのベース名（例: `cl-nagoya/ruri-v3-30m`）を指定するだけでは、TEI が内部で Hugging Face API への接続を試みて `relative URL without a base` 等のエラーで失敗します。
+   * **対策**: ローカルマウントしたディレクトリ内のスナップショットコミットIDの実パス（例: `/data/hub/models--cl-nagoya--ruri-v3-30m/snapshots/<COMMIT_ID>`）を直接 `--model-id` に指定してロードさせてください。
+
+3. **コンテナメモリとスレッド競合の最適化**
+   Gunicorn を使ってマルチワーカーで動作させる際、各ワーカーが Hugging Face Tokenizers の並列スレッドを起動するとデッドロックが発生する可能性があります。
+   * **対策**: 環境変数 `TOKENIZERS_PARALLELISM=false` を必ず設定した状態で起動してください（本プロジェクトの Dockerfile 内では自動設定されています）。
