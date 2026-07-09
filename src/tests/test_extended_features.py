@@ -118,8 +118,8 @@ def test_truncation_logic(mock_embedding_model):
         return {"input_ids": []}
 
     mock_embedding_model.tokenizer.side_effect = mock_tokenizer_call
-    mock_embedding_model.tokenizer.decode.side_effect = (
-        lambda *args, **kwargs: "検索クエリ: truncated"
+    mock_embedding_model.tokenizer.decode.side_effect = lambda *args, **kwargs: (
+        "検索クエリ: truncated"
     )
 
     response = client.post(

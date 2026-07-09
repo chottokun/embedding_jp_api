@@ -17,6 +17,7 @@ from typing import Optional
 import re
 import traceback
 
+
 def redact_pii(text: str) -> str:
     """
     Redacts common PII from a string.

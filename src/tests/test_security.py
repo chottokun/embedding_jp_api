@@ -3,6 +3,7 @@ from app.main import app
 import logging
 from unittest.mock import MagicMock, patch
 
+
 def test_pii_redaction_in_logs(caplog):
     # Set caplog to capture error logs
     caplog.set_level(logging.ERROR)
@@ -29,10 +30,11 @@ def test_pii_redaction_in_logs(caplog):
 
     with patch("app.main.get_model", return_value=mock_model):
         # Mock encode to raise an exception containing an email address
-        with patch.object(mock_model, "encode", side_effect=Exception("Error for user@example.com")):
+        with patch.object(
+            mock_model, "encode", side_effect=Exception("Error for user@example.com")
+        ):
             response = client.post(
-                "/v1/embeddings",
-                json={"input": "some input", "model": model_name}
+                "/v1/embeddings", json={"input": "some input", "model": model_name}
             )
 
     assert response.status_code == 500

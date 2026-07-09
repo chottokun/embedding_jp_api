@@ -54,7 +54,15 @@ class ApiUser(HttpUser):
             "input_type": input_type,
             "apply_ruri_prefix": random.choice([True, False]),
         }
-        self.client.post("/v1/embeddings", json=payload, name="/v1/embeddings")
+        headers = {}
+        import os
+
+        api_key = os.getenv("API_KEY")
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        self.client.post(
+            "/v1/embeddings", json=payload, name="/v1/embeddings", headers=headers
+        )
 
     @task(1)
     def get_rerank(self):
@@ -69,4 +77,10 @@ class ApiUser(HttpUser):
             "top_n": random.choice([None, 1, 2]),
             "return_documents": random.choice([True, False]),
         }
-        self.client.post("/v1/rerank", json=payload, name="/v1/rerank")
+        headers = {}
+        import os
+
+        api_key = os.getenv("API_KEY")
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        self.client.post("/v1/rerank", json=payload, name="/v1/rerank", headers=headers)
