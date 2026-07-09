@@ -32,9 +32,9 @@ class ApiUser(HttpUser):
 
     How to run this test:
     1. Make sure the FastAPI server is running.
-       (e.g., poetry run uvicorn src.app.main:app --port 8000)
+       (e.g., uv run uvicorn src.app.main:app --port 8000)
     2. Run Locust from the command line:
-       poetry run locust -f locustfile.py --host http://localhost:8000
+       uv run locust -f locustfile.py --host http://localhost:8000
     3. Open your web browser to http://localhost:8089 and start the test.
     """
 
