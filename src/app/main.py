@@ -1,15 +1,30 @@
 import os
+from typing import Any, List, Tuple
 
 # Disable tokenizer parallelism to prevent "Already Borrowed" errors and deadlocks
 # in multi-process/multi-threaded environments.
 # Set at the very beginning to ensure libraries read this correctly during import.
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends, Security
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import heapq
 import logging
 import anyio
+from typing import Optional
+import re
+import traceback
+
+def redact_pii(text: str) -> str:
+    """
+    Redacts common PII from a string.
+    Currently masks email addresses.
+    """
+    # Simple email regex
+    email_pattern = r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
+    return re.sub(email_pattern, "[REDACTED]", text)
+
 
 from .schemas import (
     EmbeddingRequest,
@@ -21,9 +36,25 @@ from .schemas import (
     RerankData,
 )
 from .models import get_model
-from .config import EMBEDDING_MODELS, RERANK_MODELS, RURI_PREFIX_MAP
+from .config import EMBEDDING_MODELS, RERANK_MODELS, RURI_PREFIX_MAP, API_KEY
 
 app = FastAPI(title="OpenAI-Compatible API")
+
+# Authentication dependency
+security = HTTPBearer(auto_error=False)
+
+
+async def verify_api_key(
+    auth: Optional[HTTPAuthorizationCredentials] = Security(security),
+):
+    if API_KEY:
+        if auth is None or auth.credentials != API_KEY:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or missing API Key",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    return auth
 
 
 @app.middleware("http")
@@ -47,40 +78,62 @@ async def add_security_headers(request: Request, call_next):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    # Log the full error with stack trace
+    # Obtain the full traceback as a string
+    tb_str = traceback.format_exc()
+
+    # Redact PII from the exception message and traceback
+    redacted_exc = redact_pii(str(exc))
+    redacted_tb = redact_pii(tb_str)
+
+    # Log the redacted error details
     # We use run_sync in a thread pool to avoid blocking the event loop
     # during potentially slow logging operations.
     await anyio.to_thread.run_sync(
-        lambda: logging.error(f"Unhandled exception: {exc}", exc_info=True)
+        lambda: logging.error(
+            f"Unhandled exception: {redacted_exc}\n{redacted_tb}", exc_info=False
+        )
     )
     # Return a generic error message to the client to avoid leaking internal details
-    return JSONResponse(
+    response = JSONResponse(
         status_code=500,
         content={"detail": "Internal Server Error"},
     )
+    # Security headers for error responses
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    # Note: Use standard header name
+    response.headers["Strict-Transport-Security"] = (
+        "max-age=31536000; includeSubDomains"
+    )
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; frame-ancestors 'none';"
+    )
+    return response
 
 
-@app.post("/v1/embeddings", response_model=EmbeddingResponse)
-def create_embeddings(request: EmbeddingRequest):
+def _get_model_or_400(model_name: str, model_type: str) -> Any:
     """
-    Creates embeddings for the given input, following OpenAI's API format.
+    Helper to get a model or raise a 400 HTTPException.
     """
-    if request.model not in EMBEDDING_MODELS:
+    supported_models = EMBEDDING_MODELS if model_type == "embedding" else RERANK_MODELS
+    if model_name not in supported_models:
         raise HTTPException(
-            status_code=400, detail=f"Model '{request.model}' not found for embeddings."
+            status_code=400,
+            detail=f"Model '{model_name}' not found for {model_type}s.",
         )
 
     try:
-        model = get_model(request.model)
+        return get_model(model_name)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    inputs = request.input if isinstance(request.input, list) else [request.input]
 
-    max_seq_length = getattr(model, "max_seq_length", 8192)
-    tokenizer = model.tokenizer
-
-    # Optimization: Determine prefix once per request
+def _determine_ruri_prefix(request: EmbeddingRequest) -> str:
+    """
+    Determines the prefix for ruri-v3 models based on request parameters.
+    """
     prefix = ""
     if "ruri-v3" in request.model:
         if request.input_type in RURI_PREFIX_MAP:
@@ -91,20 +144,29 @@ def create_embeddings(request: EmbeddingRequest):
                 prefix = RURI_PREFIX_MAP["query"]
             else:
                 prefix = RURI_PREFIX_MAP["document"]
+    return prefix
 
-    # 1. Prepare strings with prefixes
-    # If the text already starts with the prefix, we don't add it again.
-    if prefix:
-        processed_inputs = [
-            text if text.startswith(prefix) else f"{prefix}{text}" for text in inputs
-        ]
-    else:
-        processed_inputs = inputs
 
-    # Get embeddings and process tokens under a single lock to avoid "Already borrowed" inside library calls
-    with model.lock:
-        # 2. Batch tokenize to calculate usage and truncate if necessary
-        # Doing this inside model.lock ensures the tokenizer state is safe
+def _apply_prefix(inputs: List[str], prefix: str) -> List[str]:
+    """
+    Applies a prefix to each input string if it doesn't already start with it.
+    """
+    if not prefix:
+        return inputs
+    return [text if text.startswith(prefix) else f"{prefix}{text}" for text in inputs]
+
+
+def _tokenize_and_truncate_embeddings(
+    model: Any, inputs: List[str]
+) -> Tuple[List[str], Usage]:
+    """
+    Handles batch tokenization, truncation, and usage calculation for embeddings.
+    """
+    max_seq_length = getattr(model, "max_seq_length", 8192)
+    tokenizer = model.tokenizer
+    processed_inputs = list(inputs)  # Make a copy to avoid side effects
+
+    with model.tokenizer_lock:
         total_tokens = 0
         special_tokens_count = tokenizer.num_special_tokens_to_add(False)
         limit = max_seq_length - special_tokens_count
@@ -125,33 +187,53 @@ def create_embeddings(request: EmbeddingRequest):
                     total_tokens += len(ids) + special_tokens_count
 
         usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+    return processed_inputs, usage
 
-        # 3. Model inference
+
+@app.post(
+    "/v1/embeddings",
+    response_model=EmbeddingResponse,
+    dependencies=[Depends(verify_api_key)],
+)
+def create_embeddings(request: EmbeddingRequest):
+    """
+    Creates embeddings for the given input, following OpenAI's API format.
+    """
+    model = _get_model_or_400(request.model, "embedding")
+
+    inputs = request.input if isinstance(request.input, list) else [request.input]
+
+    prefix = _determine_ruri_prefix(request)
+    processed_inputs = _apply_prefix(inputs, prefix)
+
+    # 1. Tokenize, truncate and calculate usage
+    # This runs under model.tokenizer_lock but outside model.lock to improve concurrency
+    processed_inputs, usage = _tokenize_and_truncate_embeddings(model, processed_inputs)
+
+    # 2. Model inference under a single lock
+    with model.lock:
         vectors = model.encode(processed_inputs)
 
     # Create response data
     response_data = [
-        EmbeddingData(embedding=vector.tolist(), index=i)
-        for i, vector in enumerate(vectors)
+        EmbeddingData(embedding=vector, index=i)
+        for i, vector in enumerate(vectors.tolist())
     ]
 
     return EmbeddingResponse(data=response_data, model=request.model, usage=usage)
 
 
-@app.post("/v1/rerank", response_model=RerankResponse)
+@app.post(
+    "/v1/rerank",
+    response_model=RerankResponse,
+    response_model_exclude_none=True,
+    dependencies=[Depends(verify_api_key)],
+)
 def create_rerank(request: RerankRequest):
     """
     Reranks a list of documents for a given query.
     """
-    if request.model not in RERANK_MODELS:
-        raise HTTPException(
-            status_code=400, detail=f"Model '{request.model}' not found for reranking."
-        )
-
-    try:
-        model = get_model(request.model)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    model = _get_model_or_400(request.model, "rerank")
 
     # Reranking and token count within the same lock
     with model.lock:

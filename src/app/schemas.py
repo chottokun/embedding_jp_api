@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict, StringConstraints
-from typing import List, Union, Optional, Annotated
+from typing import Union, Optional, Annotated
 
 from .config import MAX_INPUT_LENGTH, MAX_INPUT_ITEMS
 
@@ -15,9 +15,7 @@ class EmbeddingRequest(BaseModel):
     input: Union[
         LimitedString,
         # Limit list size to prevent memory exhaustion (DoS)
-        Annotated[
-            List[LimitedString], Field(min_length=1, max_length=MAX_INPUT_ITEMS)
-        ],
+        Annotated[list[LimitedString], Field(min_length=1, max_length=MAX_INPUT_ITEMS)],
     ]
     model: str
     user: Optional[str] = None
@@ -37,7 +35,7 @@ class EmbeddingRequest(BaseModel):
 
 class EmbeddingData(BaseModel):
     object: str = "embedding"
-    embedding: List[float]
+    embedding: list[float]
     index: int
 
 
@@ -48,7 +46,7 @@ class Usage(BaseModel):
 
 class EmbeddingResponse(BaseModel):
     object: str = "list"
-    data: List[EmbeddingData]
+    data: list[EmbeddingData]
     model: str
     usage: Usage
 
@@ -59,7 +57,7 @@ class RerankRequest(BaseModel):
     query: LimitedString
     # Limit list size to prevent memory exhaustion (DoS)
     documents: Annotated[
-        List[LimitedString],
+        list[LimitedString],
         Field(
             min_length=1,
             max_length=MAX_INPUT_ITEMS,
@@ -83,6 +81,6 @@ class RerankData(BaseModel):
 
 class RerankResponse(BaseModel):
     query: LimitedString
-    data: List[RerankData]
+    data: list[RerankData]
     model: str
     usage: Optional[Usage] = None
