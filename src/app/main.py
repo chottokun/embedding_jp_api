@@ -5,11 +5,25 @@ import os
 # Set at the very beginning to ensure libraries read this correctly during import.
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends, Security
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import heapq
 import logging
 import anyio
+from typing import Optional
+import re
+import traceback
+
+def redact_pii(text: str) -> str:
+    """
+    Redacts common PII from a string.
+    Currently masks email addresses.
+    """
+    # Simple email regex
+    email_pattern = r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
+    return re.sub(email_pattern, "[REDACTED]", text)
+
 
 from .schemas import (
     EmbeddingRequest,
@@ -21,9 +35,25 @@ from .schemas import (
     RerankData,
 )
 from .models import get_model
-from .config import EMBEDDING_MODELS, RERANK_MODELS, RURI_PREFIX_MAP
+from .config import EMBEDDING_MODELS, RERANK_MODELS, RURI_PREFIX_MAP, API_KEY
 
 app = FastAPI(title="OpenAI-Compatible API")
+
+# Authentication dependency
+security = HTTPBearer(auto_error=False)
+
+
+async def verify_api_key(
+    auth: Optional[HTTPAuthorizationCredentials] = Security(security),
+):
+    if API_KEY:
+        if auth is None or auth.credentials != API_KEY:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or missing API Key",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    return auth
 
 
 @app.middleware("http")
@@ -47,11 +77,20 @@ async def add_security_headers(request: Request, call_next):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    # Log the full error with stack trace
+    # Obtain the full traceback as a string
+    tb_str = traceback.format_exc()
+
+    # Redact PII from the exception message and traceback
+    redacted_exc = redact_pii(str(exc))
+    redacted_tb = redact_pii(tb_str)
+
+    # Log the redacted error details
     # We use run_sync in a thread pool to avoid blocking the event loop
     # during potentially slow logging operations.
     await anyio.to_thread.run_sync(
-        lambda: logging.error(f"Unhandled exception: {exc}", exc_info=True)
+        lambda: logging.error(
+            f"Unhandled exception: {redacted_exc}\n{redacted_tb}", exc_info=False
+        )
     )
     # Return a generic error message to the client to avoid leaking internal details
     response = JSONResponse(
@@ -73,7 +112,11 @@ async def global_exception_handler(request: Request, exc: Exception):
     return response
 
 
-@app.post("/v1/embeddings", response_model=EmbeddingResponse)
+@app.post(
+    "/v1/embeddings",
+    response_model=EmbeddingResponse,
+    dependencies=[Depends(verify_api_key)],
+)
 def create_embeddings(request: EmbeddingRequest):
     """
     Creates embeddings for the given input, following OpenAI's API format.
@@ -151,7 +194,12 @@ def create_embeddings(request: EmbeddingRequest):
     return EmbeddingResponse(data=response_data, model=request.model, usage=usage)
 
 
-@app.post("/v1/rerank", response_model=RerankResponse)
+@app.post(
+    "/v1/rerank",
+    response_model=RerankResponse,
+    response_model_exclude_none=True,
+    dependencies=[Depends(verify_api_key)],
+)
 def create_rerank(request: RerankRequest):
     """
     Reranks a list of documents for a given query.

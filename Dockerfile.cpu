@@ -28,7 +28,11 @@ ENV PYTHONUNBUFFERED=1 \
     APP_PORT=8000 \
     OMP_NUM_THREADS=1 \
     MKL_NUM_THREADS=1 \
-    TOKENIZERS_PARALLELISM=false
+    TOKENIZERS_PARALLELISM=false \
+    HF_HOME=/home/appuser/.cache/huggingface
+
+# Create a non-root user
+RUN useradd -m -u 1000 appuser
 
 WORKDIR /app
 
@@ -40,6 +44,12 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY src/ ./src/
 COPY config/ ./config/
 COPY README.md locustfile.py ./
+
+# Ensure the appuser owns the application directory and HF_HOME
+RUN chown -R appuser:appuser /app /home/appuser
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8000
