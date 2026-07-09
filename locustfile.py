@@ -8,20 +8,16 @@ EMBEDDING_INPUTS = [
     "最新のAI技術について教えてください。",
     "このドキュメントを要約して。",
     "自然言語処理とは何ですか？",
-    ["これは最初の文書です。", "これは2番目の文書で、少し長いです。", "そして3番目。"]
+    ["これは最初の文書です。", "これは2番目の文書で、少し長いです。", "そして3番目。"],
 ]
 
-RERANK_QUERIES = [
-    "AIの未来について",
-    "日本の首都",
-    "猫の生態"
-]
+RERANK_QUERIES = ["AIの未来について", "日本の首都", "猫の生態"]
 RERANK_DOCS = [
     "これは猫についての文章です。",
     "人工知能は今後の社会を大きく変えるでしょう。",
     "日本の首都は東京です。",
     "犬は人間の最良の友です。",
-    "機械学習はAIのサブセットです。"
+    "機械学習はAIのサブセットです。",
 ]
 
 # Supported models from our config. We will randomly pick one.
@@ -41,19 +37,22 @@ class ApiUser(HttpUser):
        poetry run locust -f locustfile.py --host http://localhost:8000
     3. Open your web browser to http://localhost:8089 and start the test.
     """
+
     wait_time = between(1, 5)  # Users wait 1-5 seconds between tasks
 
     @task(3)
     def get_embeddings(self):
         """Task to call the /v1/embeddings endpoint."""
         input_data = random.choice(EMBEDDING_INPUTS)
-        input_type = random.choice(["query", "document", "classification", "clustering", "sts", None])
-        
+        input_type = random.choice(
+            ["query", "document", "classification", "clustering", "sts", None]
+        )
+
         payload = {
             "input": input_data,
             "model": random.choice(EMBEDDING_MODELS),
             "input_type": input_type,
-            "apply_ruri_prefix": random.choice([True, False])
+            "apply_ruri_prefix": random.choice([True, False]),
         }
         self.client.post("/v1/embeddings", json=payload, name="/v1/embeddings")
 
@@ -68,6 +67,6 @@ class ApiUser(HttpUser):
             "documents": documents,
             "model": RERANK_MODELS[0],
             "top_n": random.choice([None, 1, 2]),
-            "return_documents": random.choice([True, False])
+            "return_documents": random.choice([True, False]),
         }
         self.client.post("/v1/rerank", json=payload, name="/v1/rerank")
