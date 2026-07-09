@@ -122,35 +122,22 @@ rerank_models:
 モデルを追加・変更する場合はこのファイルを編集し、サーバーを再起動してください。Docker環境では、事前に `./run.sh download` でモデルをダウンロードしておくことを推奨します。
 
 ### 3.2. 必要なツール
-- [uv](https://docs.astral.sh/uv/) (推奨) または [Poetry](https://python-poetry.org/)
+- [uv](https://docs.astral.sh/uv/) (開発・パッケージ管理。Poetry の代わりに全面的に採用されています)
 - Python 3.11+
 
 ### 3.3. 環境のセットアップ
 
-uvを使用する場合：
 ```bash
 uv sync
-```
-
-Poetryを使用する場合：
-```bash
-poetry install
 ```
 
 ### 3.4. 開発サーバーの実行
 
 Uvicornを使用して開発サーバーを起動します。ポートは環境変数 `APP_PORT` で変更可能です（デフォルト: 8000）。
 
-uvを使用する場合：
 ```bash
 export APP_PORT=8000
 uv run uvicorn src.app.main:app --reload --port $APP_PORT
-```
-
-Poetryを使用する場合：
-```bash
-export APP_PORT=8000
-poetry run uvicorn src.app.main:app --reload --port $APP_PORT
 ```
 
 ### 3.5. 本番環境での実行 (Gunicorn)
@@ -159,7 +146,7 @@ Linuxベースの環境では、GunicornとUvicornワーカーを組み合わせ
 
 ```bash
 export GUNICORN_WORKERS=2
-poetry run gunicorn --workers $GUNICORN_WORKERS --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 300 --worker-tmp-dir /dev/shm --keep-alive 5 src.app.main:app
+uv run gunicorn --workers $GUNICORN_WORKERS --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 300 --worker-tmp-dir /dev/shm --keep-alive 5 src.app.main:app
 ```
 
 **安定性のためのポイント**:
@@ -209,14 +196,8 @@ poetry run gunicorn --workers $GUNICORN_WORKERS --worker-class uvicorn.workers.U
 
 ## 4. テストの実行
 
-uvを使用する場合：
 ```bash
 uv run pytest
-```
-
-Poetryを使用する場合：
-```bash
-poetry run pytest
 ```
 
 ## 5. 詳細設定 (Environment Variables)
@@ -298,13 +279,13 @@ Locustを使用してAPIの負荷テストを実行できます。
 1.  **Locustの起動**
 
     ```bash
-    ./.venv/bin/locust -f locustfile.py --host http://localhost:8000
+    uv run locust -f locustfile.py --host http://localhost:8000
     ```
 
 2.  **ヘッドレスモードでの実行（30秒間）**
 
     ```bash
-    ./.venv/bin/locust -f locustfile.py --headless -u 5 -r 1 --run-time 30s --host http://localhost:8000
+    uv run locust -f locustfile.py --headless -u 5 -r 1 --run-time 30s --host http://localhost:8000
     ```
 
 ## 9. ビルドパフォーマンスの最適化
@@ -315,3 +296,42 @@ Locustを使用してAPIの負荷テストを実行できます。
 - **ステージ1 (Builder)**: 依存関係のインストールのみを実行。`pyproject.toml` が変更されない限り、Dockerキャッシュが再利用されます。
 - **ステージ2 (Runtime)**: 軽量なランタイムイメージ（GPU版は `cuda:12.1.1-runtime`）をベースに、ビルド済みパッケージとソースコードのみをコピーします。
 - **効果**: ソースコードのみの変更時はステージ1がキャッシュヒットするため、**再ビルドが数十秒で完了**します。
+
+---
+
+## 10. Text Embeddings Inference (TEI) 統合 (GPU専用)
+
+Hugging Face社が提供する高速な埋め込みベクトル推論サーバー **Text Embeddings Inference (TEI)** に推論処理をオフロードするためのプロキシ（ゲートウェイ）機能をサポートしています。
+
+GPU環境において本プロジェクトの FastAPI をゲートウェイとして前面に置き、バックエンドで TEI コンテナを動かすことで、API Key 認証やセキュリティヘッダー、PII マスクといった付加価値を維持したまま、**推論スループットを劇的に高速化**できます。
+
+### 10.1. パフォーマンス比較結果 (同時10ユーザー負荷テスト時)
+
+| 評価項目 | ローカルモデル推論 (既存 GPU) | TEI プロキシ推論 (今回 GPU) | 改善効果 |
+| :--- | :--- | :--- | :--- |
+| **全体平均応答時間** | 1,117 ms | **21 ms** | **約 53 倍高速化** |
+| **Embeddings 応答時間** | 1,219 ms | **17 ms** | **約 71 倍高速化** |
+| **Rerank 応答時間** | 810 ms | **32 ms** | **約 25 倍高速化** |
+| **最大スループット (req/s)** | 2.42 req/s | **3.38 req/s** | **+39.6%** |
+
+### 10.2. 設定方法
+
+FastAPI 起動時に以下の環境変数を設定すると、対応するエンドポイントへのリクエストが TEI へ自動的にプロキシされます。
+
+* **`EMBEDDING_TEI_URL`**: 埋め込み用 TEI コンテナのホストURL（例: `http://localhost:8081`）
+* **`RERANK_TEI_URL`**: リランク用 TEI コンテナのホストURL（例: `http://localhost:8082`）
+
+### 10.3. バックエンドコンテナ (TEI) の起動方法例
+
+Docker を使用して GPU 上で TEI コンテナをオフライン（ローカルキャッシュ利用）で起動するコマンドの例です。
+
+```bash
+# 埋め込みモデル (ruri-v3-30m) の TEI コンテナを起動 (ポート 8081)
+docker run -d --gpus all \
+  --name tei-embeddings \
+  -p 8081:80 \
+  -e HF_HUB_OFFLINE=1 \
+  -v $(pwd)/.cache/models:/data \
+  ghcr.io/huggingface/text-embeddings-inference:latest \
+  --model-id /data/hub/models--cl-nagoya--ruri-v3-30m/snapshots/24899e5de370b56d179604a007c0d727bf144504
+```

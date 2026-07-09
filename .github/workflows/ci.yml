@@ -13,26 +13,23 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v5
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
       with:
-        python-version: "3.11"
+        version: "latest"
+        enable-cache: true
 
-    - name: Install Poetry
-      run: |
-        curl -sSL https://install.python-poetry.org | python3 -
-
-    - name: Configure Poetry
-      run: poetry config virtualenvs.create true --local
+    - name: Set up Python 3.11
+      run: uv python install 3.11
 
     - name: Install dependencies
-      run: poetry install
+      run: uv sync --all-groups
 
     - name: Run Lint
-      run: poetry run ruff check src
+      run: uv run ruff check src
 
     - name: Run Format Check
-      run: poetry run ruff format --check src
+      run: uv run ruff format --check src
 
     - name: Run Tests
-      run: poetry run pytest
+      run: uv run pytest
