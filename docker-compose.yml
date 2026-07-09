@@ -11,12 +11,12 @@ services:
     environment:
       - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
       - OFFLINE_MODE=${OFFLINE_MODE:-false}
-      - HF_HOME=/root/.cache/huggingface
+      - HF_HOME=/home/appuser/.cache/huggingface
       - OMP_NUM_THREADS=1
       - MKL_NUM_THREADS=1
       - TOKENIZERS_PARALLELISM=false
     volumes:
-      - ./.cache/models:/root/.cache/huggingface
+      - ./.cache/models:/home/appuser/.cache/huggingface
     restart: always
 
   api-gpu:
@@ -29,12 +29,12 @@ services:
     environment:
       - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
       - OFFLINE_MODE=${OFFLINE_MODE:-false}
-      - HF_HOME=/root/.cache/huggingface
+      - HF_HOME=/home/appuser/.cache/huggingface
       - OMP_NUM_THREADS=1
       - MKL_NUM_THREADS=1
       - TOKENIZERS_PARALLELISM=false
     volumes:
-      - ./.cache/models:/root/.cache/huggingface
+      - ./.cache/models:/home/appuser/.cache/huggingface
     deploy:
       resources:
         reservations:
