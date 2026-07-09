@@ -243,13 +243,14 @@ def create_rerank(request: RerankRequest):
         # Calculate token usage
         tokenizer = model.tokenizer
         total_tokens = 0
+        # Optimization: Pre-calculate query tokens and special tokens to avoid redundant work in the loop
+        q_tokens = len(tokenizer.encode(request.query, add_special_tokens=False))
+        special_tokens = tokenizer.num_special_tokens_to_add(True)
+
         for pair in pairs:
-            # For cross-encoders, we usually count both parts
-            q_tokens = len(tokenizer.encode(pair[0], add_special_tokens=False))
+            # For cross-encoders, we count both parts
             d_tokens = len(tokenizer.encode(pair[1], add_special_tokens=False))
-            total_tokens += (
-                q_tokens + d_tokens + tokenizer.num_special_tokens_to_add(True)
-            )
+            total_tokens += q_tokens + d_tokens + special_tokens
 
         usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
 
