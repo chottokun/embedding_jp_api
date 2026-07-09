@@ -29,15 +29,7 @@ class MockTokenizer:
     def num_special_tokens_to_add(self, pair):
         return 0
 
-    def __call__(
-        self,
-        text,
-        padding=False,
-        truncation=False,
-        max_length=None,
-        add_special_tokens=False,
-        return_tensors=None,
-    ):
+    def __call__(self, text, **kwargs):
         # Supports both single string and list of strings (batch)
         if isinstance(text, str):
             input_ids = self.encode(text)
