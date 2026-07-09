@@ -1,4 +1,5 @@
 import os
+from typing import Any, List, Tuple
 
 # Disable tokenizer parallelism to prevent "Already Borrowed" errors and deadlocks
 # in multi-process/multi-threaded environments.
@@ -112,31 +113,27 @@ async def global_exception_handler(request: Request, exc: Exception):
     return response
 
 
-@app.post(
-    "/v1/embeddings",
-    response_model=EmbeddingResponse,
-    dependencies=[Depends(verify_api_key)],
-)
-def create_embeddings(request: EmbeddingRequest):
+def _get_model_or_400(model_name: str, model_type: str) -> Any:
     """
-    Creates embeddings for the given input, following OpenAI's API format.
+    Helper to get a model or raise a 400 HTTPException.
     """
-    if request.model not in EMBEDDING_MODELS:
+    supported_models = EMBEDDING_MODELS if model_type == "embedding" else RERANK_MODELS
+    if model_name not in supported_models:
         raise HTTPException(
-            status_code=400, detail=f"Model '{request.model}' not found for embeddings."
+            status_code=400,
+            detail=f"Model '{model_name}' not found for {model_type}s.",
         )
 
     try:
-        model = get_model(request.model)
+        return get_model(model_name)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    inputs = request.input if isinstance(request.input, list) else [request.input]
 
-    max_seq_length = getattr(model, "max_seq_length", 8192)
-    tokenizer = model.tokenizer
-
-    # Optimization: Determine prefix once per request
+def _determine_ruri_prefix(request: EmbeddingRequest) -> str:
+    """
+    Determines the prefix for ruri-v3 models based on request parameters.
+    """
     prefix = ""
     if "ruri-v3" in request.model:
         if request.input_type in RURI_PREFIX_MAP:
@@ -147,20 +144,29 @@ def create_embeddings(request: EmbeddingRequest):
                 prefix = RURI_PREFIX_MAP["query"]
             else:
                 prefix = RURI_PREFIX_MAP["document"]
+    return prefix
 
-    # 1. Prepare strings with prefixes
-    # If the text already starts with the prefix, we don't add it again.
-    if prefix:
-        processed_inputs = [
-            text if text.startswith(prefix) else f"{prefix}{text}" for text in inputs
-        ]
-    else:
-        processed_inputs = inputs
 
-    # Get embeddings and process tokens under a single lock to avoid "Already borrowed" inside library calls
-    with model.lock:
-        # 2. Batch tokenize to calculate usage and truncate if necessary
-        # Doing this inside model.lock ensures the tokenizer state is safe
+def _apply_prefix(inputs: List[str], prefix: str) -> List[str]:
+    """
+    Applies a prefix to each input string if it doesn't already start with it.
+    """
+    if not prefix:
+        return inputs
+    return [text if text.startswith(prefix) else f"{prefix}{text}" for text in inputs]
+
+
+def _tokenize_and_truncate_embeddings(
+    model: Any, inputs: List[str]
+) -> Tuple[List[str], Usage]:
+    """
+    Handles batch tokenization, truncation, and usage calculation for embeddings.
+    """
+    max_seq_length = getattr(model, "max_seq_length", 8192)
+    tokenizer = model.tokenizer
+    processed_inputs = list(inputs)  # Make a copy to avoid side effects
+
+    with model.tokenizer_lock:
         total_tokens = 0
         special_tokens_count = tokenizer.num_special_tokens_to_add(False)
         limit = max_seq_length - special_tokens_count
@@ -181,8 +187,31 @@ def create_embeddings(request: EmbeddingRequest):
                     total_tokens += len(ids) + special_tokens_count
 
         usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+    return processed_inputs, usage
 
-        # 3. Model inference
+
+@app.post(
+    "/v1/embeddings",
+    response_model=EmbeddingResponse,
+    dependencies=[Depends(verify_api_key)],
+)
+def create_embeddings(request: EmbeddingRequest):
+    """
+    Creates embeddings for the given input, following OpenAI's API format.
+    """
+    model = _get_model_or_400(request.model, "embedding")
+
+    inputs = request.input if isinstance(request.input, list) else [request.input]
+
+    prefix = _determine_ruri_prefix(request)
+    processed_inputs = _apply_prefix(inputs, prefix)
+
+    # 1. Tokenize, truncate and calculate usage
+    # This runs under model.tokenizer_lock but outside model.lock to improve concurrency
+    processed_inputs, usage = _tokenize_and_truncate_embeddings(model, processed_inputs)
+
+    # 2. Model inference under a single lock
+    with model.lock:
         vectors = model.encode(processed_inputs)
 
     # Create response data
@@ -204,15 +233,7 @@ def create_rerank(request: RerankRequest):
     """
     Reranks a list of documents for a given query.
     """
-    if request.model not in RERANK_MODELS:
-        raise HTTPException(
-            status_code=400, detail=f"Model '{request.model}' not found for reranking."
-        )
-
-    try:
-        model = get_model(request.model)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    model = _get_model_or_400(request.model, "rerank")
 
     # Reranking and token count within the same lock
     with model.lock:

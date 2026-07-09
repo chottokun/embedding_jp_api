@@ -1,7 +1,7 @@
-
 import time
 import threading
 import concurrent.futures
+
 
 class MockModel:
     def __init__(self):
@@ -17,26 +17,32 @@ class MockModel:
         time.sleep(0.1)
         return [0.5] * len(data)
 
+
 def baseline_call(model, data):
     with model.lock:
         tokens = model.tokenize(data)
         result = model.predict(data)
     return tokens, result
 
+
 def optimized_call(model, data):
-    tokens = model.tokenize(data) # Outside lock
+    tokens = model.tokenize(data)  # Outside lock
     with model.lock:
         result = model.predict(data)
     return tokens, result
 
+
 def run_test(name, func, model, num_requests):
     start = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_requests) as executor:
-        futures = [executor.submit(func, model, ["doc"] * 10) for _ in range(num_requests)]
+        futures = [
+            executor.submit(func, model, ["doc"] * 10) for _ in range(num_requests)
+        ]
         concurrent.futures.wait(futures)
     elapsed = time.perf_counter() - start
     print(f"{name}: {elapsed:.4f}s")
     return elapsed
+
 
 if __name__ == "__main__":
     model = MockModel()
