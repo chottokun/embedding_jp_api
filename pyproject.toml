@@ -24,6 +24,7 @@ dev = [
     "pytest>=8.4.2",
     "locust>=2.40.4",
     "gunicorn",
+    "ruff",
 ]
 
 [build-system]
