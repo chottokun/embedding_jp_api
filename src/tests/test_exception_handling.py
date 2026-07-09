@@ -3,6 +3,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 from app.main import app
+from app.config import EMBEDDING_MODELS, RERANK_MODELS
 
 # Disable raising server exceptions to allow testing the 500 error handler
 client = TestClient(app, raise_server_exceptions=False)
@@ -39,6 +40,43 @@ def test_unhandled_exception_caught(mock_get_model):
     assert response.json()["detail"] == "Internal Server Error"
     # Security check: Ensure the internal error message is NOT leaked
     assert "Unexpected Database Failure" not in response.text
+
+
+@patch("app.main.get_model")
+def test_get_model_value_error_embeddings(mock_get_model):
+    """
+    Ensure that ValueError during model loading in embeddings is caught
+    and returned as a 400 Bad Request.
+    """
+    mock_get_model.side_effect = ValueError("Custom Model Load Error")
+
+    # Use a valid model name so we pass the initial validation check
+    valid_model = EMBEDDING_MODELS[0]
+    response = client.post(
+        "/v1/embeddings", json={"input": "test", "model": valid_model}
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Custom Model Load Error"
+
+
+@patch("app.main.get_model")
+def test_get_model_value_error_rerank(mock_get_model):
+    """
+    Ensure that ValueError during model loading in reranking is caught
+    and returned as a 400 Bad Request.
+    """
+    mock_get_model.side_effect = ValueError("Custom Rerank Load Error")
+
+    # Use a valid model name so we pass the initial validation check
+    valid_model = RERANK_MODELS[0]
+    response = client.post(
+        "/v1/rerank",
+        json={"query": "test", "documents": ["doc"], "model": valid_model},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Custom Rerank Load Error"
 
 
 @patch("app.main.get_model")
