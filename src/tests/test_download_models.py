@@ -1,6 +1,5 @@
 import pytest
-import yaml
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, mock_open
 from app.download_models import download_models
 
 @patch("builtins.print")
