@@ -44,6 +44,9 @@ MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", "65536"))
 # Clients should batch requests if they need to process more items.
 MAX_INPUT_ITEMS = int(os.getenv("MAX_INPUT_ITEMS", "256"))
 
+# API Key for authentication. If not set, authentication is disabled.
+API_KEY = os.getenv("API_KEY")
+
 # --- Offline Mode Configuration ---
 OFFLINE_MODE = os.getenv("OFFLINE_MODE", "false").lower() == "true"
 if OFFLINE_MODE:

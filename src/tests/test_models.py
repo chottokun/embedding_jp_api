@@ -6,6 +6,7 @@ from unittest.mock import patch, MagicMock
 from app.models import get_model, _model_cache
 from app.config import EMBEDDING_MODELS, RERANK_MODELS
 
+
 @pytest.fixture(autouse=True)
 def clear_cache():
     """Clear the model cache before and after each test."""
@@ -13,6 +14,7 @@ def clear_cache():
     _model_cache.clear()
     yield
     _model_cache.clear()
+
 
 def test_get_model_unsupported_error():
     """Test that get_model raises ValueError for unsupported models."""
@@ -25,6 +27,7 @@ def test_get_model_unsupported_error():
         get_model(invalid_model)
 
     assert f"Model '{invalid_model}' is not supported." in str(excinfo.value)
+
 
 @patch("torch.cuda.is_available", return_value=False)
 @patch("app.models.SentenceTransformer")
@@ -50,6 +53,7 @@ def test_get_model_embedding_success(mock_st, mock_cuda):
     assert hasattr(model, "tokenizer_lock")
     assert not isinstance(model.tokenizer_lock, MagicMock)
 
+
 @patch("torch.cuda.is_available", return_value=True)
 @patch("app.models.CrossEncoder")
 def test_get_model_rerank_success(mock_ce, mock_cuda):
@@ -74,6 +78,7 @@ def test_get_model_rerank_success(mock_ce, mock_cuda):
     assert hasattr(model, "tokenizer_lock")
     assert not isinstance(model.tokenizer_lock, MagicMock)
 
+
 @patch("torch.cuda.is_available", return_value=False)
 @patch("app.models.SentenceTransformer")
 def test_get_model_caching(mock_st, mock_cuda):
@@ -95,6 +100,7 @@ def test_get_model_caching(mock_st, mock_cuda):
     # SentenceTransformer should only be called once due to caching
     mock_st.assert_called_once()
 
+
 def test_get_model_thread_safety():
     """Test that get_model is thread-safe when loading a new model."""
     if not EMBEDDING_MODELS:
@@ -104,6 +110,7 @@ def test_get_model_thread_safety():
 
     call_count = 0
     call_count_lock = threading.Lock()
+
     def mocked_st(*args, **kwargs):
         nonlocal call_count
         with call_count_lock:
@@ -122,6 +129,7 @@ def test_get_model_thread_safety():
 
     # SentenceTransformer should have been called only once despite concurrent calls
     assert call_count == 1
+
 
 @patch("app.models.SentenceTransformer", side_effect=Exception("Failed to load"))
 def test_get_model_load_failure(mock_st):

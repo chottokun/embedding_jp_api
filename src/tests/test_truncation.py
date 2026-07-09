@@ -7,6 +7,7 @@ from app.config import EMBEDDING_MODELS
 client = TestClient(app)
 SUPPORTED_EMBED_MODEL = EMBEDDING_MODELS[0]
 
+
 @patch("app.main.get_model")
 def test_create_embeddings_truncation_logic(mock_get_model):
     """
@@ -34,11 +35,12 @@ def test_create_embeddings_truncation_logic(mock_get_model):
 
     # We need a Lock for the mock model
     import threading
+
     mock_model.lock = threading.Lock()
 
     request_payload = {
         "input": "this text is way too long",
-        "model": SUPPORTED_EMBED_MODEL
+        "model": SUPPORTED_EMBED_MODEL,
     }
 
     response = client.post("/v1/embeddings", json=request_payload)
@@ -53,6 +55,7 @@ def test_create_embeddings_truncation_logic(mock_get_model):
     data = response.json()
     assert data["usage"]["total_tokens"] == 10
     assert data["usage"]["prompt_tokens"] == 10
+
 
 @patch("app.main.get_model")
 def test_create_embeddings_no_truncation_needed(mock_get_model):
@@ -72,12 +75,10 @@ def test_create_embeddings_no_truncation_needed(mock_get_model):
     mock_model.encode.return_value = np.array([[0.1] * 768])
 
     import threading
+
     mock_model.lock = threading.Lock()
 
-    request_payload = {
-        "input": "short text",
-        "model": SUPPORTED_EMBED_MODEL
-    }
+    request_payload = {"input": "short text", "model": SUPPORTED_EMBED_MODEL}
 
     response = client.post("/v1/embeddings", json=request_payload)
 
