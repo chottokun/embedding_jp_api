@@ -182,7 +182,10 @@ def create_embeddings(request: EmbeddingRequest):
 
 
 @app.post(
-    "/v1/rerank", response_model=RerankResponse, dependencies=[Depends(verify_api_key)]
+    "/v1/rerank",
+    response_model=RerankResponse,
+    response_model_exclude_none=True,
+    dependencies=[Depends(verify_api_key)],
 )
 def create_rerank(request: RerankRequest):
     """
