@@ -1,5 +1,8 @@
-from fastapi.testclient import TestClient
 from unittest.mock import patch
+
+import numpy as np
+from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)
@@ -18,7 +21,6 @@ def test_auth_no_key_configured():
             mock_model.tokenizer.side_effect = lambda text, **kwargs: {
                 "input_ids": [[1]]
             }
-            import numpy as np
 
             mock_model.encode.return_value = np.array([[0.1]])
 
@@ -61,7 +63,6 @@ def test_auth_key_configured_correct_key():
             mock_model.tokenizer.side_effect = lambda text, **kwargs: {
                 "input_ids": [[1]]
             }
-            import numpy as np
 
             mock_model.encode.return_value = np.array([[0.1]])
 
