@@ -317,12 +317,12 @@ def create_rerank(request: RerankRequest):
 
     model = _get_model_or_400(request.model, "rerank")
 
-    # Reranking and token count within the same lock
-    with model.lock:
-        # Prepare pairs for the cross-encoder
-        pairs = [[request.query, doc] for doc in request.documents]
+    # Prepare pairs for the cross-encoder outside the inference lock
+    pairs = [[request.query, doc] for doc in request.documents]
 
-        # Calculate token usage
+    # Calculate token usage outside the inference lock to improve concurrency
+    # We acquire the tokenizer_lock to make it thread-safe for the tokenizer calls
+    with model.tokenizer_lock:
         tokenizer = model.tokenizer
         total_tokens = 0
         # Optimization: Pre-calculate query tokens and special tokens to avoid redundant work in the loop
@@ -336,6 +336,8 @@ def create_rerank(request: RerankRequest):
 
         usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
 
+    # Reranking inference inside the model lock
+    with model.lock:
         # Get scores
         scores = model.predict(pairs)
 
