@@ -1,6 +1,9 @@
+import pytest
 from fastapi.testclient import TestClient
+from fastapi.security import HTTPAuthorizationCredentials
+from fastapi import HTTPException
 from unittest.mock import patch
-from app.main import app
+from app.main import app, verify_api_key
 
 client = TestClient(app)
 
@@ -71,3 +74,52 @@ def test_auth_key_configured_correct_key():
                 headers={"Authorization": "Bearer secret-key"},
             )
             assert response.status_code == 200
+
+
+@pytest.mark.anyio
+async def test_verify_api_key_no_key_no_auth():
+    """verify_api_key should allow None auth when API_KEY is None."""
+    with patch("app.main.API_KEY", None):
+        result = await verify_api_key(None)
+        assert result is None
+
+
+@pytest.mark.anyio
+async def test_verify_api_key_no_key_with_auth():
+    """verify_api_key should allow and return auth when API_KEY is None."""
+    with patch("app.main.API_KEY", None):
+        auth = HTTPAuthorizationCredentials(scheme="Bearer", credentials="any-key")
+        result = await verify_api_key(auth)
+        assert result == auth
+
+
+@pytest.mark.anyio
+async def test_verify_api_key_with_key_no_auth():
+    """verify_api_key should raise 401 when API_KEY is set but auth is None."""
+    with patch("app.main.API_KEY", "secret-key"):
+        with pytest.raises(HTTPException) as exc_info:
+            await verify_api_key(None)
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.detail == "Invalid or missing API Key"
+        assert exc_info.value.headers == {"WWW-Authenticate": "Bearer"}
+
+
+@pytest.mark.anyio
+async def test_verify_api_key_with_key_wrong_auth():
+    """verify_api_key should raise 401 when API_KEY is set but credentials do not match."""
+    with patch("app.main.API_KEY", "secret-key"):
+        auth = HTTPAuthorizationCredentials(scheme="Bearer", credentials="wrong-key")
+        with pytest.raises(HTTPException) as exc_info:
+            await verify_api_key(auth)
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.detail == "Invalid or missing API Key"
+        assert exc_info.value.headers == {"WWW-Authenticate": "Bearer"}
+
+
+@pytest.mark.anyio
+async def test_verify_api_key_with_key_correct_auth():
+    """verify_api_key should allow and return auth when API_KEY is set and credentials match."""
+    with patch("app.main.API_KEY", "secret-key"):
+        auth = HTTPAuthorizationCredentials(scheme="Bearer", credentials="secret-key")
+        result = await verify_api_key(auth)
+        assert result == auth
