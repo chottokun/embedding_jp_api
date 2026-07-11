@@ -221,6 +221,69 @@ def _tokenize_and_truncate_embeddings(
     return processed_inputs, usage
 
 
+def _calculate_rerank_tokens(model: Any, query: str, documents: List[str]) -> Usage:
+    """
+    Calculates token usage for reranking based on query and documents.
+    """
+    tokenizer = model.tokenizer
+    total_tokens = 0
+    # Optimization: Pre-calculate query tokens and special tokens to avoid redundant work in the loop
+    q_tokens = len(tokenizer.encode(query, add_special_tokens=False))
+    special_tokens = tokenizer.num_special_tokens_to_add(True)
+
+    for doc in documents:
+        # For cross-encoders, we count both parts (query + document)
+        d_tokens = len(tokenizer.encode(doc, add_special_tokens=False))
+        total_tokens += q_tokens + d_tokens + special_tokens
+
+    return Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+
+
+def _sort_and_format_rerank_results(
+    results: List[dict], top_n: Optional[int]
+) -> List[RerankData]:
+    """
+    Sorts and filters rerank results by score (descending order) and formats for the response schema.
+    """
+    # Optimization: Use heapq.nlargest for top_n which is O(N log k) instead of O(N log N)
+    if top_n is not None:
+        # Use (score, -index) tuple key to ensure stability (deterministic tie-breaking)
+        # matching Python's stable sort behavior where earlier indices come first for same score.
+        sorted_results = heapq.nlargest(
+            top_n, results, key=lambda x: (x["score"], -x["document"])
+        )
+    else:
+        sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
+
+    return [RerankData(**result) for result in sorted_results]
+
+
+def _proxy_rerank_to_tei(request: RerankRequest) -> RerankResponse:
+    """
+    Proxies a reranking request to TEI.
+    """
+    tei_results = _proxy_to_tei(
+        RERANK_TEI_URL,
+        "/rerank",
+        {"query": request.query, "texts": request.documents},
+    )
+
+    results = []
+    for item in tei_results:
+        idx = item["index"]
+        score = item["score"]
+        result_item = {"document": idx, "score": float(score)}
+        if request.return_documents:
+            result_item["text"] = request.documents[idx]
+        results.append(result_item)
+
+    response_data = _sort_and_format_rerank_results(results, request.top_n)
+    usage = Usage(prompt_tokens=0, total_tokens=0)
+    return RerankResponse(
+        query=request.query, data=response_data, model=request.model, usage=usage
+    )
+
+
 @app.post(
     "/v1/embeddings",
     response_model=EmbeddingResponse,
@@ -286,34 +349,7 @@ def create_rerank(request: RerankRequest):
 
     # Proxy to TEI if URL is configured
     if RERANK_TEI_URL:
-        tei_results = _proxy_to_tei(
-            RERANK_TEI_URL,
-            "/rerank",
-            {"query": request.query, "texts": request.documents},
-        )
-
-        results = []
-        for item in tei_results:
-            idx = item["index"]
-            score = item["score"]
-            result_item = {"document": idx, "score": float(score)}
-            if request.return_documents:
-                result_item["text"] = request.documents[idx]
-            results.append(result_item)
-
-        # Sort and filter by top_n
-        if request.top_n is not None:
-            sorted_results = heapq.nlargest(
-                request.top_n, results, key=lambda x: (x["score"], -x["document"])
-            )
-        else:
-            sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
-
-        response_data = [RerankData(**result) for result in sorted_results]
-        usage = Usage(prompt_tokens=0, total_tokens=0)
-        return RerankResponse(
-            query=request.query, data=response_data, model=request.model, usage=usage
-        )
+        return _proxy_rerank_to_tei(request)
 
     model = _get_model_or_400(request.model, "rerank")
 
@@ -323,18 +359,7 @@ def create_rerank(request: RerankRequest):
         pairs = [[request.query, doc] for doc in request.documents]
 
         # Calculate token usage
-        tokenizer = model.tokenizer
-        total_tokens = 0
-        # Optimization: Pre-calculate query tokens and special tokens to avoid redundant work in the loop
-        q_tokens = len(tokenizer.encode(request.query, add_special_tokens=False))
-        special_tokens = tokenizer.num_special_tokens_to_add(True)
-
-        for pair in pairs:
-            # For cross-encoders, we count both parts
-            d_tokens = len(tokenizer.encode(pair[1], add_special_tokens=False))
-            total_tokens += q_tokens + d_tokens + special_tokens
-
-        usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
+        usage = _calculate_rerank_tokens(model, request.query, request.documents)
 
         # Get scores
         scores = model.predict(pairs)
@@ -347,19 +372,8 @@ def create_rerank(request: RerankRequest):
             result_item["text"] = request.documents[i]
         results.append(result_item)
 
-    # Sort results by score in descending order
-    # Optimization: Use heapq.nlargest for top_n which is O(N log k) instead of O(N log N)
-    if request.top_n is not None:
-        # Use (score, -index) tuple key to ensure stability (deterministic tie-breaking)
-        # matching Python's stable sort behavior where earlier indices come first for same score.
-        sorted_results = heapq.nlargest(
-            request.top_n, results, key=lambda x: (x["score"], -x["document"])
-        )
-    else:
-        sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
-
-    # Format for response schema
-    response_data = [RerankData(**result) for result in sorted_results]
+    # Format and sort results
+    response_data = _sort_and_format_rerank_results(results, request.top_n)
 
     return RerankResponse(
         query=request.query, data=response_data, model=request.model, usage=usage
