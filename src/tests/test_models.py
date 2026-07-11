@@ -1,4 +1,5 @@
 import pytest
+import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -31,8 +32,8 @@ def test_get_model_unsupported_error():
 
 @patch("torch.cuda.is_available", return_value=False)
 @patch("app.models.SentenceTransformer")
-def test_get_model_embedding_success(mock_st, mock_cuda):
-    """Test that get_model correctly loads an embedding model."""
+def test_get_model_embedding_success(mock_st, mock_cuda, caplog):
+    """Test that get_model correctly loads an embedding model and logs the output."""
     if not EMBEDDING_MODELS:
         pytest.skip("No embedding models configured")
 
@@ -40,7 +41,8 @@ def test_get_model_embedding_success(mock_st, mock_cuda):
     mock_instance = MagicMock()
     mock_st.return_value = mock_instance
 
-    model = get_model(model_name)
+    with caplog.at_level(logging.INFO):
+        model = get_model(model_name)
 
     assert model == mock_instance
     mock_st.assert_called_once_with(model_name, device="cpu")
@@ -53,11 +55,15 @@ def test_get_model_embedding_success(mock_st, mock_cuda):
     assert hasattr(model, "tokenizer_lock")
     assert not isinstance(model.tokenizer_lock, MagicMock)
 
+    # Verify that the print replaced logging occurs
+    assert f"Loading model '{model_name}' on device 'cpu'..." in caplog.text
+    assert f"Model '{model_name}' loaded successfully." in caplog.text
+
 
 @patch("torch.cuda.is_available", return_value=True)
 @patch("app.models.CrossEncoder")
-def test_get_model_rerank_success(mock_ce, mock_cuda):
-    """Test that get_model correctly loads a rerank model."""
+def test_get_model_rerank_success(mock_ce, mock_cuda, caplog):
+    """Test that get_model correctly loads a rerank model and logs the output."""
     if not RERANK_MODELS:
         pytest.skip("No rerank models configured")
 
@@ -65,7 +71,8 @@ def test_get_model_rerank_success(mock_ce, mock_cuda):
     mock_instance = MagicMock()
     mock_ce.return_value = mock_instance
 
-    model = get_model(model_name)
+    with caplog.at_level(logging.INFO):
+        model = get_model(model_name)
 
     assert model == mock_instance
     mock_ce.assert_called_once_with(model_name, device="cuda")
@@ -77,6 +84,10 @@ def test_get_model_rerank_success(mock_ce, mock_cuda):
     assert not isinstance(model.lock, MagicMock)
     assert hasattr(model, "tokenizer_lock")
     assert not isinstance(model.tokenizer_lock, MagicMock)
+
+    # Verify that the print replaced logging occurs
+    assert f"Loading model '{model_name}' on device 'cuda'..." in caplog.text
+    assert f"Model '{model_name}' loaded successfully." in caplog.text
 
 
 @patch("torch.cuda.is_available", return_value=False)

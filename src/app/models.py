@@ -1,6 +1,7 @@
 from .config import EMBEDDING_MODELS, RERANK_MODELS
 from sentence_transformers import SentenceTransformer, CrossEncoder
 import torch
+import logging
 
 import threading
 
@@ -20,7 +21,7 @@ def get_model(model_name: str):
             return _model_cache[model_name]
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"Loading model '{model_name}' on device '{device}'...")
+        logging.info(f"Loading model '{model_name}' on device '{device}'...")
 
         if model_name in EMBEDDING_MODELS:
             model = SentenceTransformer(model_name, device=device)
@@ -33,5 +34,5 @@ def get_model(model_name: str):
         model.lock = threading.Lock()
         model.tokenizer_lock = threading.Lock()
         _model_cache[model_name] = model
-        print(f"Model '{model_name}' loaded successfully.")
+        logging.info(f"Model '{model_name}' loaded successfully.")
         return model
