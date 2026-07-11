@@ -1,3 +1,4 @@
+import os
 import random
 from locust import HttpUser, task, between
 
@@ -55,7 +56,6 @@ class ApiUser(HttpUser):
             "apply_ruri_prefix": random.choice([True, False]),
         }
         headers = {}
-        import os
 
         api_key = os.getenv("API_KEY")
         if api_key:
@@ -78,7 +78,6 @@ class ApiUser(HttpUser):
             "return_documents": random.choice([True, False]),
         }
         headers = {}
-        import os
 
         api_key = os.getenv("API_KEY")
         if api_key:
