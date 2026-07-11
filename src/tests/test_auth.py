@@ -71,3 +71,29 @@ def test_auth_key_configured_correct_key():
                 headers={"Authorization": "Bearer secret-key"},
             )
             assert response.status_code == 200
+
+
+def test_api_key_timing_attack_protection():
+    """Verify that secrets.compare_digest is called to protect against timing attacks."""
+    with patch("app.main.API_KEY", "secret-key"):
+        with patch(
+            "app.main.secrets.compare_digest", return_value=True
+        ) as mock_compare:
+            with patch("app.main.get_model") as mock_get_model:
+                mock_model = mock_get_model.return_value
+                mock_model.tokenizer.num_special_tokens_to_add.return_value = 2
+                mock_model.max_seq_length = 8192
+                mock_model.tokenizer.side_effect = lambda text, **kwargs: {
+                    "input_ids": [[1]]
+                }
+                import numpy as np
+
+                mock_model.encode.return_value = np.array([[0.1]])
+
+                response = client.post(
+                    "/v1/embeddings",
+                    json={"input": "test", "model": "cl-nagoya/ruri-v3-30m"},
+                    headers={"Authorization": "Bearer secret-key"},
+                )
+                assert response.status_code == 200
+                mock_compare.assert_called_once_with("secret-key", "secret-key")
