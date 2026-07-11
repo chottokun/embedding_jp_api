@@ -324,15 +324,29 @@ def create_rerank(request: RerankRequest):
 
         # Calculate token usage
         tokenizer = model.tokenizer
-        total_tokens = 0
         # Optimization: Pre-calculate query tokens and special tokens to avoid redundant work in the loop
         q_tokens = len(tokenizer.encode(request.query, add_special_tokens=False))
         special_tokens = tokenizer.num_special_tokens_to_add(True)
 
-        for pair in pairs:
-            # For cross-encoders, we count both parts
-            d_tokens = len(tokenizer.encode(pair[1], add_special_tokens=False))
-            total_tokens += q_tokens + d_tokens + special_tokens
+        try:
+            from collections.abc import Mapping
+
+            # Batch tokenize all documents to avoid O(N) single-string tokenization overhead
+            encodings = tokenizer(request.documents, add_special_tokens=False)
+            if not isinstance(encodings, Mapping) or "input_ids" not in encodings:
+                raise ValueError("Unexpected tokenizer output format")
+
+            total_tokens = sum(
+                q_tokens + len(d_ids) + special_tokens
+                for d_ids in encodings["input_ids"]
+            )
+        except Exception:
+            # Fallback for custom/mock tokenizers that do not support batch call
+            total_tokens = 0
+            for pair in pairs:
+                # For cross-encoders, we count both parts
+                d_tokens = len(tokenizer.encode(pair[1], add_special_tokens=False))
+                total_tokens += q_tokens + d_tokens + special_tokens
 
         usage = Usage(prompt_tokens=total_tokens, total_tokens=total_tokens)
 

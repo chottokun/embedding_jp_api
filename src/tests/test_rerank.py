@@ -20,7 +20,7 @@ def test_create_rerank_successful(mock_get_model):
     # Return scores in an unsorted order to test sorting logic
     mock_model.predict.return_value = [0.1, 0.9, 0.5]
 
-    mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
+    mock_model.tokenizer.side_effect = lambda queries, docs=None, **kwargs: {
         "input_ids": [[1, 2, 3, 4, 5] for _ in range(len(queries))]
     }
 
@@ -69,7 +69,7 @@ def test_rerank_top_n(mock_get_model):
     scores = [0.1, 0.9, 0.5, 0.8, 0.2]
     mock_model.predict.return_value = scores
 
-    mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
+    mock_model.tokenizer.side_effect = lambda queries, docs=None, **kwargs: {
         "input_ids": [[1] for _ in range(len(queries))]
     }
 
@@ -111,7 +111,7 @@ def test_rerank_top_n_larger_than_docs(mock_get_model):
     scores = [0.1, 0.2]
     mock_model.predict.return_value = scores
 
-    mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
+    mock_model.tokenizer.side_effect = lambda queries, docs=None, **kwargs: {
         "input_ids": [[1] for _ in range(len(queries))]
     }
 
@@ -140,7 +140,7 @@ def test_rerank_stability(mock_get_model):
     scores = [0.5, 0.5, 0.5]
     mock_model.predict.return_value = scores
 
-    mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
+    mock_model.tokenizer.side_effect = lambda queries, docs=None, **kwargs: {
         "input_ids": [[1] for _ in range(len(queries))]
     }
 
@@ -170,7 +170,7 @@ def test_rerank_top_n_zero(mock_get_model):
     scores = [0.1, 0.9, 0.5]
     mock_model.predict.return_value = scores
 
-    mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
+    mock_model.tokenizer.side_effect = lambda queries, docs=None, **kwargs: {
         "input_ids": [[1] for _ in range(len(queries))]
     }
 
@@ -198,7 +198,7 @@ def test_rerank_return_documents(mock_get_model):
     mock_model = mock_get_model.return_value
     mock_model.predict.return_value = [0.5, 0.8]
 
-    mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
+    mock_model.tokenizer.side_effect = lambda queries, docs=None, **kwargs: {
         "input_ids": [[1] for _ in range(len(queries))]
     }
 
@@ -232,7 +232,7 @@ def test_rerank_no_return_documents(mock_get_model):
     mock_model = mock_get_model.return_value
     mock_model.predict.return_value = [0.5]
 
-    mock_model.tokenizer.side_effect = lambda queries, docs, **kwargs: {
+    mock_model.tokenizer.side_effect = lambda queries, docs=None, **kwargs: {
         "input_ids": [[1] for _ in range(len(queries))]
     }
 
