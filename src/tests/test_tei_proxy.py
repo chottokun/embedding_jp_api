@@ -122,3 +122,50 @@ def test_tei_rerank_proxy_failure():
         response = client.post("/v1/rerank", json=payload)
         assert response.status_code == 500
         assert "proxy" in response.json()["detail"]
+
+
+def test_tei_proxy_uses_pooled_client():
+    """Verify that _proxy_to_tei correctly uses the pooled client from app.state when initialized,
+
+    and gracefully falls back to a local client when not initialized.
+    """
+    from unittest.mock import MagicMock
+    from app.main import _proxy_to_tei, app
+    import httpx
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"success": True}
+
+    # 1. Test fallback when app.state does not have tei_client initialized
+    if hasattr(app.state, "tei_client"):
+        delattr(app.state, "tei_client")
+
+    with patch("httpx.Client") as mock_client_class:
+        mock_client_instance = mock_client_class.return_value.__enter__.return_value
+        mock_client_instance.post.return_value = mock_response
+
+        res = _proxy_to_tei("http://tei-url", "/path", {"test": "data"})
+        assert res == {"success": True}
+        mock_client_instance.post.assert_called_once_with(
+            "http://tei-url/path", json={"test": "data"}
+        )
+
+    # 2. Test when app.state.tei_client IS initialized
+    mock_pooled_client = MagicMock(spec=httpx.Client)
+    mock_pooled_client.post.return_value = mock_response
+    app.state.tei_client = mock_pooled_client
+
+    with patch("httpx.Client") as mock_client_class:
+        res = _proxy_to_tei("http://tei-url", "/path", {"test": "data"})
+        assert res == {"success": True}
+        # Verify that httpx.Client constructor was NOT called (i.e. local client not instantiated)
+        mock_client_class.assert_not_called()
+        # Verify pooled client was called
+        mock_pooled_client.post.assert_called_once_with(
+            "http://tei-url/path", json={"test": "data"}
+        )
+
+    # Clean up
+    if hasattr(app.state, "tei_client"):
+        delattr(app.state, "tei_client")

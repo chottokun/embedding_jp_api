@@ -1,6 +1,7 @@
 # ruff: noqa: E402
 import os
 from typing import Any, List, Tuple
+from contextlib import asynccontextmanager
 
 # Disable tokenizer parallelism to prevent "Already Borrowed" errors and deadlocks
 # in multi-process/multi-threaded environments.
@@ -48,7 +49,18 @@ from .config import (
     RERANK_TEI_URL,
 )
 
-app = FastAPI(title="OpenAI-Compatible API")
+
+@asynccontextmanager
+async def lifespan(app_instance: FastAPI):
+    # Initialize global HTTP client with connection pooling for TEI proxy requests
+    app_instance.state.tei_client = httpx.Client(timeout=30.0)
+    try:
+        yield
+    finally:
+        app_instance.state.tei_client.close()
+
+
+app = FastAPI(title="OpenAI-Compatible API", lifespan=lifespan)
 
 # Authentication dependency
 security = HTTPBearer(auto_error=False)
@@ -128,14 +140,21 @@ def _proxy_to_tei(tei_url: str, path: str, json_data: dict) -> Any:
     Helper to send a POST request to TEI and return the JSON response.
     """
     try:
-        with httpx.Client(timeout=30.0) as client:
-            response = client.post(f"{tei_url}{path}", json=json_data)
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"TEI Proxy Error ({response.status_code}): {response.text}",
-                )
-            return response.json()
+        # Utilize the pooled client from app.state if initialized;
+        # otherwise gracefully fall back to a local context-managed client.
+        shared_client = getattr(app.state, "tei_client", None)
+        if shared_client is not None:
+            response = shared_client.post(f"{tei_url}{path}", json=json_data)
+        else:
+            with httpx.Client(timeout=30.0) as client:
+                response = client.post(f"{tei_url}{path}", json=json_data)
+
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=500,
+                detail=f"TEI Proxy Error ({response.status_code}): {response.text}",
+            )
+        return response.json()
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
