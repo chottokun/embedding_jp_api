@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 import numpy as np
+import pytest
 
 from app.main import app
 from app.config import EMBEDDING_MODELS, RERANK_MODELS
@@ -11,41 +12,58 @@ SUPPORTED_EMBED_MODEL = EMBEDDING_MODELS[0]
 SUPPORTED_RERANK_MODEL = RERANK_MODELS[0]
 
 
-def setup_mock_model(mock_get_model, model_type="embedding"):
-    mock_model = mock_get_model.return_value
+@pytest.fixture
+def setup_mock_model():
+    started_patches = []
 
-    if model_type == "embedding":
-        mock_model.encode.return_value = np.array([[0.1, 0.2, 0.3]])
+    def _setup(mock_get_model, model_type="embedding"):
+        mock_model = mock_get_model.return_value
 
-        def mock_tokenizer_call(text, **kwargs):
-            if isinstance(text, str):
-                tokens = [1] * 10 if "検索" in text else [1, 2, 3]
-                return {"input_ids": tokens}
-            elif isinstance(text, list):
-                ids = [[1] * 10 if "検索" in t else [1, 2, 3] for t in text]
-                return {"input_ids": ids}
-            return {"input_ids": []}
+        if model_type == "embedding":
+            mock_model.encode.return_value = np.array([[0.1, 0.2, 0.3]])
 
-        mock_model.tokenizer.side_effect = mock_tokenizer_call
-        mock_model.tokenizer.num_special_tokens_to_add.return_value = 2
-        mock_model.max_seq_length = 8
+            def mock_tokenizer_call(text, **kwargs):
+                if isinstance(text, str):
+                    tokens = [1] * 10 if "検索" in text else [1, 2, 3]
+                    return {"input_ids": tokens}
+                elif isinstance(text, list):
+                    ids = [[1] * 10 if "検索" in t else [1, 2, 3] for t in text]
+                    return {"input_ids": ids}
+                return {"input_ids": []}
 
-        # For truncation test
-        mock_model.tokenizer.decode.return_value = "truncated text"
+            mock_model.tokenizer.side_effect = mock_tokenizer_call
+            mock_model.tokenizer.num_special_tokens_to_add.return_value = 2
+            mock_model.max_seq_length = 8
 
-    else:  # rerank
-        mock_model.predict.return_value = np.array([0.9, 0.8])
-        mock_model.tokenizer.encode.side_effect = lambda *args, **kwargs: [1, 2, 3]
-        mock_model.tokenizer.num_special_tokens_to_add.return_value = 1
+            # For truncation test
+            mock_model.tokenizer.decode.return_value = "truncated text"
 
-    mock_model.lock = patch("threading.Lock").start()
-    mock_model.tokenizer_lock = patch("threading.Lock").start()
+        else:  # rerank
+            mock_model.predict.return_value = np.array([0.9, 0.8])
+            mock_model.tokenizer.encode.side_effect = lambda *args, **kwargs: [1, 2, 3]
+            mock_model.tokenizer.num_special_tokens_to_add.return_value = 1
 
-    return mock_model
+        lock_patch = patch("threading.Lock")
+        tokenizer_lock_patch = patch("threading.Lock")
+        mock_model.lock = lock_patch.start()
+        mock_model.tokenizer_lock = tokenizer_lock_patch.start()
+        started_patches.append(lock_patch)
+        started_patches.append(tokenizer_lock_patch)
+
+        return mock_model
+
+    yield _setup
+
+    for p in started_patches:
+        try:
+            p.stop()
+        except RuntimeError:
+            # Avoid error if patch has already been stopped
+            pass
 
 
 @patch("app.main.get_model")
-def test_embeddings_baseline(mock_get_model):
+def test_embeddings_baseline(mock_get_model, setup_mock_model):
     mock_model = setup_mock_model(mock_get_model, "embedding")
 
     # Test ruri-v3 prefix handling and truncation
@@ -66,7 +84,7 @@ def test_embeddings_baseline(mock_get_model):
 
 
 @patch("app.main.get_model")
-def test_rerank_baseline(mock_get_model):
+def test_rerank_baseline(mock_get_model, setup_mock_model):
     setup_mock_model(mock_get_model, "rerank")
 
     payload = {
