@@ -1,4 +1,3 @@
-
 import time
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
@@ -12,6 +11,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 sys.path.append(os.path.join(os.getcwd(), "src"))
 
 from app.main import app
+
 
 def benchmark_rerank_logic(num_docs=100):
     client = TestClient(app)
@@ -43,7 +43,7 @@ def benchmark_rerank_logic(num_docs=100):
         payload = {
             "query": "test query",
             "documents": [f"doc{i}" for i in range(num_docs)],
-            "model": "cl-nagoya/ruri-v3-reranker-310m"
+            "model": "cl-nagoya/ruri-v3-reranker-310m",
         }
 
         start_time = time.perf_counter()
@@ -54,8 +54,11 @@ def benchmark_rerank_logic(num_docs=100):
             print(f"Error: {response.status_code} - {response.text}")
 
     total_time = end_time - start_time
-    print(f"Total time for 1 request with {num_docs} documents: {total_time:.4f} seconds")
+    print(
+        f"Total time for 1 request with {num_docs} documents: {total_time:.4f} seconds"
+    )
     return total_time
+
 
 if __name__ == "__main__":
     # Warmup
@@ -68,4 +71,4 @@ if __name__ == "__main__":
     for i in range(iterations):
         total_baseline += benchmark_rerank_logic(num_docs=200)
 
-    print(f"Average baseline time: {total_baseline/iterations:.4f} seconds")
+    print(f"Average baseline time: {total_baseline / iterations:.4f} seconds")

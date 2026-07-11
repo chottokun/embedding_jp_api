@@ -122,3 +122,61 @@ def test_tei_rerank_proxy_failure():
         response = client.post("/v1/rerank", json=payload)
         assert response.status_code == 500
         assert "proxy" in response.json()["detail"]
+
+
+def test_direct_proxy_to_tei_success():
+    """Verify that _proxy_to_tei successfully returns JSON when HTTP response is 200."""
+    from app.main import _proxy_to_tei
+    from unittest.mock import MagicMock
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"success": True}
+
+    with patch("app.main._tei_client") as mock_client:
+        mock_client.post.return_value = mock_response
+
+        res = _proxy_to_tei("http://tei-url", "/path", {"data": "val"})
+
+        assert res == {"success": True}
+        mock_client.post.assert_called_once_with(
+            "http://tei-url/path", json={"data": "val"}
+        )
+
+
+def test_direct_proxy_to_tei_http_failure():
+    """Verify that _proxy_to_tei raises HTTPException when HTTP response is not 200."""
+    from app.main import _proxy_to_tei
+    from fastapi import HTTPException
+    from unittest.mock import MagicMock
+    import pytest
+
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    mock_response.text = "Internal Server Error in TEI"
+
+    with patch("app.main._tei_client") as mock_client:
+        mock_client.post.return_value = mock_response
+
+        with pytest.raises(HTTPException) as exc_info:
+            _proxy_to_tei("http://tei-url", "/path", {"data": "val"})
+
+        assert exc_info.value.status_code == 500
+        assert "TEI Proxy Error (500)" in exc_info.value.detail
+
+
+def test_direct_proxy_to_tei_network_failure():
+    """Verify that _proxy_to_tei raises HTTPException with 500 status code on general exception."""
+    from app.main import _proxy_to_tei
+    from fastapi import HTTPException
+    import httpx
+    import pytest
+
+    with patch("app.main._tei_client") as mock_client:
+        mock_client.post.side_effect = httpx.ConnectError("Connection refused")
+
+        with pytest.raises(HTTPException) as exc_info:
+            _proxy_to_tei("http://tei-url", "/path", {"data": "val"})
+
+        assert exc_info.value.status_code == 500
+        assert "Failed to proxy request to TEI" in exc_info.value.detail

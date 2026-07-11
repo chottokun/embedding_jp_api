@@ -39,6 +39,7 @@ from .schemas import (
     RerankData,
 )
 from .models import get_model
+from contextlib import asynccontextmanager
 from .config import (
     EMBEDDING_MODELS,
     RERANK_MODELS,
@@ -48,7 +49,19 @@ from .config import (
     RERANK_TEI_URL,
 )
 
-app = FastAPI(title="OpenAI-Compatible API")
+# Shared thread-safe HTTPX Client for TEI Proxying
+_tei_client = httpx.Client(timeout=30.0)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: no-op
+    yield
+    # Shutdown: Clean up connection pool
+    _tei_client.close()
+
+
+app = FastAPI(title="OpenAI-Compatible API", lifespan=lifespan)
 
 # Authentication dependency
 security = HTTPBearer(auto_error=False)
@@ -128,14 +141,13 @@ def _proxy_to_tei(tei_url: str, path: str, json_data: dict) -> Any:
     Helper to send a POST request to TEI and return the JSON response.
     """
     try:
-        with httpx.Client(timeout=30.0) as client:
-            response = client.post(f"{tei_url}{path}", json=json_data)
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"TEI Proxy Error ({response.status_code}): {response.text}",
-                )
-            return response.json()
+        response = _tei_client.post(f"{tei_url}{path}", json=json_data)
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=500,
+                detail=f"TEI Proxy Error ({response.status_code}): {response.text}",
+            )
+        return response.json()
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
