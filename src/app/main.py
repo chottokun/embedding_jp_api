@@ -1,5 +1,6 @@
 # ruff: noqa: E402
 import os
+import secrets
 from typing import Any, List, Tuple
 
 # Disable tokenizer parallelism to prevent "Already Borrowed" errors and deadlocks
@@ -58,7 +59,7 @@ async def verify_api_key(
     auth: Optional[HTTPAuthorizationCredentials] = Security(security),
 ):
     if API_KEY:
-        if auth is None or auth.credentials != API_KEY:
+        if auth is None or not secrets.compare_digest(auth.credentials, API_KEY):
             raise HTTPException(
                 status_code=401,
                 detail="Invalid or missing API Key",
