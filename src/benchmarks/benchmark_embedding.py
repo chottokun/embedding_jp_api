@@ -16,9 +16,6 @@ from app.config import EMBEDDING_MODELS
 
 
 class MockTokenizer:
-    def __init__(self):
-        pass
-
     def encode(self, text, add_special_tokens=False):
         # Simulate O(N) work
         return [ord(c) for c in text]
