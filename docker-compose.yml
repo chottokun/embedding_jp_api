@@ -9,6 +9,7 @@ services:
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:
+      - API_KEY=${API_KEY}
       - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
       - OFFLINE_MODE=${OFFLINE_MODE:-false}
       - HF_HOME=/home/appuser/.cache/huggingface
@@ -27,6 +28,7 @@ services:
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:
+      - API_KEY=${API_KEY}
       - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
       - OFFLINE_MODE=${OFFLINE_MODE:-false}
       - HF_HOME=/home/appuser/.cache/huggingface
