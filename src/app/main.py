@@ -132,9 +132,12 @@ def _proxy_to_tei(tei_url: str, path: str, json_data: dict) -> Any:
         with httpx.Client(timeout=30.0) as client:
             response = client.post(f"{tei_url}{path}", json=json_data)
             if response.status_code != 200:
+                error_msg = response.text
+                if len(error_msg) > 200:
+                    error_msg = error_msg[:200] + "..."
                 raise HTTPException(
                     status_code=500,
-                    detail=f"TEI Proxy Error ({response.status_code}): {response.text}",
+                    detail=f"TEI Proxy Error ({response.status_code}): {error_msg}",
                 )
             return response.json()
     except Exception as e:

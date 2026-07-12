@@ -122,3 +122,62 @@ def test_tei_rerank_proxy_failure():
         response = client.post("/v1/rerank", json=payload)
         assert response.status_code == 500
         assert "proxy" in response.json()["detail"]
+
+
+def test_proxy_to_tei_error_truncation():
+    """Verify that _proxy_to_tei limits the reflected length of response.text on failure."""
+    from app.main import _proxy_to_tei
+    from fastapi import HTTPException
+    import pytest
+
+    # We will mock httpx.Client in _proxy_to_tei to return a non-200 response
+    class MockResponse:
+        def __init__(self, status_code, text):
+            self.status_code = status_code
+            self.text = text
+
+    class MockClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+        def post(self, url, json):
+            # Return response with long text
+            return MockResponse(500, "A" * 500)
+
+    with patch("httpx.Client", MockClient):
+        with pytest.raises(HTTPException) as exc_info:
+            _proxy_to_tei("http://tei-url", "/path", {"data": "test"})
+
+        assert exc_info.value.status_code == 500
+        # The detail string should contain truncated response of exactly 200 'A's + "..."
+        expected_truncated_text = "A" * 200 + "..."
+        assert expected_truncated_text in exc_info.value.detail
+        assert len(exc_info.value.detail) < 300
+
+    # Test short error is not truncated and doesn't get "..."
+    class MockClientShort:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+        def post(self, url, json):
+            return MockResponse(500, "Short error")
+
+    with patch("httpx.Client", MockClientShort):
+        with pytest.raises(HTTPException) as exc_info:
+            _proxy_to_tei("http://tei-url", "/path", {"data": "test"})
+
+        assert exc_info.value.status_code == 500
+        assert "Short error" in exc_info.value.detail
+        assert "..." not in exc_info.value.detail
