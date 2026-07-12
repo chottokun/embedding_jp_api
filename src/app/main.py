@@ -355,8 +355,8 @@ def create_embeddings(request: EmbeddingRequest):
     # This runs under model.tokenizer_lock but outside model.lock to improve concurrency
     processed_inputs, usage = _tokenize_and_truncate_embeddings(model, processed_inputs)
 
-    # 2. Model inference under a single lock
-    with model.lock:
+    # 2. Model inference under locks to prevent tokenizer race conditions
+    with model.lock, model.tokenizer_lock:
         vectors = model.encode(processed_inputs)
 
     # Create response data
@@ -396,8 +396,8 @@ def create_rerank(request: RerankRequest):
     # Calculate token usage
     usage = _calculate_rerank_tokens(model, request.query, request.documents)
 
-    # Reranking inference inside the model lock
-    with model.lock:
+    # Reranking inference inside the locks to prevent tokenizer race conditions
+    with model.lock, model.tokenizer_lock:
         # Get scores
         scores = model.predict(pairs)
 
