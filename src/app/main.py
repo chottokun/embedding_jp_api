@@ -51,6 +51,7 @@ from .config import (
 
 from contextlib import asynccontextmanager
 
+
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI):
     # Initialize global HTTP client with connection pooling for TEI proxy requests
@@ -317,8 +318,6 @@ def _proxy_rerank_to_tei(request: RerankRequest) -> RerankResponse:
     return RerankResponse(
         query=request.query, data=response_data, model=request.model, usage=usage
     )
-
-
 
 
 @app.post(
