@@ -49,7 +49,19 @@ from .config import (
     RERANK_TEI_URL,
 )
 
-app = FastAPI(title="OpenAI-Compatible API")
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app_instance: FastAPI):
+    # Initialize global HTTP client with connection pooling for TEI proxy requests
+    app_instance.state.tei_client = httpx.Client(timeout=30.0)
+    try:
+        yield
+    finally:
+        app_instance.state.tei_client.close()
+
+
+app = FastAPI(title="OpenAI-Compatible API", lifespan=lifespan)
 
 # Authentication dependency
 security = HTTPBearer(auto_error=False)
@@ -129,17 +141,22 @@ def _proxy_to_tei(tei_url: str, path: str, json_data: dict) -> Any:
     Helper to send a POST request to TEI and return the JSON response.
     """
     try:
-        with httpx.Client(timeout=30.0) as client:
-            response = client.post(f"{tei_url}{path}", json=json_data)
-            if response.status_code != 200:
-                error_msg = response.text
-                if len(error_msg) > 200:
-                    error_msg = error_msg[:200] + "..."
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"TEI Proxy Error ({response.status_code}): {error_msg}",
-                )
-            return response.json()
+        shared_client = getattr(app.state, "tei_client", None)
+        if shared_client is not None:
+            response = shared_client.post(f"{tei_url}{path}", json=json_data)
+        else:
+            with httpx.Client(timeout=30.0) as client:
+                response = client.post(f"{tei_url}{path}", json=json_data)
+
+        if response.status_code != 200:
+            error_msg = response.text
+            if len(error_msg) > 200:
+                error_msg = error_msg[:200] + "..."
+            raise HTTPException(
+                status_code=500,
+                detail=f"TEI Proxy Error ({response.status_code}): {error_msg}",
+            )
+        return response.json()
     except HTTPException:
         raise
     except Exception as e:
