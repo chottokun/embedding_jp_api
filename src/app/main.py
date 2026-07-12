@@ -140,9 +140,9 @@ def _proxy_to_tei(tei_url: str, path: str, json_data: dict) -> Any:
                     detail=f"TEI Proxy Error ({response.status_code}): {error_msg}",
                 )
             return response.json()
+    except HTTPException:
+        raise
     except Exception as e:
-        if isinstance(e, HTTPException):
-            raise e
         raise HTTPException(
             status_code=500, detail=f"Failed to proxy request to TEI: {str(e)}"
         )
