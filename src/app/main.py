@@ -16,6 +16,7 @@ import anyio
 import httpx
 from typing import Optional
 import re
+import secrets
 import traceback
 
 
@@ -58,7 +59,7 @@ async def verify_api_key(
     auth: Optional[HTTPAuthorizationCredentials] = Security(security),
 ):
     if API_KEY:
-        if auth is None or auth.credentials != API_KEY:
+        if auth is None or not secrets.compare_digest(auth.credentials, API_KEY):
             raise HTTPException(
                 status_code=401,
                 detail="Invalid or missing API Key",
