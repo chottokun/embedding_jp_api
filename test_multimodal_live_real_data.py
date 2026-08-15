@@ -6,7 +6,9 @@ import httpx
 import numpy as np
 from PIL import Image, ImageDraw
 
-BASE_URL = "http://127.0.0.1:8000"
+from app.main import app
+
+BASE_URL = "http://testserver"
 API_KEY = "test_api_key_secret"
 HEADERS = {"Authorization": f"Bearer {API_KEY}"}
 
@@ -66,7 +68,12 @@ async def run_multimodal_real_data_tests():
     print(f"  ✓ Created System Architecture Diagram (Base64 length: {len(arch_diagram_b64)})")
     print(f"  ✓ Created Performance Bar Chart (Base64 length: {len(chart_diagram_b64)})")
 
-    async with httpx.AsyncClient(base_url=BASE_URL, headers=HEADERS, timeout=60.0) as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app),
+        base_url=BASE_URL,
+        headers=HEADERS,
+        timeout=120.0,
+    ) as client:
         # Test 1: Flat Format (Architecture Diagram + Japanese Description)
         print("\n[Test 1] Flat Schema: System Architecture Diagram + Japanese Description")
         t0 = time.perf_counter()

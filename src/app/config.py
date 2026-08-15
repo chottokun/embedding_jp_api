@@ -1,7 +1,28 @@
-import os
-import yaml
 import logging
+import os
 from pathlib import Path
+import yaml
+
+# --- Load .env File ---
+def _load_env_file():
+    """Load key-value pairs from .env file if it exists, without overriding existing OS environment variables."""
+    env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+    if env_path.exists():
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    k, v = line.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip("'\"")
+                    if k and k not in os.environ:
+                        os.environ[k] = v
+        except Exception as e:
+            logging.warning(f"Failed to load .env file: {e}")
+
+_load_env_file()
 
 # --- Port Configuration ---
 # Read port from environment variable APP_PORT, with a default of 8000.
@@ -53,10 +74,11 @@ EMBEDDING_TEI_URL = os.getenv("EMBEDDING_TEI_URL")
 RERANK_TEI_URL = os.getenv("RERANK_TEI_URL")
 
 # --- Offline Mode Configuration ---
-OFFLINE_MODE = os.getenv("OFFLINE_MODE", "false").lower() == "true"
+OFFLINE_MODE = os.getenv("OFFLINE_MODE", "false").lower() in ("true", "1", "yes")
 if OFFLINE_MODE:
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
+    os.environ["HF_DATASETS_OFFLINE"] = "1"
     logging.info("Offline mode is enabled. Hugging Face Hub access is disabled.")
 else:
     logging.info(

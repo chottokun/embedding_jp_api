@@ -77,7 +77,7 @@ _model_cache = {}
 _model_lock = threading.Lock()
 
 
-def get_model(model_name: str):
+def get_model(model_name: str, device: str | None = None):
     """
     Factory function to get a model instance.
     It loads real models from Hugging Face and caches them.
@@ -86,7 +86,8 @@ def get_model(model_name: str):
         if model_name in _model_cache:
             return _model_cache[model_name]
 
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
         logging.info(f"Loading model '{model_name}' on device '{device}'...")
 
         if model_name in {"bge-visualized-m3", "BAAI/bge-visualized-m3"}:

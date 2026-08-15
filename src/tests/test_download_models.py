@@ -82,41 +82,35 @@ def test_download_models_success(
     assert mock_snapshot.call_count == 2
     mock_snapshot.assert_any_call(repo_id="model1")
     mock_snapshot.assert_any_call(repo_id="model2")
-    mock_print.assert_any_call("完了: model1")
-    mock_print.assert_any_call("完了: model2")
+    printed_messages = [str(call.args[0]) for call in mock_print.call_args_list if call.args]
+    assert any("完了: model1" in msg for msg in printed_messages)
+    assert any("完了: model2" in msg for msg in printed_messages)
 
 
 @patch("builtins.print")
+@patch("sys.exit")
 @patch("app.download_models.snapshot_download")
 @patch("app.download_models.yaml.safe_load")
 @patch("builtins.open", new_callable=mock_open)
 @patch("app.download_models.MODELS_FILE")
-def test_download_models_partial_failure(
-    mock_models_file, mock_file, mock_yaml, mock_snapshot, mock_print
+def test_download_models_failure_exits(
+    mock_models_file, mock_file, mock_yaml, mock_snapshot, mock_exit, mock_print
 ):
-    """Test that download_models continues if some downloads fail."""
+    """Test that download_models exits with code 1 if a download fails."""
     mock_models_file.exists.return_value = True
-    mock_yaml.return_value = {"embedding_models": ["fail_model", "success_model"]}
+    mock_yaml.return_value = {"embedding_models": ["fail_model"]}
+    mock_snapshot.side_effect = Exception("Download error")
+    mock_exit.side_effect = SystemExit(1)
 
-    # Mock snapshot_download to fail for the first model and succeed for the second
-    def side_effect(repo_id, **kwargs):
-        if repo_id == "fail_model":
-            raise Exception("Download error")
-        return None
+    with pytest.raises(SystemExit) as excinfo:
+        download_models()
 
-    mock_snapshot.side_effect = side_effect
-
-    download_models()
-
-    assert mock_snapshot.call_count == 2
-    mock_snapshot.assert_any_call(repo_id="fail_model")
-    mock_snapshot.assert_any_call(repo_id="success_model")
+    assert excinfo.value.code == 1
+    mock_exit.assert_called_once_with(1)
 
     # Check that error message was printed for fail_model
-    printed_messages = [call.args[0] for call in mock_print.call_args_list]
+    printed_messages = [str(call.args[0]) for call in mock_print.call_args_list if call.args]
     assert any(
-        "エラー: fail_model のダウンロードに失敗しました: Download error" in msg
+        "fail_model のダウンロードに失敗しました" in msg
         for msg in printed_messages
     )
-    # Check that success message was printed for success_model
-    assert "完了: success_model" in printed_messages
