@@ -59,7 +59,57 @@ response = client.embeddings.create(
 
 ---
 
-### 2.2. 再ランキング (Rerank)
+### 2.2. マルチモーダル埋め込み (Multimodal Embeddings)
+
+`POST /v1/embeddings`
+
+`bge-visualized-m3` モデルを指定することで、画像単体、またはテキスト＋画像の複合入力に対するベクトル埋め込みを生成できます。
+
+#### 入力フォーマット
+
+1. **フラット形式 (Flat Item)**:
+   ```json
+   {
+     "model": "bge-visualized-m3",
+     "input": {
+       "text": "青い服を着た人物",
+       "image_url": "data:image/png;base64,iVBORw0KG..."
+     }
+   }
+   ```
+2. **OpenAI Chat互換 コンテンツパーツ配列 (Content Parts)**:
+   ```json
+   {
+     "model": "bge-visualized-m3",
+     "input": [
+       {"type": "text", "text": "赤い車"},
+       {"type": "image_url", "image_url": {"url": "https://example.com/car.png"}}
+     ]
+   }
+   ```
+
+#### セキュリティ仕様
+- **SSRF防御**: リダイレクト追従時を含め、プライベートIP（127.0.0.1, 10.x, 192.168.x）およびクラウドメタデータエンドポイント（169.254.169.254）へのアクセスはブロックされ、HTTP 400 を返却します。
+- **DoS防御**: 画像デコード爆弾防御（`MAX_IMAGE_PIXELS = 20,000,000`）およびファイルサイズ制限（15MB）を適用。
+- **モデル不一致ガード**: 画像入力をテキスト専用モデル（Ruri-v3等）に送信した場合は、モデル破壊や500エラーを防ぐため HTTP 400 を返却します。
+
+---
+
+### 2.3. ヘルスチェック (Health Checks)
+
+マイクロサービスの死活監視（Liveness / Readiness Probes）用エンドポイントを提供します。APIキー認証は不要です。
+
+- `GET /health`
+- `GET /healthz`
+
+**レスポンス例**:
+```json
+{"status": "ok"}
+```
+
+---
+
+### 2.4. 再ランキング (Rerank)
 
 `POST /v1/rerank`
 
@@ -273,21 +323,34 @@ APP_PORT=8080 GUNICORN_WORKERS=4 ./run.sh run cpu
 - **`api-cpu`**: CPU専用イメージ
 - **`api-gpu`**: NVIDIA GPU対応イメージ
 
-## 8. 負荷テストの実行
+## 8. テストと負荷・ストレステストの実行
 
-Locustを使用してAPIの負荷テストを実行できます。
+### 8.1. 単体・統合テスト (pytest)
+```bash
+uv run pytest
+```
 
-1.  **Locustの起動**
+### 8.2. 実動コンテナ E2E 検証 (`test_e2e_live.py`)
+稼働中のサーバーまたはコンテナに対して、認証・埋め込み・画像入力・SSRF防御・同時実行性を一括検証します。
+```bash
+# ポート8000に対して実行
+uv run python test_e2e_live.py 8000
+```
 
-    ```bash
-    uv run locust -f locustfile.py --host http://localhost:8000
-    ```
+### 8.3. 100並行同時接続ストレステスト (`run_heavy_load_test.py`)
+テキスト埋め込み、バッチ推論、リランク、画像入力拒否、ヘルスチェックを混在させた100並行の同時アクセス耐久テストを実行します。
+```bash
+uv run python run_heavy_load_test.py
+```
 
-2.  **ヘッドレスモードでの実行（30秒間）**
+### 8.4. Locustによる負荷テスト
+```bash
+# Web UI起動
+uv run locust -f locustfile.py --host http://localhost:8000
 
-    ```bash
-    uv run locust -f locustfile.py --headless -u 5 -r 1 --run-time 30s --host http://localhost:8000
-    ```
+# ヘッドレスモードでの実行（30秒間、20同時ユーザー）
+uv run locust -f locustfile.py --headless -u 20 -r 5 --run-time 30s --host http://localhost:8000
+```
 
 ## 9. ビルドパフォーマンスの最適化
 
