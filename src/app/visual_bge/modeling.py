@@ -9,7 +9,7 @@ from transformers import AutoModel, AutoTokenizer, AutoConfig
 from transformers.file_utils import ModelOutput
 
 
-from visual_bge.eva_clip import create_eva_vision_and_transforms
+from .eva_clip import create_eva_vision_and_transforms
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -114,17 +114,24 @@ class Visualized_BGE(nn.Module):
     def encode(self, image=None, text=None):
         # used for simple inference
         if image is not None:
-            image = self.preprocess_val(Image.open(image)).unsqueeze(0)
+            if isinstance(image, str):
+                pil_img = Image.open(image).convert("RGB")
+            elif isinstance(image, Image.Image):
+                pil_img = image.convert("RGB")
+            else:
+                pil_img = Image.open(image).convert("RGB")
+
+            image_tensor = self.preprocess_val(pil_img).unsqueeze(0)
 
             if text is not None:
-                text = self.tokenizer(text, return_tensors="pt", padding=True)
-                return self.encode_mm(image.to(self.device), text.to(self.device))
+                text_tok = self.tokenizer(text, return_tensors="pt", padding=True)
+                return self.encode_mm(image_tensor.to(self.device), text_tok.to(self.device))
             else:
-                return self.encode_image(image.to(self.device))
+                return self.encode_image(image_tensor.to(self.device))
         else:
             if text is not None:
-                text = self.tokenizer(text, return_tensors="pt", padding=True)
-                return self.encode_text(text.to(self.device))
+                text_tok = self.tokenizer(text, return_tensors="pt", padding=True)
+                return self.encode_text(text_tok.to(self.device))
             else:
                 return None
         
