@@ -52,20 +52,34 @@ async def load_image_from_source(source: str, client: httpx.AsyncClient) -> Imag
         except Exception as e:
             raise ValueError(f"Base64画像のデコードに失敗しました: {str(e)}")
 
-    if not await is_safe_url_async(source):
-        raise ValueError(f"セキュリティ上の理由で拒否されたURLです: {source}")
+    # Stream download with safe redirect validation to prevent SSRF redirect bypass
+    current_url = source
+    max_redirects = 3
+    for _ in range(max_redirects + 1):
+        if not await is_safe_url_async(current_url):
+            raise ValueError(f"セキュリティ上の理由で拒否されたURLです: {current_url}")
 
-    # Stream download to avoid OOM on large payloads
-    async with client.stream(
-        "GET", source, timeout=10.0, follow_redirects=True
-    ) as resp:
-        resp.raise_for_status()
-        buffer = bytearray()
-        async for chunk in resp.aiter_bytes():
-            buffer.extend(chunk)
-            if len(buffer) > MAX_FILE_SIZE:
-                raise ValueError("画像サイズが上限(15MB)を超えています。")
+        async with client.stream(
+            "GET", current_url, timeout=10.0, follow_redirects=False
+        ) as resp:
+            if resp.is_redirect:
+                location = resp.headers.get("Location")
+                if not location:
+                    raise ValueError(
+                        "リダイレクト先Locationヘッダーが指定されていません。"
+                    )
+                current_url = str(resp.url.join(location))
+                continue
 
-        image = Image.open(io.BytesIO(buffer))
-        image.load()
-        return image.convert("RGB")
+            resp.raise_for_status()
+            buffer = bytearray()
+            async for chunk in resp.aiter_bytes():
+                buffer.extend(chunk)
+                if len(buffer) > MAX_FILE_SIZE:
+                    raise ValueError("画像サイズが上限(15MB)を超えています。")
+
+            image = Image.open(io.BytesIO(buffer))
+            image.load()
+            return image.convert("RGB")
+
+    raise ValueError("リダイレクト回数が上限を超えました。")

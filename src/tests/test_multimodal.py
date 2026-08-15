@@ -148,3 +148,45 @@ def test_tei_proxy_bypassed_for_multimodal_request():
         assert response.status_code == 200
         # TEI proxy should NOT be called for image requests
         mock_tei_proxy.assert_not_called()
+
+
+def test_health_endpoints():
+    res1 = client.get("/health")
+    assert res1.status_code == 200
+    assert res1.json() == {"status": "ok"}
+
+    res2 = client.get("/healthz")
+    assert res2.status_code == 200
+    assert res2.json() == {"status": "ok"}
+
+
+@pytest.mark.anyio
+async def test_ssrf_redirect_to_private_ip_rejected():
+    from app.image_utils import load_image_from_source
+    import httpx
+
+    # Mock an HTTP client where safe URL redirects to 127.0.0.1
+    redirect_resp = httpx.Response(
+        status_code=302,
+        headers={"Location": "http://127.0.0.1/private.png"},
+        request=httpx.Request("GET", "http://example.com/image.png"),
+    )
+
+    class MockAsyncClient:
+        def stream(self, method, url, **kwargs):
+            class StreamCtx:
+                async def __aenter__(self_inner):
+                    return redirect_resp
+
+                async def __aexit__(self_inner, *args):
+                    pass
+
+            return StreamCtx()
+
+    with patch("app.image_utils.is_safe_url_async") as mock_safe:
+        # First request to example.com is safe, but second to 127.0.0.1 is not safe
+        mock_safe.side_effect = [True, False]
+        with pytest.raises(ValueError, match="拒否されたURL"):
+            await load_image_from_source(
+                "http://example.com/image.png", MockAsyncClient()
+            )

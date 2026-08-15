@@ -22,28 +22,26 @@ RERANK_DOCS = [
 ]
 
 # Supported models from our config. We will randomly pick one.
-# In a real test, you might want to target specific models.
 EMBEDDING_MODELS = ["cl-nagoya/ruri-v3-30m", "cl-nagoya/ruri-v3-310m"]
+MULTIMODAL_MODELS = ["bge-visualized-m3"]
 RERANK_MODELS = ["cl-nagoya/ruri-v3-reranker-310m"]
+
+TINY_PNG_B64 = (
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ"
+    "AAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+)
 
 
 class ApiUser(HttpUser):
     """
-    A user that simulates requests to the embedding and rerank APIs.
-
-    How to run this test:
-    1. Make sure the FastAPI server is running.
-       (e.g., uv run uvicorn src.app.main:app --port 8000)
-    2. Run Locust from the command line:
-       uv run locust -f locustfile.py --host http://localhost:8000
-    3. Open your web browser to http://localhost:8089 and start the test.
+    A user that simulates requests to the embedding, rerank, and multimodal APIs.
     """
 
-    wait_time = between(1, 5)  # Users wait 1-5 seconds between tasks
+    wait_time = between(0.1, 1.0)
 
     @task(3)
     def get_embeddings(self):
-        """Task to call the /v1/embeddings endpoint."""
+        """Task to call the /v1/embeddings endpoint with text inputs."""
         input_data = random.choice(EMBEDDING_INPUTS)
         input_type = random.choice(
             ["query", "document", "classification", "clustering", "sts", None]
@@ -56,18 +54,37 @@ class ApiUser(HttpUser):
             "apply_ruri_prefix": random.choice([True, False]),
         }
         headers = {}
-
         api_key = os.getenv("API_KEY")
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
         self.client.post(
-            "/v1/embeddings", json=payload, name="/v1/embeddings", headers=headers
+            "/v1/embeddings", json=payload, name="/v1/embeddings-text", headers=headers
         )
 
-    @task(1)
+    @task(2)
+    def get_multimodal_embeddings(self):
+        """Task to call /v1/embeddings with multimodal inputs."""
+        payload = {
+            "model": random.choice(MULTIMODAL_MODELS),
+            "input": {
+                "text": random.choice(EMBEDDING_INPUTS[0:4]),
+                "image_url": TINY_PNG_B64,
+            },
+        }
+        headers = {}
+        api_key = os.getenv("API_KEY")
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        self.client.post(
+            "/v1/embeddings",
+            json=payload,
+            name="/v1/embeddings-multimodal",
+            headers=headers,
+        )
+
+    @task(2)
     def get_rerank(self):
         """Task to call the /v1/rerank endpoint."""
-        # Select 3 random documents for reranking
         documents = random.sample(RERANK_DOCS, 3)
 
         payload = {
@@ -78,8 +95,12 @@ class ApiUser(HttpUser):
             "return_documents": random.choice([True, False]),
         }
         headers = {}
-
         api_key = os.getenv("API_KEY")
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
         self.client.post("/v1/rerank", json=payload, name="/v1/rerank", headers=headers)
+
+    @task(1)
+    def check_health(self):
+        """Task to check health endpoint."""
+        self.client.get("/health", name="/health")

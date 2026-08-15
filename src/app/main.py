@@ -68,6 +68,16 @@ async def lifespan(app_instance: FastAPI):
 
 app = FastAPI(title="OpenAI-Compatible API", lifespan=lifespan)
 
+
+@app.get("/health", tags=["Health"])
+@app.get("/healthz", tags=["Health"])
+async def health_check():
+    """
+    Liveness / readiness probe for microservice orchestrators and Docker health checks.
+    """
+    return {"status": "ok"}
+
+
 # Authentication dependency
 security = HTTPBearer(auto_error=False)
 

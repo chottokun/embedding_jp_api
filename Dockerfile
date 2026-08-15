@@ -36,22 +36,21 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && \
     apt-get install -y python3.11 python3.11-venv && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
-    # Create a non-root user
+    # Create a non-root user and huggingface cache directory
     useradd -m -u 1000 appuser && \
+    mkdir -p /home/appuser/.cache/huggingface && \
+    chown -R appuser:appuser /home/appuser && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Copy virtualenv containing production packages from builder
-COPY --from=builder /app/.venv /app/.venv
+COPY --chown=appuser:appuser --from=builder /app/.venv /app/.venv
 
 # Copy source code and config
-COPY src/ ./src/
-COPY config/ ./config/
-COPY README.md ./
-
-# Ensure the appuser owns the application directory and HF_HOME
-RUN chown -R appuser:appuser /app /home/appuser
+COPY --chown=appuser:appuser src/ ./src/
+COPY --chown=appuser:appuser config/ ./config/
+COPY --chown=appuser:appuser README.md ./
 
 # Switch to non-root user
 USER appuser
@@ -60,6 +59,9 @@ USER appuser
 EXPOSE 8000
 
 ENV GUNICORN_WORKERS=2
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=20s --retries=3 \
+  CMD python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)" || exit 1
 
 # Command to run the application using Gunicorn from the virtual environment
 CMD ["sh", "-c", "gunicorn --workers ${GUNICORN_WORKERS} --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 600 --worker-tmp-dir /dev/shm --keep-alive 5 src.app.main:app"]

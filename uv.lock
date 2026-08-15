@@ -1841,6 +1841,14 @@ dev = [
     { name = "ruff" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "gunicorn" },
+    { name = "locust" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "einops", specifier = ">=0.7.0" },
@@ -1869,6 +1877,14 @@ requires-dist = [
     { name = "werkzeug", specifier = ">=3.1.6" },
 ]
 provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "gunicorn" },
+    { name = "locust", specifier = ">=2.40.4" },
+    { name = "pytest", specifier = ">=8.4.2" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "packaging"
