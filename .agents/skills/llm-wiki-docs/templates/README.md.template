@@ -1,0 +1,16 @@
+---
+okf_version: "0.2"
+title: Project Knowledge Index
+---
+
+# Project Knowledge Index
+
+## 概要
+
+本リポジトリにおけるドキュメント・アーキテクチャ・ドメインモデルの最上位ナレッジインデックスです。
+
+## ナレッジ領域
+
+* [Architecture](./architecture/README.md) - アーキテクチャ方針、技術選定、設計原則
+* [Domain](./domain/README.md) - 事業ロジック、ドメインモデル、データ構造
+* [Infrastructure](./infrastructure/README.md) - DBスキーマ、インフラ構成、デプロイメント
