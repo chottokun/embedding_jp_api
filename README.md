@@ -2,8 +2,10 @@
 
 ## 1. 概要
 
-このプロジェクトは、日本語のテキスト埋め込み（Embedding）および再ランキング（Rerank）機能を提供する、OpenAI互換のFastAPIサーバーです。
-名古屋大学にて開発された[Ruri v3モデル](https://huggingface.co/cl-nagoya/ruri-v3-30m)などを利用することを想定しています。
+このプロジェクトは、日本語のテキスト埋め込み（Embedding）、マルチモーダル埋め込み（画像＋テキスト）、および再ランキング（Rerank）機能を提供する、OpenAI互換のFastAPIサーバーです。
+名古屋大学にて開発された[Ruri v3モデル](https://huggingface.co/cl-nagoya/ruri-v3-30m)や[Visualized-BGE (bge-visualized-m3)](https://huggingface.co/BAAI/bge-visualized-m3)などを利用することを想定しています。
+
+> 📖 **詳細ドキュメント**: マイクロサービス統合設計、スレッドセーフティモデル、セキュリティ仕様、および100並行負荷テスト結果の詳細は [docs/ARCHITECTURE_AND_VERIFICATION.md](docs/ARCHITECTURE_AND_VERIFICATION.md) をご覧ください。
 
 ## 2. API仕様
 
