@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict, StringConstraints
-from typing import Union, Optional, Annotated
+from typing import Union, Optional, Annotated, Literal
 
 from .config import MAX_INPUT_LENGTH, MAX_INPUT_ITEMS
 
@@ -8,14 +8,50 @@ LimitedString = Annotated[
     str, StringConstraints(min_length=1, max_length=MAX_INPUT_LENGTH)
 ]
 
+# Base64/URL image source constraint (up to ~18MB Base64 string length)
+ImageSourceString = Annotated[
+    str, StringConstraints(min_length=1, max_length=25_000_000)
+]
+
+
+# --- Multimodal Schemas ---
+class ImageUrl(BaseModel):
+    url: ImageSourceString
+    detail: Optional[str] = "auto"
+
+
+class FlatMultimodalItem(BaseModel):
+    text: Optional[LimitedString] = None
+    image_url: Optional[Union[ImageUrl, ImageSourceString]] = None
+
+
+class ContentPartText(BaseModel):
+    type: Literal["text"]
+    text: LimitedString
+
+
+class ContentPartImage(BaseModel):
+    type: Literal["image_url"]
+    image_url: Union[ImageUrl, ImageSourceString]
+
+
+ContentPart = Union[ContentPartText, ContentPartImage]
+SingleInputItem = Union[
+    LimitedString,
+    FlatMultimodalItem,
+    Annotated[list[ContentPart], Field(min_length=1)],
+]
+
 # --- For /v1/embeddings ---
 
 
 class EmbeddingRequest(BaseModel):
     input: Union[
-        LimitedString,
+        SingleInputItem,
         # Limit list size to prevent memory exhaustion (DoS)
-        Annotated[list[LimitedString], Field(min_length=1, max_length=MAX_INPUT_ITEMS)],
+        Annotated[
+            list[SingleInputItem], Field(min_length=1, max_length=MAX_INPUT_ITEMS)
+        ],
     ]
     model: str
     user: Optional[str] = None
@@ -52,7 +88,6 @@ class EmbeddingResponse(BaseModel):
 
 
 # --- For /v1/rerank ---
-# Schemas for the rerank endpoint will be added in the corresponding step.
 class RerankRequest(BaseModel):
     query: LimitedString
     # Limit list size to prevent memory exhaustion (DoS)

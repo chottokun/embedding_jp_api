@@ -1,6 +1,8 @@
 embedding_models:
   - "cl-nagoya/ruri-v3-30m"
   - "cl-nagoya/ruri-v3-310m"
+  - "BAAI/bge-m3"
+  - "bge-visualized-m3"
 
 rerank_models:
   - "cl-nagoya/ruri-v3-reranker-310m"

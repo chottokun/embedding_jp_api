@@ -1,35 +1,28 @@
 # ruff: noqa: E402
 import os
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Optional
 
 # Disable tokenizer parallelism to prevent "Already Borrowed" errors and deadlocks
 # in multi-process/multi-threaded environments.
 # Set at the very beginning to ensure libraries read this correctly during import.
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from fastapi import FastAPI, HTTPException, Request, Depends, Security
-from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import asyncio
 import heapq
 import logging
-import anyio
-import httpx
-from typing import Optional
 import re
 import secrets
 import traceback
+from contextlib import asynccontextmanager
 
+import anyio
+import httpx
+from PIL import Image
+from fastapi import FastAPI, HTTPException, Request, Depends, Security
+from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-def redact_pii(text: str) -> str:
-    """
-    Redacts common PII from a string.
-    Currently masks email addresses.
-    """
-    # Simple email regex
-    email_pattern = r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
-    return re.sub(email_pattern, "[REDACTED]", text)
-
-
+from .image_utils import load_image_from_source
 from .schemas import (
     EmbeddingRequest,
     EmbeddingResponse,
@@ -38,6 +31,10 @@ from .schemas import (
     RerankRequest,
     RerankResponse,
     RerankData,
+    FlatMultimodalItem,
+    ContentPartText,
+    ContentPartImage,
+    ImageUrl,
 )
 from .models import get_model
 from .config import (
@@ -49,7 +46,14 @@ from .config import (
     RERANK_TEI_URL,
 )
 
-from contextlib import asynccontextmanager
+
+def redact_pii(text: str) -> str:
+    """
+    Redacts common PII from a string.
+    Currently masks email addresses.
+    """
+    email_pattern = r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
+    return re.sub(email_pattern, "[REDACTED]", text)
 
 
 @asynccontextmanager
@@ -102,31 +106,22 @@ async def add_security_headers(request: Request, call_next):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    # Obtain the full traceback as a string
     tb_str = traceback.format_exc()
-
-    # Redact PII from the exception message and traceback
     redacted_exc = redact_pii(str(exc))
     redacted_tb = redact_pii(tb_str)
 
-    # Log the redacted error details
-    # We use run_sync in a thread pool to avoid blocking the event loop
-    # during potentially slow logging operations.
     await anyio.to_thread.run_sync(
         lambda: logging.error(
             f"Unhandled exception: {redacted_exc}\n{redacted_tb}", exc_info=False
         )
     )
-    # Return a generic error message to the client to avoid leaking internal details
     response = JSONResponse(
         status_code=500,
         content={"detail": "Internal Server Error"},
     )
-    # Security headers for error responses
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    # Note: Use standard header name
     response.headers["Strict-Transport-Security"] = (
         "max-age=31536000; includeSubDomains"
     )
@@ -192,7 +187,6 @@ def _determine_ruri_prefix(request: EmbeddingRequest) -> str:
         if request.input_type in RURI_PREFIX_MAP:
             prefix = RURI_PREFIX_MAP[request.input_type]
         elif request.apply_ruri_prefix:
-            # Fallback logic based on input shape (compatibility mode)
             if isinstance(request.input, str):
                 prefix = RURI_PREFIX_MAP["query"]
             else:
@@ -216,15 +210,18 @@ def _tokenize_and_truncate_embeddings(
     Handles batch tokenization, truncation, and usage calculation for embeddings.
     """
     max_seq_length = getattr(model, "max_seq_length", 8192)
+    if not isinstance(max_seq_length, int):
+        max_seq_length = 8192
     tokenizer = model.tokenizer
-    processed_inputs = list(inputs)  # Make a copy to avoid side effects
+    processed_inputs = list(inputs)
 
     with model.tokenizer_lock:
         total_tokens = 0
         special_tokens_count = tokenizer.num_special_tokens_to_add(False)
+        if not isinstance(special_tokens_count, int):
+            special_tokens_count = 2
         limit = max_seq_length - special_tokens_count
 
-        # Process in batches to avoid OOM on huge payloads
         batch_size = 256
         for i in range(0, len(processed_inputs), batch_size):
             batch = processed_inputs[i : i + batch_size]
@@ -246,7 +243,6 @@ def _tokenize_and_truncate_embeddings(
 def _calculate_rerank_tokens(model: Any, query: str, documents: List[str]) -> Usage:
     """
     Calculates token usage for reranking based on query and documents.
-    This is executed under model.tokenizer_lock for thread safety.
     """
     with model.tokenizer_lock:
         tokenizer = model.tokenizer
@@ -256,7 +252,6 @@ def _calculate_rerank_tokens(model: Any, query: str, documents: List[str]) -> Us
         try:
             from collections.abc import Mapping
 
-            # Batch tokenize all documents to avoid O(N) single-string tokenization overhead
             encodings = tokenizer(documents, add_special_tokens=False)
             if not isinstance(encodings, Mapping) or "input_ids" not in encodings:
                 raise ValueError("Unexpected tokenizer output format")
@@ -266,7 +261,6 @@ def _calculate_rerank_tokens(model: Any, query: str, documents: List[str]) -> Us
                 for d_ids in encodings["input_ids"]
             )
         except Exception:
-            # Fallback for custom/mock tokenizers that do not support batch call
             total_tokens = 0
             for doc in documents:
                 d_tokens = len(tokenizer.encode(doc, add_special_tokens=False))
@@ -279,12 +273,9 @@ def _sort_and_format_rerank_results(
     results: List[dict], top_n: Optional[int]
 ) -> List[RerankData]:
     """
-    Sorts and filters rerank results by score (descending order) and formats for the response schema.
+    Sorts and filters rerank results by score (descending order).
     """
-    # Optimization: Use heapq.nlargest for top_n which is O(N log k) instead of O(N log N)
     if top_n is not None:
-        # Use (score, -index) tuple key to ensure stability (deterministic tie-breaking)
-        # matching Python's stable sort behavior where earlier indices come first for same score.
         sorted_results = heapq.nlargest(
             top_n, results, key=lambda x: (x["score"], -x["document"])
         )
@@ -320,14 +311,88 @@ def _proxy_rerank_to_tei(request: RerankRequest) -> RerankResponse:
     )
 
 
+def _normalize_raw_inputs(input_data: Any) -> list:
+    """
+    Normalizes input into a flat list of input items.
+    """
+    if isinstance(input_data, list):
+        if not input_data:
+            return []
+        if all(
+            isinstance(x, (ContentPartText, ContentPartImage))
+            or (isinstance(x, dict) and x.get("type") in {"text", "image_url"})
+            for x in input_data
+        ):
+            return [input_data]
+        return input_data
+    return [input_data]
+
+
+async def parse_input_item(
+    item: Any, client: httpx.AsyncClient
+) -> Tuple[Optional[str], Optional[Image.Image]]:
+    """
+    Parses a single input item into a (text, PIL.Image) tuple.
+    """
+    if isinstance(item, str):
+        return item, None
+
+    if isinstance(item, FlatMultimodalItem):
+        text = item.text
+        img = None
+        if item.image_url:
+            url_val = (
+                item.image_url.url
+                if isinstance(item.image_url, ImageUrl)
+                else item.image_url
+            )
+            img = await load_image_from_source(url_val, client)
+        return text, img
+
+    if isinstance(item, list):
+        text_parts = []
+        img = None
+        for part in item:
+            if isinstance(part, ContentPartText) or (
+                isinstance(part, dict) and part.get("type") == "text"
+            ):
+                text_val = (
+                    part.text
+                    if isinstance(part, ContentPartText)
+                    else part.get("text", "")
+                )
+                text_parts.append(text_val)
+            elif isinstance(part, ContentPartImage) or (
+                isinstance(part, dict) and part.get("type") == "image_url"
+            ):
+                img_data = (
+                    part.image_url
+                    if isinstance(part, ContentPartImage)
+                    else part.get("image_url")
+                )
+                url_val = (
+                    img_data.url
+                    if isinstance(img_data, ImageUrl)
+                    else (
+                        img_data.get("url") if isinstance(img_data, dict) else img_data
+                    )
+                )
+                img = await load_image_from_source(url_val, client)
+        text = "\n".join(text_parts) if text_parts else None
+        return text, img
+
+    raise ValueError("不正な入力形式です。")
+
+
 @app.post(
     "/v1/embeddings",
     response_model=EmbeddingResponse,
     dependencies=[Depends(verify_api_key)],
 )
-def create_embeddings(request: EmbeddingRequest):
+async def create_embeddings(request: EmbeddingRequest):
     """
     Creates embeddings for the given input, following OpenAI's API format.
+    Supports text-only and multimodal (image/composite) inputs.
     """
     if request.model not in EMBEDDING_MODELS:
         raise HTTPException(
@@ -335,12 +400,24 @@ def create_embeddings(request: EmbeddingRequest):
             detail=f"Model '{request.model}' not found for embeddings.",
         )
 
-    inputs = request.input if isinstance(request.input, list) else [request.input]
-    prefix = _determine_ruri_prefix(request)
-    processed_inputs = _apply_prefix(inputs, prefix)
+    raw_items = _normalize_raw_inputs(request.input)
 
-    # Proxy to TEI if URL is configured
-    if EMBEDDING_TEI_URL:
+    try:
+        async with httpx.AsyncClient() as client:
+            tasks = [parse_input_item(item, client) for item in raw_items]
+            parsed_items: List[
+                Tuple[Optional[str], Optional[Image.Image]]
+            ] = await asyncio.gather(*tasks)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    has_image = any(img is not None for _, img in parsed_items)
+
+    # TEI Proxy check: if EMBEDDING_TEI_URL is set and request is text-only, proxy to TEI
+    if EMBEDDING_TEI_URL and not has_image:
+        inputs = [text for text, _ in parsed_items if text is not None]
+        prefix = _determine_ruri_prefix(request)
+        processed_inputs = _apply_prefix(inputs, prefix)
         data = _proxy_to_tei(
             EMBEDDING_TEI_URL,
             "/v1/embeddings",
@@ -349,16 +426,46 @@ def create_embeddings(request: EmbeddingRequest):
         return EmbeddingResponse(**data)
 
     model = _get_model_or_400(request.model, "embedding")
+    is_multimodal = getattr(model, "supports_multimodal", False) is True
 
-    # 1. Tokenize, truncate and calculate usage
-    # This runs under model.tokenizer_lock but outside model.lock to improve concurrency
+    # Guard against sending image inputs to text-only models
+    if has_image and not is_multimodal:
+        raise HTTPException(
+            status_code=400,
+            detail=f"モデル '{request.model}' は画像入力をサポートしていません。bge-visualized-m3 などのマルチモーダル対応モデルを指定してください。",
+        )
+
+    # Multimodal model encoding
+    if is_multimodal:
+        prefix = _determine_ruri_prefix(request)
+        processed_items = []
+        for text, img in parsed_items:
+            if text:
+                text = _apply_prefix([text], prefix)[0]
+            processed_items.append((text, img))
+
+        embeddings = await anyio.to_thread.run_sync(
+            model.encode_multimodal, processed_items
+        )
+        response_data = [
+            EmbeddingData(embedding=emb, index=i) for i, emb in enumerate(embeddings)
+        ]
+        usage = Usage(prompt_tokens=0, total_tokens=0)
+        return EmbeddingResponse(data=response_data, model=request.model, usage=usage)
+
+    # Standard text-only embedding model pipeline
+    inputs = [text if text is not None else "" for text, _ in parsed_items]
+    prefix = _determine_ruri_prefix(request)
+    processed_inputs = _apply_prefix(inputs, prefix)
+
     processed_inputs, usage = _tokenize_and_truncate_embeddings(model, processed_inputs)
 
-    # 2. Model inference under locks to prevent tokenizer race conditions
-    with model.lock, model.tokenizer_lock:
-        vectors = model.encode(processed_inputs)
+    def _run_inference():
+        with model.lock, model.tokenizer_lock:
+            return model.encode(processed_inputs)
 
-    # Create response data
+    vectors = await anyio.to_thread.run_sync(_run_inference)
+
     response_data = [
         EmbeddingData(embedding=vector, index=i)
         for i, vector in enumerate(vectors.tolist())
@@ -383,24 +490,17 @@ def create_rerank(request: RerankRequest):
             detail=f"Model '{request.model}' not found for reranks.",
         )
 
-    # Proxy to TEI if URL is configured
     if RERANK_TEI_URL:
         return _proxy_rerank_to_tei(request)
 
     model = _get_model_or_400(request.model, "rerank")
 
-    # Prepare pairs for the cross-encoder outside the inference lock
     pairs = [[request.query, doc] for doc in request.documents]
-
-    # Calculate token usage
     usage = _calculate_rerank_tokens(model, request.query, request.documents)
 
-    # Reranking inference inside the locks to prevent tokenizer race conditions
     with model.lock, model.tokenizer_lock:
-        # Get scores
         scores = model.predict(pairs)
 
-    # Combine documents with their scores
     results = []
     for i, score in enumerate(scores):
         result_item = {"document": i, "score": float(score)}
@@ -408,7 +508,6 @@ def create_rerank(request: RerankRequest):
             result_item["text"] = request.documents[i]
         results.append(result_item)
 
-    # Format and sort results
     response_data = _sort_and_format_rerank_results(results, request.top_n)
 
     return RerankResponse(

@@ -39,10 +39,19 @@ def download_models():
     for model_id in model_ids:
         print(f"\nモデルをダウンロード中: {model_id}")
         try:
-            # cache_dir は指定しない（デフォルトの ~/.cache/huggingface/hub を使用し、
-            # run.sh でそこをマウントする。あるいは明示的にプロジェクト内のパスを指定する）
-            # ここでは将来的にオフラインモードでの利用を確実にするため、snapshot_downloadを使用
-            snapshot_download(repo_id=model_id)
+            if model_id == "bge-visualized-m3":
+                # Download BAAI/bge-m3 base model and Visualized_m3.pth weights
+                snapshot_download(repo_id="BAAI/bge-m3")
+                try:
+                    from huggingface_hub import hf_hub_download
+
+                    hf_hub_download(
+                        repo_id="BAAI/bge-visualized-m3", filename="Visualized_m3.pth"
+                    )
+                except Exception:
+                    snapshot_download(repo_id="BAAI/bge-visualized-m3")
+            else:
+                snapshot_download(repo_id=model_id)
             print(f"完了: {model_id}")
         except Exception as e:
             print(f"エラー: {model_id} のダウンロードに失敗しました: {e}")
