@@ -30,7 +30,10 @@ class VisualizedBGEEmbeddingModel:
         if not os.path.exists(weights_path):
             try:
                 from huggingface_hub import hf_hub_download
-                weights_path = hf_hub_download(repo_id="BAAI/bge-visualized", filename="Visualized_m3.pth")
+
+                weights_path = hf_hub_download(
+                    repo_id="BAAI/bge-visualized", filename="Visualized_m3.pth"
+                )
             except Exception as e:
                 logging.warning(f"Could not resolve Visualized_m3.pth from HF: {e}")
 

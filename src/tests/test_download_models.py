@@ -82,7 +82,9 @@ def test_download_models_success(
     assert mock_snapshot.call_count == 2
     mock_snapshot.assert_any_call(repo_id="model1")
     mock_snapshot.assert_any_call(repo_id="model2")
-    printed_messages = [str(call.args[0]) for call in mock_print.call_args_list if call.args]
+    printed_messages = [
+        str(call.args[0]) for call in mock_print.call_args_list if call.args
+    ]
     assert any("完了: model1" in msg for msg in printed_messages)
     assert any("完了: model2" in msg for msg in printed_messages)
 
@@ -109,8 +111,9 @@ def test_download_models_failure_exits(
     mock_exit.assert_called_once_with(1)
 
     # Check that error message was printed for fail_model
-    printed_messages = [str(call.args[0]) for call in mock_print.call_args_list if call.args]
+    printed_messages = [
+        str(call.args[0]) for call in mock_print.call_args_list if call.args
+    ]
     assert any(
-        "fail_model のダウンロードに失敗しました" in msg
-        for msg in printed_messages
+        "fail_model のダウンロードに失敗しました" in msg for msg in printed_messages
     )

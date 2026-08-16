@@ -451,9 +451,7 @@ async def create_embeddings(request: EmbeddingRequest):
         processed_items = []
         for text, img in parsed_items:
             clean_text = (
-                text.strip()
-                if isinstance(text, str) and text.strip()
-                else None
+                text.strip() if isinstance(text, str) and text.strip() else None
             )
             if clean_text:
                 clean_text = _apply_prefix([clean_text], prefix)[0]

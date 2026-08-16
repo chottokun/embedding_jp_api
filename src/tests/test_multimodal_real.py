@@ -5,7 +5,6 @@ Tests various diagram types, formats, edge cases, and schema structures.
 
 import base64
 import io
-import pytest
 from PIL import Image, ImageDraw
 from fastapi.testclient import TestClient
 
@@ -19,7 +18,9 @@ def _create_sample_diagram(title: str = "Sample Architecture") -> str:
     """Helper to generate a small sample PNG diagram Base64 Data URL."""
     img = Image.new("RGB", (200, 120), color=(240, 245, 250))
     draw = ImageDraw.Draw(img)
-    draw.rectangle([20, 20, 180, 100], fill=(33, 150, 243), outline=(25, 118, 210), width=2)
+    draw.rectangle(
+        [20, 20, 180, 100], fill=(33, 150, 243), outline=(25, 118, 210), width=2
+    )
     draw.text((35, 50), title, fill=(255, 255, 255))
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -137,12 +138,17 @@ def test_multimodal_real_invalid_base64_returns_400():
         "/v1/embeddings",
         json={
             "model": "bge-visualized-m3",
-            "input": {"text": "破損画像", "image_url": "data:image/png;base64,not_valid_b64!!"},
+            "input": {
+                "text": "破損画像",
+                "image_url": "data:image/png;base64,not_valid_b64!!",
+            },
         },
         headers=AUTH_HEADERS,
     )
     assert response.status_code == 400
-    assert "Base64" in response.json()["detail"] or "デコード" in response.json()["detail"]
+    assert (
+        "Base64" in response.json()["detail"] or "デコード" in response.json()["detail"]
+    )
 
 
 def test_multimodal_real_text_only_model_rejection():

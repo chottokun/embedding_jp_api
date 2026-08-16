@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import yaml
 
+
 # --- Load .env File ---
 def _load_env_file():
     """Load key-value pairs from .env file if it exists, without overriding existing OS environment variables."""
@@ -21,6 +22,7 @@ def _load_env_file():
                         os.environ[k] = v
         except Exception as e:
             logging.warning(f"Failed to load .env file: {e}")
+
 
 _load_env_file()
 
