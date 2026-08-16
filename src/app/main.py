@@ -450,9 +450,14 @@ async def create_embeddings(request: EmbeddingRequest):
         prefix = _determine_ruri_prefix(request)
         processed_items = []
         for text, img in parsed_items:
-            if text:
-                text = _apply_prefix([text], prefix)[0]
-            processed_items.append((text, img))
+            clean_text = (
+                text.strip()
+                if isinstance(text, str) and text.strip()
+                else None
+            )
+            if clean_text:
+                clean_text = _apply_prefix([clean_text], prefix)[0]
+            processed_items.append((clean_text, img))
 
         embeddings = await anyio.to_thread.run_sync(
             model.encode_multimodal, processed_items

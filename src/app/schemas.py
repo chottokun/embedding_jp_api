@@ -14,6 +14,10 @@ ImageSourceString = Annotated[
 ]
 
 
+# Multimodal text constraint (allows empty string for image-only items)
+MultimodalText = Annotated[str, StringConstraints(max_length=MAX_INPUT_LENGTH)]
+
+
 # --- Multimodal Schemas ---
 class ImageUrl(BaseModel):
     url: ImageSourceString
@@ -21,13 +25,13 @@ class ImageUrl(BaseModel):
 
 
 class FlatMultimodalItem(BaseModel):
-    text: Optional[LimitedString] = None
+    text: Optional[MultimodalText] = None
     image_url: Optional[Union[ImageUrl, ImageSourceString]] = None
 
 
 class ContentPartText(BaseModel):
     type: Literal["text"]
-    text: LimitedString
+    text: MultimodalText
 
 
 class ContentPartImage(BaseModel):
