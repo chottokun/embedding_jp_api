@@ -339,26 +339,35 @@ uv run pytest
 ### 8.2. 実データ「図＋テキスト」マルチモーダル網羅的テスト・負荷検証
 多様な図面（構成図、グラフ、表、スケッチ）、透過PNG、長文テキスト、5x5類似度マトリクス、20並行同時負荷を検証します。
 ```bash
-PYTHONPATH=src uv run python test_multimodal_suite.py
+PYTHONPATH=src uv run python scripts/test_multimodal_suite.py
 ```
 
-### 8.3. 実動コンテナ E2E 検証 (`test_e2e_live.py`)
+### 8.3. 実動コンテナ E2E 検証 (`scripts/test_e2e_live.py`)
 稼働中のサーバーまたはコンテナに対して、認証・埋め込み・画像入力・SSRF防御・同時実行性を一括検証します。
 ```bash
 # ポート8000に対して実行
-uv run python test_e2e_live.py 8000
+uv run python scripts/test_e2e_live.py 8000
 ```
 
-### 8.4. 実機ベンチマークスイート (`benchmark_suite.py`)
+### 8.4. 実機ベンチマークスイート (`scripts/benchmark_suite.py`)
 RTX 3060 / CPU 上での単一推論レイテンシ（P50/P95/P99）、バッチサイズ別スループット（1〜64）、リランカー推論時間を測定します。
 ```bash
-uv run python benchmark_suite.py
+PYTHONPATH=src uv run python scripts/benchmark_suite.py
 ```
 
-### 8.5. 50〜100並行同時接続ストレステスト (`run_heavy_load_test.py`)
+### 8.5. 50〜100並行同時接続ストレステスト (`scripts/run_heavy_load_test.py`)
 テキスト埋め込み、バッチ推論、リランク、画像入力拒否、ヘルスチェックを混在させた高並行アクセス耐久テストを実行します。
 ```bash
-uv run python run_heavy_load_test.py
+uv run python scripts/run_heavy_load_test.py
+```
+
+### 8.6. Locustによる負荷テスト
+```bash
+# Web UI起動
+uv run locust -f scripts/locustfile.py --host http://localhost:8000
+
+# ヘッドレスモードでの実行（30秒間、20同時ユーザー）
+uv run locust -f scripts/locustfile.py --headless -u 20 -r 5 --run-time 30s --host http://localhost:8000
 ```
 
 ## 9. ビルドパフォーマンスの最適化
