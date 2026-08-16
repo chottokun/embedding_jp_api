@@ -5,7 +5,7 @@
 このプロジェクトは、日本語のテキスト埋め込み（Embedding）、マルチモーダル埋め込み（画像＋テキスト）、および再ランキング（Rerank）機能を提供する、OpenAI互換のFastAPIサーバーです。
 名古屋大学にて開発された[Ruri v3モデル](https://huggingface.co/cl-nagoya/ruri-v3-30m)や[Visualized-BGE (bge-visualized-m3)](https://huggingface.co/BAAI/bge-visualized-m3)などを利用することを想定しています。
 
-> 📖 **詳細ドキュメント**: マイクロサービス統合設計、スレッドセーフティモデル、セキュリティ仕様、および100並行負荷テスト結果の詳細は [docs/ARCHITECTURE_AND_VERIFICATION.md](docs/ARCHITECTURE_AND_VERIFICATION.md) をご覧ください。
+> 📖 **詳細ナレッジベース (OKF v0.2)**: システムアーキテクチャ、スレッドセーフティ、マルチモーダル仕様、オフライン設定、および実機ベンチマークデータの詳細は [docs/README.md](docs/README.md) をご覧ください。
 
 ## 2. API仕様
 
@@ -278,15 +278,16 @@ GUNICORN_WORKERS=4
 
 `run.sh` スクリプトを使用することで、コンテナの起動、モデルの管理、オフラインモードの設定を簡単に行えます。
 
-### 6.1. モデルの事前ダウンロード
+### 6.1. モデルの事前ダウンロード & オフライン検証
 
-起動時間を短縮するため、およびオフライン環境で利用するために、あらかじめモデルをダウンロードすることができます。ダウンロードされたモデルはプロジェクトルートの `.cache/models` に保存されます。
+起動時間を短縮するため、および完全オフライン（エアギャップ）環境で利用するために、全モデル（テキスト＋マルチモーダル重み＋リランカー）を一括ダウンロードし、ロード検証（Dry-Run）を実施できます。
 
 ```bash
-# CPU版イメージを使用してダウンロード
-./run.sh download cpu
+# Pythonスクリプトから直接ダウンロード & オフライン自己検証
+PYTHONPATH=src uv run python src/app/download_models.py --verify-offline
 
-# GPU版イメージを使用してダウンロード
+# または run.sh を使用してダウンロード
+./run.sh download cpu
 ./run.sh download gpu
 ```
 
@@ -303,13 +304,16 @@ GUNICORN_WORKERS=4
 ./run.sh stop
 ```
 
-### 6.3. オフラインモード
+### 6.3. オフラインモードと設定管理 (.env)
 
-環境変数 `OFFLINE_MODE=true` を設定して起動すると、Hugging Face Hubへのアクセスが発生しなくなります。事前に `download` コマンドでモデルを取得済みである必要があります。
+`.env` または `config/config.toml` に `OFFLINE_MODE=true` を設定すると、FastAPI 起動時に自動的に `HF_HUB_OFFLINE=1` 等が伝播し、外部ネットワークへのアクセスを完全に遮断します。
 
 ```bash
-export OFFLINE_MODE=true
-./run.sh run cpu
+# .env.example をコピーして設定
+cp .env.example .env
+
+# .env 内で OFFLINE_MODE=true を指定して起動
+./run.sh run gpu
 ```
 
 ## 7. Docker Composeによる管理
@@ -332,26 +336,38 @@ APP_PORT=8080 GUNICORN_WORKERS=4 ./run.sh run cpu
 uv run pytest
 ```
 
-### 8.2. 実動コンテナ E2E 検証 (`test_e2e_live.py`)
+### 8.2. 実データ「図＋テキスト」マルチモーダル網羅的テスト・負荷検証
+多様な図面（構成図、グラフ、表、スケッチ）、透過PNG、長文テキスト、5x5類似度マトリクス、20並行同時負荷を検証します。
+```bash
+PYTHONPATH=src uv run python scripts/test_multimodal_suite.py
+```
+
+### 8.3. 実動コンテナ E2E 検証 (`scripts/test_e2e_live.py`)
 稼働中のサーバーまたはコンテナに対して、認証・埋め込み・画像入力・SSRF防御・同時実行性を一括検証します。
 ```bash
 # ポート8000に対して実行
-uv run python test_e2e_live.py 8000
+uv run python scripts/test_e2e_live.py 8000
 ```
 
-### 8.3. 100並行同時接続ストレステスト (`run_heavy_load_test.py`)
-テキスト埋め込み、バッチ推論、リランク、画像入力拒否、ヘルスチェックを混在させた100並行の同時アクセス耐久テストを実行します。
+### 8.4. 実機ベンチマークスイート (`scripts/benchmark_suite.py`)
+RTX 3060 / CPU 上での単一推論レイテンシ（P50/P95/P99）、バッチサイズ別スループット（1〜64）、リランカー推論時間を測定します。
 ```bash
-uv run python run_heavy_load_test.py
+PYTHONPATH=src uv run python scripts/benchmark_suite.py
 ```
 
-### 8.4. Locustによる負荷テスト
+### 8.5. 50〜100並行同時接続ストレステスト (`scripts/run_heavy_load_test.py`)
+テキスト埋め込み、バッチ推論、リランク、画像入力拒否、ヘルスチェックを混在させた高並行アクセス耐久テストを実行します。
+```bash
+uv run python scripts/run_heavy_load_test.py
+```
+
+### 8.6. Locustによる負荷テスト
 ```bash
 # Web UI起動
-uv run locust -f locustfile.py --host http://localhost:8000
+uv run locust -f scripts/locustfile.py --host http://localhost:8000
 
 # ヘッドレスモードでの実行（30秒間、20同時ユーザー）
-uv run locust -f locustfile.py --headless -u 20 -r 5 --run-time 30s --host http://localhost:8000
+uv run locust -f scripts/locustfile.py --headless -u 20 -r 5 --run-time 30s --host http://localhost:8000
 ```
 
 ## 9. ビルドパフォーマンスの最適化

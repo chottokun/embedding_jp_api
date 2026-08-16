@@ -1,0 +1,33 @@
+---
+type: Concept
+title: {{CONCEPT_TITLE}}
+description: {{CONCEPT_DESCRIPTION}}
+status: stable
+generated:
+  by: {{ACTOR}}
+  at: {{TIMESTAMP_ISO8601}}
+tags:
+  - {{TAG_1}}
+sources:
+  - id: {{SOURCE_ID}}
+    resource: /docs/raw/{{SOURCE_FILE_NAME}}
+    title: {{SOURCE_TITLE}}
+---
+
+# {{CONCEPT_TITLE}}
+
+## 1. 概要
+
+{{概念の要約を記述。1行〜数行程度}}
+
+## 2. 詳細仕様・構造
+
+{{具体的なデータモデル、コードインターフェース、ロジック、設定値などを記述}}
+
+## 3. 制約・注意事項
+
+{{テストや実装過程で判明した注意点、ライブラリの制限事項などを記述}}
+
+## 4. 関連概念
+
+* [{{RELATED_CONCEPT_TITLE}}](./{{RELATED_CONCEPT_PATH}}) - {{簡潔な説明}}

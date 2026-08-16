@@ -3,11 +3,11 @@ FROM nvidia/cuda:12.1.1-devel-ubuntu22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    UV_LINK_MODE=copy
+    UV_LINK_MODE=copy \
+    UV_PYTHON_INSTALL_DIR=/opt/uv/python
 
 RUN apt-get update && \
-    apt-get install -y python3.11 python3.11-venv python3-pip git && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
+    apt-get install -y git curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy uv binary from official image
@@ -18,8 +18,10 @@ WORKDIR /app
 # Copy dependency files
 COPY pyproject.toml uv.lock README.md ./
 
-# Create virtualenv and install production dependencies only (no dev dependencies)
-RUN uv sync --no-dev --no-install-project
+# Create virtualenv using uv managed Python 3.11 and install dependencies with CUDA torch
+RUN uv python install 3.11 && \
+    uv sync --no-dev --no-install-project --python 3.11 && \
+    uv pip install --python /app/.venv/bin/python torch torchvision --index-url https://download.pytorch.org/whl/cu121
 
 # Stage 2: Final Image
 FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
@@ -31,12 +33,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
     MKL_NUM_THREADS=1 \
     TOKENIZERS_PARALLELISM=false \
     HF_HOME=/home/appuser/.cache/huggingface \
-    PATH="/app/.venv/bin:$PATH"
+    UV_PYTHON_INSTALL_DIR=/opt/uv/python \
+    PATH="/app/.venv/bin:/opt/uv/python/cpython-3.11-linux-x86_64-gnu/bin:$PATH"
 
 RUN apt-get update && \
-    apt-get install -y python3.11 python3.11-venv && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
-    # Create a non-root user and huggingface cache directory
+    apt-get install -y ca-certificates && \
     useradd -m -u 1000 appuser && \
     mkdir -p /home/appuser/.cache/huggingface && \
     chown -R appuser:appuser /home/appuser && \
@@ -44,7 +45,8 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Copy virtualenv containing production packages from builder
+# Copy python runtime and virtualenv from builder
+COPY --from=builder /opt/uv/python /opt/uv/python
 COPY --chown=appuser:appuser --from=builder /app/.venv /app/.venv
 
 # Copy source code and config

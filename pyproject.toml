@@ -59,3 +59,13 @@ explicit = true
 [tool.uv.sources]
 torch = { index = "pytorch-cpu" }
 torchvision = { index = "pytorch-cpu" }
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+exclude = [
+    "src/app/visual_bge",
+    ".venv",
+    ".cache",
+]
+

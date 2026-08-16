@@ -25,13 +25,28 @@ class VisualizedBGEEmbeddingModel:
         self.lock = threading.Lock()
         self.tokenizer_lock = threading.Lock()
 
+        import os
+
+        if not os.path.exists(weights_path):
+            try:
+                from huggingface_hub import hf_hub_download
+
+                weights_path = hf_hub_download(
+                    repo_id="BAAI/bge-visualized", filename="Visualized_m3.pth"
+                )
+            except Exception as e:
+                logging.warning(f"Could not resolve Visualized_m3.pth from HF: {e}")
+
         try:
             from visual_bge.modeling import Visualized_BGE
         except ImportError:
             try:
-                from FlagEmbedding.visual.modeling import Visualized_BGE
+                from .visual_bge.modeling import Visualized_BGE
             except ImportError:
-                Visualized_BGE = None
+                try:
+                    from FlagEmbedding.visual.modeling import Visualized_BGE
+                except ImportError:
+                    Visualized_BGE = None
 
         if Visualized_BGE is None:
             raise ValueError("FlagEmbedding / visual_bge package is not installed.")
@@ -65,7 +80,7 @@ _model_cache = {}
 _model_lock = threading.Lock()
 
 
-def get_model(model_name: str):
+def get_model(model_name: str, device: str | None = None):
     """
     Factory function to get a model instance.
     It loads real models from Hugging Face and caches them.
@@ -74,7 +89,8 @@ def get_model(model_name: str):
         if model_name in _model_cache:
             return _model_cache[model_name]
 
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
         logging.info(f"Loading model '{model_name}' on device '{device}'...")
 
         if model_name in {"bge-visualized-m3", "BAAI/bge-visualized-m3"}:

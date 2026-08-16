@@ -120,9 +120,12 @@ dmypy.json
 # Locust
 locust_report*
 
-# Test and log files
+# Test, benchmark, and load test output files
 *.csv
+*.html
+*.log
 nohup.out
 server.log
 diff_output.txt
+load_test_*
 .cache/models/
