@@ -190,3 +190,41 @@ async def test_ssrf_redirect_to_private_ip_rejected():
             await load_image_from_source(
                 "http://example.com/image.png", MockAsyncClient()
             )
+
+
+@pytest.mark.anyio
+async def test_load_image_from_source_base64_invalid_format():
+    from app.image_utils import load_image_from_source
+    import httpx
+
+    # Invalid base64 characters
+    invalid_b64 = "data:image/png;base64,!!!invalid_base64!!!"
+    async with httpx.AsyncClient() as client:
+        with pytest.raises(ValueError, match="Base64画像のデコードに失敗しました"):
+            await load_image_from_source(invalid_b64, client)
+
+
+@pytest.mark.anyio
+async def test_load_image_from_source_base64_non_image_data():
+    from app.image_utils import load_image_from_source
+    import httpx
+    import base64
+
+    # Valid base64 encoding of non-image text string
+    non_image_b64 = "data:image/png;base64," + base64.b64encode(b"not an image file").decode()
+    async with httpx.AsyncClient() as client:
+        with pytest.raises(ValueError, match="Base64画像のデコードに失敗しました"):
+            await load_image_from_source(non_image_b64, client)
+
+
+@pytest.mark.anyio
+async def test_load_image_from_source_base64_exceeds_max_size():
+    from app.image_utils import load_image_from_source
+    import httpx
+
+    with patch("app.image_utils.MAX_FILE_SIZE", 10):
+        # TINY_PNG_B64 is larger than 10 bytes after base64 decoding
+        async with httpx.AsyncClient() as client:
+            with pytest.raises(ValueError, match="画像サイズが上限") as exc_info:
+                await load_image_from_source(TINY_PNG_B64, client)
+            assert "上限" in str(exc_info.value)
