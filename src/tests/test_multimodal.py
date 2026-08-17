@@ -190,3 +190,36 @@ async def test_ssrf_redirect_to_private_ip_rejected():
             await load_image_from_source(
                 "http://example.com/image.png", MockAsyncClient()
             )
+
+
+@pytest.mark.anyio
+async def test_load_image_from_source_max_file_size_exceeded():
+    from app.image_utils import load_image_from_source, MAX_FILE_SIZE
+    import httpx
+
+    large_b64_source = "data:image/png;base64,large_dummy_data"
+    with patch("base64.b64decode") as mock_b64decode:
+        mock_b64decode.return_value = b"x" * (MAX_FILE_SIZE + 1)
+        async with httpx.AsyncClient() as client:
+            with pytest.raises(ValueError, match="画像サイズが上限\\(15MB\\)を超えています"):
+                await load_image_from_source(large_b64_source, client)
+
+
+def test_embeddings_endpoint_base64_max_file_size_exceeded():
+    from app.image_utils import MAX_FILE_SIZE
+
+    large_b64_source = "data:image/png;base64,large_dummy_data"
+    with patch("base64.b64decode") as mock_b64decode:
+        mock_b64decode.return_value = b"x" * (MAX_FILE_SIZE + 1)
+        response = client.post(
+            "/v1/embeddings",
+            json={
+                "model": "bge-visualized-m3",
+                "input": {
+                    "text": "テスト",
+                    "image_url": large_b64_source,
+                },
+            },
+        )
+        assert response.status_code == 400
+        assert "画像サイズが上限(15MB)を超えています" in response.json()["detail"]
