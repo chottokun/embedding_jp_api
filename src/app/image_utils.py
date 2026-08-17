@@ -11,6 +11,16 @@ Image.MAX_IMAGE_PIXELS = 20_000_000  # Decompression bomb guard (20 megapixels)
 MAX_FILE_SIZE = 15 * 1024 * 1024  # Max 15MB
 
 
+def _decode_and_convert_image(data: bytes | bytearray) -> Image.Image:
+    """
+    Decodes image bytes and converts to RGB format using PIL.
+    CPU-bound operation offloaded to worker threads to avoid blocking the event loop.
+    """
+    image = Image.open(io.BytesIO(data))
+    image.load()
+    return image.convert("RGB")
+
+
 async def is_safe_url_async(url: str) -> bool:
     """
     SSRF protection: Blocks access to private IP, loopback, and link-local addresses
@@ -46,9 +56,7 @@ async def load_image_from_source(source: str, client: httpx.AsyncClient) -> Imag
             decoded = base64.b64decode(b64_data)
             if len(decoded) > MAX_FILE_SIZE:
                 raise ValueError("画像サイズが上限(15MB)を超えています。")
-            image = Image.open(io.BytesIO(decoded))
-            image.load()
-            return image.convert("RGB")
+            return await anyio.to_thread.run_sync(_decode_and_convert_image, decoded)
         except Exception as e:
             raise ValueError(f"Base64画像のデコードに失敗しました: {str(e)}")
 
@@ -78,8 +86,6 @@ async def load_image_from_source(source: str, client: httpx.AsyncClient) -> Imag
                 if len(buffer) > MAX_FILE_SIZE:
                     raise ValueError("画像サイズが上限(15MB)を超えています。")
 
-            image = Image.open(io.BytesIO(buffer))
-            image.load()
-            return image.convert("RGB")
+            return await anyio.to_thread.run_sync(_decode_and_convert_image, bytes(buffer))
 
     raise ValueError("リダイレクト回数が上限を超えました。")
