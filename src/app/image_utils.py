@@ -1,8 +1,9 @@
 import base64
 import io
-import socket
 import ipaddress
+import socket
 from urllib.parse import urlparse
+
 import anyio
 import httpx
 from PIL import Image
@@ -35,10 +36,21 @@ async def is_safe_url_async(url: str) -> bool:
         return False
 
 
+def _decode_image_bytes(data: bytes | bytearray) -> Image.Image:
+    """
+    Helper function to open, load, and convert image bytes to RGB format synchronously.
+    Intended to be run in a thread pool via anyio.to_thread.run_sync.
+    """
+    image = Image.open(io.BytesIO(data))
+    image.load()
+    return image.convert("RGB")
+
+
 async def load_image_from_source(source: str, client: httpx.AsyncClient) -> Image.Image:
     """
     Loads and converts an image from Base64 or HTTP(S) URL into PIL Image (RGB format).
     Enforces stream chunk byte size checks to prevent OOM / DoS.
+    Offloads synchronous image decoding and conversion to a worker thread to prevent blocking the event loop.
     """
     if source.startswith("data:image"):
         try:
@@ -46,11 +58,9 @@ async def load_image_from_source(source: str, client: httpx.AsyncClient) -> Imag
             decoded = base64.b64decode(b64_data)
             if len(decoded) > MAX_FILE_SIZE:
                 raise ValueError("画像サイズが上限(15MB)を超えています。")
-            image = Image.open(io.BytesIO(decoded))
-            image.load()
-            return image.convert("RGB")
+            return await anyio.to_thread.run_sync(_decode_image_bytes, decoded)
         except Exception as e:
-            raise ValueError(f"Base64画像のデコードに失敗しました: {str(e)}")
+            raise ValueError(f"Base64画像のデコードに失敗しました: {e!s}")
 
     # Stream download with safe redirect validation to prevent SSRF redirect bypass
     current_url = source
@@ -78,8 +88,6 @@ async def load_image_from_source(source: str, client: httpx.AsyncClient) -> Imag
                 if len(buffer) > MAX_FILE_SIZE:
                     raise ValueError("画像サイズが上限(15MB)を超えています。")
 
-            image = Image.open(io.BytesIO(buffer))
-            image.load()
-            return image.convert("RGB")
+            return await anyio.to_thread.run_sync(_decode_image_bytes, buffer)
 
     raise ValueError("リダイレクト回数が上限を超えました。")
