@@ -103,7 +103,7 @@ class Visualized_BGE(nn.Module):
         self.dtype = next(bge.parameters()).dtype
     
     def load_model(self, model_weight):
-        self.load_state_dict(torch.load(model_weight, map_location='cpu'))
+        self.load_state_dict(torch.load(model_weight, map_location='cpu', weights_only=True))
     
     def gradient_checkpointing_enable(self, **kwargs):
         # self.bge_encoder.gradient_checkpointing_enable()
