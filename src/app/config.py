@@ -76,7 +76,7 @@ EMBEDDING_TEI_URL = os.getenv("EMBEDDING_TEI_URL")
 RERANK_TEI_URL = os.getenv("RERANK_TEI_URL")
 
 # --- Offline Mode Configuration ---
-OFFLINE_MODE = os.getenv("OFFLINE_MODE", "false").lower() in ("true", "1", "yes")
+OFFLINE_MODE = os.getenv("OFFLINE_MODE", "false").lower() in {"true", "1", "yes"}
 if OFFLINE_MODE:
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
