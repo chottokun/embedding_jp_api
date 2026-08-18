@@ -54,6 +54,7 @@ class VisualizedBGEEmbeddingModel:
         self.model = Visualized_BGE(
             model_name_bge=model_name, model_weight=weights_path
         )
+        self.model.device = torch.device(self.device)
         self.model.to(self.device)
         self.model.eval()
 
