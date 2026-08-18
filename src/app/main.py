@@ -47,13 +47,15 @@ from .config import (
 )
 
 
+EMAIL_PATTERN = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
+
+
 def redact_pii(text: str) -> str:
     """
     Redacts common PII from a string.
     Currently masks email addresses.
     """
-    email_pattern = r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
-    return re.sub(email_pattern, "[REDACTED]", text)
+    return EMAIL_PATTERN.sub("[REDACTED]", text)
 
 
 @asynccontextmanager
