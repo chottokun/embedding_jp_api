@@ -84,7 +84,7 @@ def load_state_dict(checkpoint_path: str, map_location: str='cpu', model_key: st
         for key in ["input_resolution", "context_length", "vocab_size"]:
             state_dict.pop(key, None)
     else:
-        checkpoint = torch.load(checkpoint_path, map_location=map_location)
+        checkpoint = torch.load(checkpoint_path, map_location=map_location, weights_only=True)
         for mk in model_key.split('|'):
             if isinstance(checkpoint, dict) and mk in checkpoint:
                 state_dict = checkpoint[mk]

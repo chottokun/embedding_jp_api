@@ -117,3 +117,160 @@ def test_download_models_failure_exits(
     assert any(
         "fail_model のダウンロードに失敗しました" in msg for msg in printed_messages
     )
+
+
+@patch("builtins.print")
+@patch("app.download_models.hf_hub_download")
+@patch("app.download_models.snapshot_download")
+@patch("app.download_models.yaml.safe_load")
+@patch("builtins.open", new_callable=mock_open)
+@patch("app.download_models.MODELS_FILE")
+def test_download_models_bge_visualized_success(
+    mock_models_file, mock_file, mock_yaml, mock_snapshot, mock_hf_download, mock_print
+):
+    """Test successful download for bge-visualized-m3 special model."""
+    mock_models_file.exists.return_value = True
+    mock_yaml.return_value = {"embedding_models": ["bge-visualized-m3"]}
+
+    download_models()
+
+    mock_snapshot.assert_called_once_with(repo_id="BAAI/bge-m3")
+    mock_hf_download.assert_called_once_with(
+        repo_id="BAAI/bge-visualized", filename="Visualized_m3.pth"
+    )
+    printed_messages = [
+        str(call.args[0]) for call in mock_print.call_args_list if call.args
+    ]
+    assert any("完了: bge-visualized-m3" in msg for msg in printed_messages)
+
+
+@patch("builtins.print")
+@patch("sys.exit")
+@patch("app.download_models.hf_hub_download")
+@patch("app.download_models.snapshot_download")
+@patch("app.download_models.yaml.safe_load")
+@patch("builtins.open", new_callable=mock_open)
+@patch("app.download_models.MODELS_FILE")
+def test_download_models_bge_visualized_failure(
+    mock_models_file,
+    mock_file,
+    mock_yaml,
+    mock_snapshot,
+    mock_hf_download,
+    mock_exit,
+    mock_print,
+):
+    """Test failure during bge-visualized-m3 download exits with code 1."""
+    mock_models_file.exists.return_value = True
+    mock_yaml.return_value = {"embedding_models": ["bge-visualized-m3"]}
+    mock_hf_download.side_effect = Exception("HF Download error")
+    mock_exit.side_effect = SystemExit(1)
+
+    with pytest.raises(SystemExit) as excinfo:
+        download_models()
+
+    assert excinfo.value.code == 1
+    mock_exit.assert_called_once_with(1)
+    printed_messages = [
+        str(call.args[0]) for call in mock_print.call_args_list if call.args
+    ]
+    assert any(
+        "bge-visualized-m3 のダウンロードに失敗しました" in msg
+        for msg in printed_messages
+    )
+
+
+@patch("builtins.print")
+@patch("app.download_models.verify_offline_loading")
+@patch("app.download_models.snapshot_download")
+@patch("app.download_models.yaml.safe_load")
+@patch("builtins.open", new_callable=mock_open)
+@patch("app.download_models.MODELS_FILE")
+def test_download_models_with_verify_offline(
+    mock_models_file, mock_file, mock_yaml, mock_snapshot, mock_verify, mock_print
+):
+    """Test download_models calls verify_offline_loading when verify_offline=True."""
+    mock_models_file.exists.return_value = True
+    mock_yaml.return_value = {"embedding_models": ["model1"]}
+
+    download_models(verify_offline=True)
+
+    mock_verify.assert_called_once_with(["model1"])
+
+
+@patch("builtins.print")
+@patch("app.models.get_model")
+def test_verify_offline_loading_success(mock_get_model, mock_print):
+    """Test verify_offline_loading success path when all models load offline."""
+    import os
+    from unittest.mock import MagicMock
+    from app.download_models import verify_offline_loading
+
+    mock_get_model.return_value = MagicMock()
+
+    test_models = ["model_a", "model_b"]
+    verify_offline_loading(test_models)
+
+    assert os.environ.get("HF_HUB_OFFLINE") == "1"
+    assert os.environ.get("TRANSFORMERS_OFFLINE") == "1"
+    assert os.environ.get("HF_DATASETS_OFFLINE") == "1"
+
+    assert mock_get_model.call_count == 2
+    mock_get_model.assert_any_call("model_a", device="cpu")
+    mock_get_model.assert_any_call("model_b", device="cpu")
+
+    printed_messages = [
+        str(call.args[0]) for call in mock_print.call_args_list if call.args
+    ]
+    assert any(
+        "全モデルのオフライン完全ロード検証に成功しました！" in msg
+        for msg in printed_messages
+    )
+
+
+@patch("builtins.print")
+@patch("sys.exit")
+@patch("app.models.get_model")
+def test_verify_offline_loading_exception_failure(
+    mock_get_model, mock_exit, mock_print
+):
+    """Test verify_offline_loading failure when get_model raises an exception."""
+    from app.download_models import verify_offline_loading
+
+    mock_get_model.side_effect = RuntimeError("Model loading error")
+    mock_exit.side_effect = SystemExit(1)
+
+    with pytest.raises(SystemExit) as excinfo:
+        verify_offline_loading(["fail_model"])
+
+    assert excinfo.value.code == 1
+    mock_exit.assert_called_once_with(1)
+
+    printed_messages = [
+        str(call.args[0]) for call in mock_print.call_args_list if call.args
+    ]
+    assert any("FAILED ❌" in msg for msg in printed_messages)
+
+
+@patch("builtins.print")
+@patch("sys.exit")
+@patch("app.models.get_model")
+def test_verify_offline_loading_none_model_failure(
+    mock_get_model, mock_exit, mock_print
+):
+    """Test verify_offline_loading failure when get_model returns None (AssertionError)."""
+    from app.download_models import verify_offline_loading
+
+    mock_get_model.return_value = None
+    mock_exit.side_effect = SystemExit(1)
+
+    with pytest.raises(SystemExit) as excinfo:
+        verify_offline_loading(["none_model"])
+
+    assert excinfo.value.code == 1
+    mock_exit.assert_called_once_with(1)
+
+    printed_messages = [
+        str(call.args[0]) for call in mock_print.call_args_list if call.args
+    ]
+    assert any("FAILED ❌" in msg for msg in printed_messages)
