@@ -29,8 +29,8 @@ from .config import (
     RERANK_MODELS,
     RURI_PREFIX_MAP,
     API_KEY,
-    EMBEDDING_TEI_URL,
-    RERANK_TEI_URL,
+    EMBEDDING_TEI_URL as EMBEDDING_TEI_URL,
+    RERANK_TEI_URL as RERANK_TEI_URL,
 )
 from .services import (
     BaseEmbeddingService,
