@@ -3,7 +3,7 @@ from sentence_transformers import SentenceTransformer, CrossEncoder
 import torch
 import logging
 import threading
-from typing import Optional
+from typing import Optional, Any
 from PIL import Image
 from unittest.mock import MagicMock
 
@@ -77,7 +77,7 @@ class VisualizedBGEEmbeddingModel:
 
 # --- Model Loader (Factory) ---
 
-_model_cache = {}
+_model_cache: dict[str, Any] = {}
 _model_lock = threading.Lock()
 
 

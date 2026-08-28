@@ -5,10 +5,13 @@ Tests various diagram types, formats, edge cases, and schema structures.
 
 import base64
 import io
+import pytest
 from PIL import Image, ImageDraw
 from fastapi.testclient import TestClient
 
 from app.main import app
+
+pytestmark = pytest.mark.integration
 
 client = TestClient(app)
 AUTH_HEADERS = {"Authorization": "Bearer test_api_key_secret"}
