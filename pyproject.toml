@@ -69,3 +69,9 @@ exclude = [
     ".cache",
 ]
 
+[tool.pytest.ini_options]
+testpaths = ["src/tests"]
+markers = [
+    "integration: tests requiring real model downloads or long running execution",
+    "gpu: tests requiring NVIDIA GPU",
+]
