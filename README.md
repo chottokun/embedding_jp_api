@@ -250,6 +250,13 @@ uv run gunicorn --workers $GUNICORN_WORKERS --worker-class uvicorn.workers.Uvico
 ## 4. テストの実行
 
 ```bash
+# 高速ユニットテスト（モデル非ロード・CI高速モード / 約5秒）
+uv run pytest -m "not integration"
+
+# 実モデル統合テスト（モデルダウンロード・実画像推論）
+uv run pytest -m "integration"
+
+# 全テスト実行
 uv run pytest
 ```
 
@@ -333,6 +340,13 @@ APP_PORT=8080 GUNICORN_WORKERS=4 ./run.sh run cpu
 
 ### 8.1. 単体・統合テスト (pytest)
 ```bash
+# 高速ユニットテスト（CI同等・約5秒）
+uv run pytest -v -m "not integration"
+
+# 実モデル統合テスト
+uv run pytest -v -m "integration"
+
+# 全件実行
 uv run pytest
 ```
 

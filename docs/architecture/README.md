@@ -13,5 +13,6 @@ APIサーバーの全体構造、マルチモーダル推論エンジン、ス�
 ## ドキュメント一覧
 
 * [システム概要・マイクロサービス連携](./overview.md) - 全体アーキテクチャ、API Gateway、TEI Proxy、セキュリティ多層防御
+* [サービス層・DIアーキテクチャ](./services.md) - 抽象サービスクラス、FastAPI Depends による DI、モック化設計
 * [マルチモーダル推論アーキテクチャ](./multimodal.md) - `bge-visualized-m3` による画像＋テキスト統合エンコード、SSRF 防御
 * [並行制御・スレッドセーフティモデル](./concurrency.md) - `threading.Lock` と `anyio` ワーカープールによる GPU/CPU 競合制御
