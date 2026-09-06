@@ -23,7 +23,7 @@ from .schemas import (
     RerankRequest,
     RerankResponse,
 )
-from .models import get_model
+from .models import get_model as get_model, get_model_or_400
 from .config import (
     EMBEDDING_MODELS,
     RERANK_MODELS,
@@ -170,16 +170,7 @@ def _get_model_or_400(model_name: str, model_type: str) -> Any:
     Helper for backwards compatibility with legacy tests calling _get_model_or_400.
     """
     supported_models = EMBEDDING_MODELS if model_type == "embedding" else RERANK_MODELS
-    if model_name not in supported_models:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Model '{model_name}' not found for {model_type}s.",
-        )
-
-    try:
-        return get_model(model_name)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return get_model_or_400(model_name, supported_models, model_type)
 
 
 def _determine_ruri_prefix(request: EmbeddingRequest) -> str:

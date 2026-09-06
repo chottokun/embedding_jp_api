@@ -7,6 +7,7 @@ from fastapi import HTTPException
 
 from .base import BaseEmbeddingService
 from ..image_utils import load_image_from_source
+from ..models import get_model_or_400
 from ..schemas import (
     EmbeddingRequest,
     EmbeddingResponse,
@@ -143,17 +144,7 @@ def _tokenize_and_truncate_embeddings(
 
 
 def _get_model_or_400(model_name: str) -> Any:
-    from app.main import get_model
-
-    if model_name not in EMBEDDING_MODELS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Model '{model_name}' not found for embeddings.",
-        )
-    try:
-        return get_model(model_name)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return get_model_or_400(model_name, EMBEDDING_MODELS, "embedding")
 
 
 class EmbeddingService(BaseEmbeddingService):
