@@ -71,11 +71,20 @@ class EmbeddingRequest(BaseModel):
         False,
         description="Automatically apply prefixes based on input shape if true (fallback/compatibility).",
     )
+    dimensions: Optional[int] = Field(
+        None,
+        ge=1,
+        description="The number of dimensions the resulting output embeddings should have. Supports Matryoshka models.",
+    )
+    encoding_format: Literal["float", "base64"] = Field(
+        "float",
+        description="The format to return the embeddings in. Can be either float or base64.",
+    )
 
 
 class EmbeddingData(BaseModel):
     object: str = "embedding"
-    embedding: list[float]
+    embedding: Union[list[float], str]
     index: int
 
 

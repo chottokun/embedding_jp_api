@@ -37,6 +37,7 @@ from .config import (
     EMBEDDING_MODELS,
     RERANK_MODELS,
     API_KEY,
+    RATE_LIMIT_PER_MINUTE,
     EMBEDDING_TEI_URL as EMBEDDING_TEI_URL,
     RERANK_TEI_URL as RERANK_TEI_URL,
 )
@@ -233,6 +234,69 @@ async def payload_size_limit_middleware(request: Request, call_next):
                 )
         except ValueError:
             pass
+
+    return await call_next(request)
+
+
+# --- Rate Limiting (Token Bucket / Sliding Window) ---
+class RateLimiter:
+    def __init__(self, limit: int, window: int = 60):
+        self.limit = limit
+        self.window = window
+        self.requests: dict[str, list[float]] = {}
+        from threading import Lock
+
+        self.lock = Lock()
+
+    def is_allowed(self, client_id: str) -> bool:
+        now = time.time()
+        with self.lock:
+            if client_id not in self.requests:
+                self.requests[client_id] = []
+            # Evict timestamps older than window
+            self.requests[client_id] = [
+                t for t in self.requests[client_id] if now - t < self.window
+            ]
+            if len(self.requests[client_id]) >= self.limit:
+                return False
+            self.requests[client_id].append(now)
+            return True
+
+    def get_retry_after(self, client_id: str) -> int:
+        now = time.time()
+        with self.lock:
+            if client_id not in self.requests or not self.requests[client_id]:
+                return 0
+            oldest = self.requests[client_id][0]
+            retry_after = self.window - int(now - oldest)
+            return max(1, retry_after)
+
+
+rate_limiter = RateLimiter(limit=RATE_LIMIT_PER_MINUTE, window=60)
+EXEMPT_RATE_LIMIT_PATHS = {"/health", "/healthz", "/ready", "/metrics"}
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    """
+    Applies per-minute rate limiting based on Authorization key or client host IP.
+    Bypasses health and monitoring endpoints. Returns 429 Too Many Requests on breach.
+    """
+    if request.url.path in EXEMPT_RATE_LIMIT_PATHS:
+        return await call_next(request)
+
+    client_id = request.client.host if request.client else "unknown"
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        client_id = auth_header[7:]
+
+    if not rate_limiter.is_allowed(client_id):
+        retry_after = rate_limiter.get_retry_after(client_id)
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too Many Requests"},
+            headers={"Retry-After": str(retry_after)},
+        )
 
     return await call_next(request)
 

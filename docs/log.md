@@ -1,6 +1,8 @@
 # Knowledge Update Log
 
 ## 2026-09-12
+* **Feature**: OpenAI 完全互換の `dimensions`（Matryoshka 次元削減 + L2 再正規化）および `encoding_format: "base64"`（IEEE 754 float32 リトルエンディアン Base64 化）を実装し、ローカル推論・TEIプロキシ・マルチモーダルの全経路に統合しました（テスト: `src/tests/test_dimensions_and_encoding.py`）。
+* **Security & SRE**: API キー／クライアント IP 単位で毎分リクエスト数を制限するスライディングウィンドウ型 `RateLimiter`（`RATE_LIMIT_PER_MINUTE`、超過時 `429 Too Many Requests` + `Retry-After`）を導入し、死活監視エンドポイントの自動除外を適用しました（テスト: `src/tests/test_rate_limit.py`）。
 * **Feature**: OpenAI 互換のモデル一覧取得エンドポイント (`GET /v1/models`) を新設し、テスト `src/tests/test_models_endpoint.py` を追加しました。
 * **Security**: 悪意ある巨大リクエスト（32MB超）による OOM を早期防御する `PayloadLimitMiddleware`（`413 Payload Too Large`）を導入し、テスト `src/tests/test_payload_limit.py` を追加しました。
 * **Feature & SRE**: メモリ／VRAM を動的に解放可能なモデルアンロードエンドポイント (`POST /v1/models/unload`) を新設し、テスト `src/tests/test_model_unload.py` を追加しました。

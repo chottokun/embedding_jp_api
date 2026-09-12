@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **OpenAI-Compatible `dimensions` & `encoding_format: "base64"` Support**:
+  - Added Matryoshka dimension truncation with automatic L2 re-normalization.
+  - Added IEEE 754 float32 little-endian Base64 embedding serialization (`encoding_format="base64"`).
+  - Applied formatting consistently across local PyTorch inference, TEI proxy, and multimodal embedding flows.
+  - Added unit test suite in `src/tests/test_dimensions_and_encoding.py`.
+- **IP / Token-based Rate Limiter Middleware (`429 Too Many Requests`)**:
+  - Implemented sliding-window token bucket rate limiter tracking requests per minute per IP/Bearer token (`RATE_LIMIT_PER_MINUTE`, default: 120).
+  - Included `Retry-After` header in 429 responses and automatically exempted internal health check/metric probes (`/health`, `/healthz`, `/ready`, `/metrics`).
+  - Added unit test suite in `src/tests/test_rate_limit.py`.
 - **OpenAI-Compatible Models Endpoint (`GET /v1/models`)**:
   - Implemented standard OpenAI model listing endpoint returning all configured embedding and reranking models (`ModelList`, `ModelCard`).
   - Added dedicated test suite `src/tests/test_models_endpoint.py`.

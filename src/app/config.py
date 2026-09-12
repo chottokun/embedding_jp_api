@@ -70,6 +70,9 @@ MAX_INPUT_ITEMS = int(os.getenv("MAX_INPUT_ITEMS", "256"))
 # API Key for authentication. If not set, authentication is disabled.
 API_KEY = os.getenv("API_KEY")
 
+# Rate limit configuration (requests per minute per client)
+RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
+
 # --- TEI Integration Configuration ---
 # If these environment variables are set, the API will proxy requests to TEI.
 EMBEDDING_TEI_URL = os.getenv("EMBEDDING_TEI_URL")
