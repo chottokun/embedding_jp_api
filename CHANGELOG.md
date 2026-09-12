@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **OpenAI-Compatible Models Endpoint (`GET /v1/models`)**:
+  - Implemented standard OpenAI model listing endpoint returning all configured embedding and reranking models (`ModelList`, `ModelCard`).
+  - Added dedicated test suite `src/tests/test_models_endpoint.py`.
+- **HTTP Payload Size Limit Middleware (DoS / OOM Defense)**:
+  - Enforced 32MB maximum request body size (`MAX_PAYLOAD_SIZE`), returning `413 Payload Too Large` for oversized requests before parsing.
+  - Added dedicated test suite `src/tests/test_payload_limit.py`.
+- **Dynamic Model Unloading & Memory Reclamation (`POST /v1/models/unload`)**:
+  - Added endpoint to dynamically unload specific or all models from cache, triggering `torch.cuda.empty_cache()` and garbage collection to free RAM/VRAM.
+  - Added dedicated test suite `src/tests/test_model_unload.py`.
 - **Structured JSON Logging with Request ID Tracking**:
   - Integrated JSON log formatting and `X-Request-ID` correlation via ContextVars in HTTP middleware.
   - Automatically captures HTTP method, endpoint, status code, and latency in standard JSON output for APM/log aggregation.

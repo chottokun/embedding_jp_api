@@ -1,6 +1,9 @@
 # Knowledge Update Log
 
 ## 2026-09-12
+* **Feature**: OpenAI 互換のモデル一覧取得エンドポイント (`GET /v1/models`) を新設し、テスト `src/tests/test_models_endpoint.py` を追加しました。
+* **Security**: 悪意ある巨大リクエスト（32MB超）による OOM を早期防御する `PayloadLimitMiddleware`（`413 Payload Too Large`）を導入し、テスト `src/tests/test_payload_limit.py` を追加しました。
+* **Feature & SRE**: メモリ／VRAM を動的に解放可能なモデルアンロードエンドポイント (`POST /v1/models/unload`) を新設し、テスト `src/tests/test_model_unload.py` を追加しました。
 * **Security**: マルチモーダル画像ダウンロードにおける DNS Rebinding / TOCTOU 脆弱性対策として、SSRF 検査時に解決した安全な IP アドレスを TCP 接続先として直接固定（IP Pinning）する `SafeNetworkBackend` を実装しました。
 * **Observability**: 構造化 JSON ロギングおよび `X-Request-ID` によるリクエスト追跡（ContextVars連携）を実装し、テスト `src/tests/test_logger.py` を追加しました。
 * **Feature**: `/ready` エンドポイントを新設し、Liveness (`/health`, `/healthz`) と分離して GPU 状態およびロード済みモデルを監視可能にしました。
