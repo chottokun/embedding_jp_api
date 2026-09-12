@@ -48,7 +48,7 @@ async def run_comprehensive_benchmarks():
     print("=" * 80)
 
     device_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "Host CPU"
-    print(f"\n[Environment Information]")
+    print("\n[Environment Information]")
     print(f"  • Compute Device : {device_name}")
     print(f"  • PyTorch Version: {torch.__version__}")
     print(f"  • CUDA Available : {torch.cuda.is_available()}")
