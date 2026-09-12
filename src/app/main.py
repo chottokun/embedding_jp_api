@@ -1,6 +1,6 @@
 # ruff: noqa: E402
 import os
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 # Disable tokenizer parallelism to prevent "Already Borrowed" errors and deadlocks
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -27,7 +27,6 @@ from .models import get_model
 from .config import (
     EMBEDDING_MODELS,
     RERANK_MODELS,
-    RURI_PREFIX_MAP,
     API_KEY,
     EMBEDDING_TEI_URL as EMBEDDING_TEI_URL,
     RERANK_TEI_URL as RERANK_TEI_URL,
@@ -37,6 +36,10 @@ from .services import (
     BaseRerankService,
     EmbeddingService,
     RerankService,
+)
+from .services.embedding import (
+    _determine_ruri_prefix as _determine_ruri_prefix,
+    _apply_prefix as _apply_prefix,
 )
 
 EMAIL_PATTERN = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
@@ -180,25 +183,6 @@ def _get_model_or_400(model_name: str, model_type: str) -> Any:
         return get_model(model_name)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-
-def _determine_ruri_prefix(request: EmbeddingRequest) -> str:
-    prefix = ""
-    if "ruri-v3" in request.model:
-        if request.input_type in RURI_PREFIX_MAP:
-            prefix = RURI_PREFIX_MAP[request.input_type]
-        elif request.apply_ruri_prefix:
-            if isinstance(request.input, str):
-                prefix = RURI_PREFIX_MAP["query"]
-            else:
-                prefix = RURI_PREFIX_MAP["document"]
-    return prefix
-
-
-def _apply_prefix(inputs: List[str], prefix: str) -> List[str]:
-    if not prefix:
-        return inputs
-    return [text if text.startswith(prefix) else f"{prefix}{text}" for text in inputs]
 
 
 # Dependency Injection Providers
