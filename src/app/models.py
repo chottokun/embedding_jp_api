@@ -120,3 +120,33 @@ def get_model(model_name: str, device: str | None = None):
         _model_cache[model_name] = model
         logging.info(f"Model '{model_name}' loaded successfully.")
         return model
+
+
+def get_model_or_400(
+    model_name: str, valid_models: Any, model_type: str = "model"
+) -> Any:
+    """
+    Validates model_name against valid_models and fetches model instance via get_model.
+    Raises HTTPException(400) if model is invalid or if get_model raises a ValueError.
+    """
+    from fastapi import HTTPException
+
+    if model_name not in valid_models:
+        suffix = "s" if not model_type.endswith("s") else ""
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model '{model_name}' not found for {model_type}{suffix}.",
+        )
+
+    try:
+        # Dynamically import main to support patches on app.main.get_model in tests
+        try:
+            import app.main as main_mod
+
+            fetch_func = getattr(main_mod, "get_model", get_model)
+        except Exception:
+            fetch_func = get_model
+
+        return fetch_func(model_name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

@@ -3,6 +3,7 @@ from typing import Any, List, Optional
 from fastapi import HTTPException
 
 from .base import BaseRerankService
+from ..models import get_model_or_400
 from ..schemas import RerankRequest, RerankResponse, RerankData, Usage
 from ..config import RERANK_MODELS
 
@@ -47,17 +48,7 @@ def _sort_and_format_rerank_results(
 
 
 def _get_model_or_400(model_name: str) -> Any:
-    from app.main import get_model
-
-    if model_name not in RERANK_MODELS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Model '{model_name}' not found for reranks.",
-        )
-    try:
-        return get_model(model_name)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return get_model_or_400(model_name, RERANK_MODELS, "rerank")
 
 
 class RerankService(BaseRerankService):
