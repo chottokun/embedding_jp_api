@@ -2,7 +2,6 @@ from unittest.mock import patch, MagicMock
 import pytest
 from fastapi import HTTPException
 from app.main import _get_model_or_400
-from app.models import get_model_or_400
 from app.config import EMBEDDING_MODELS, RERANK_MODELS
 
 
@@ -101,29 +100,3 @@ def test_get_model_or_400_value_error(mock_get_model):
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Some model load failure message"
-
-
-@patch("app.main.get_model")
-def test_models_get_model_or_400_success(mock_get_model):
-    """
-    Test that get_model_or_400 in app.models correctly retrieves an embedding model or rerank model.
-    """
-    mock_model = MagicMock()
-    mock_get_model.return_value = mock_model
-
-    result_embed = get_model_or_400(EMBEDDING_MODELS[0], "embedding")
-    assert result_embed == mock_model
-
-    result_rerank = get_model_or_400(RERANK_MODELS[0], "rerank")
-    assert result_rerank == mock_model
-
-
-def test_models_get_model_or_400_unsupported():
-    """
-    Test that get_model_or_400 in app.models raises HTTPException 400 for unsupported models.
-    """
-    with pytest.raises(HTTPException) as exc_info:
-        get_model_or_400("invalid-model", "embedding")
-
-    assert exc_info.value.status_code == 400
-    assert exc_info.value.detail == "Model 'invalid-model' not found for embeddings."

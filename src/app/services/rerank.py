@@ -8,16 +8,6 @@ from ..config import RERANK_MODELS
 
 
 def _calculate_rerank_tokens(model: Any, query: str, documents: List[str]) -> Usage:
-    """Calculates total token usage for reranking query and document pairs.
-
-    Args:
-        model: Model instance containing tokenizer.
-        query: Query string.
-        documents: List of document strings.
-
-    Returns:
-        Usage object with calculated prompt and total tokens.
-    """
     with model.tokenizer_lock:
         tokenizer = model.tokenizer
         q_tokens = len(tokenizer.encode(query, add_special_tokens=False))
@@ -46,15 +36,6 @@ def _calculate_rerank_tokens(model: Any, query: str, documents: List[str]) -> Us
 def _sort_and_format_rerank_results(
     results: List[dict], top_n: Optional[int]
 ) -> List[RerankData]:
-    """Sorts rerank results by score descending and formats them into RerankData models.
-
-    Args:
-        results: List of result dicts containing score, document index, and optional text.
-        top_n: Optional limit for top N results to return.
-
-    Returns:
-        List of RerankData items.
-    """
     if top_n is not None:
         sorted_results = heapq.nlargest(
             top_n, results, key=lambda x: (x["score"], -x["document"])
@@ -66,9 +47,17 @@ def _sort_and_format_rerank_results(
 
 
 def _get_model_or_400(model_name: str) -> Any:
-    from app.models import get_model_or_400
+    from app.main import get_model
 
-    return get_model_or_400(model_name, "rerank")
+    if model_name not in RERANK_MODELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model '{model_name}' not found for reranks.",
+        )
+    try:
+        return get_model(model_name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 class RerankService(BaseRerankService):
