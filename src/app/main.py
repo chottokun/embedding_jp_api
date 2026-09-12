@@ -22,8 +22,11 @@ from .schemas import (
     EmbeddingResponse,
     RerankRequest,
     RerankResponse,
+    ModelList,
+    ModelCard,
+    ErrorResponse,
 )
-from .models import get_model as get_model
+from .models import get_model as get_model, _model_cache
 from .config import (
     EMBEDDING_MODELS,
     RERANK_MODELS,
@@ -188,9 +191,65 @@ def get_rerank_service() -> BaseRerankService:
     return RerankService(proxy_to_tei_func=_proxy_to_tei, model_loader=get_model)
 
 
+@app.get(
+    "/v1/models",
+    response_model=ModelList,
+    tags=["Models"],
+    summary="List available models",
+    description="Retrieves a list of all currently supported models, including both embedding and reranking models.",
+    responses={
+        401: {"model": ErrorResponse, "description": "Unauthorized"},
+        429: {"model": ErrorResponse, "description": "Too Many Requests"},
+        503: {"model": ErrorResponse, "description": "Service Unavailable"},
+    },
+)
+async def list_models():
+    """
+    Lists available models by dynamically aggregating and deduplicating
+    from EMBEDDING_MODELS and RERANK_MODELS.
+    """
+    model_ids = sorted(list(set(EMBEDDING_MODELS + RERANK_MODELS)))
+    models = [ModelCard(id=model_id) for model_id in model_ids]
+    return ModelList(data=models)
+
+
+@app.post(
+    "/v1/models/unload",
+    tags=["Models"],
+    summary="Unload models",
+    description="Clears the model cache, releasing any loaded models from memory.",
+    responses={
+        401: {"model": ErrorResponse, "description": "Unauthorized"},
+        429: {"model": ErrorResponse, "description": "Too Many Requests"},
+        503: {"model": ErrorResponse, "description": "Service Unavailable"},
+    },
+    dependencies=[Depends(verify_api_key)],
+)
+async def unload_models():
+    """
+    Unloads all currently cached models to free memory/VRAM.
+    """
+    _model_cache.clear()
+    return {"status": "ok", "message": "All models unloaded"}
+
+
 @app.post(
     "/v1/embeddings",
     response_model=EmbeddingResponse,
+    tags=["Embeddings"],
+    summary="Create embeddings",
+    description="Creates embeddings for the given input text or multimodal item, following OpenAI's API format.",
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Bad Request (e.g., unsupported model, invalid input)",
+        },
+        401: {"model": ErrorResponse, "description": "Unauthorized"},
+        413: {"model": ErrorResponse, "description": "Payload Too Large"},
+        429: {"model": ErrorResponse, "description": "Too Many Requests"},
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        503: {"model": ErrorResponse, "description": "Service Unavailable"},
+    },
     dependencies=[Depends(verify_api_key)],
 )
 async def create_embeddings(
@@ -208,6 +267,20 @@ async def create_embeddings(
     "/v1/rerank",
     response_model=RerankResponse,
     response_model_exclude_none=True,
+    tags=["Rerank"],
+    summary="Rerank documents",
+    description="Reranks a list of documents for a given query to determine their relevance.",
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Bad Request (e.g., unsupported model, invalid input)",
+        },
+        401: {"model": ErrorResponse, "description": "Unauthorized"},
+        413: {"model": ErrorResponse, "description": "Payload Too Large"},
+        429: {"model": ErrorResponse, "description": "Too Many Requests"},
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+        503: {"model": ErrorResponse, "description": "Service Unavailable"},
+    },
     dependencies=[Depends(verify_api_key)],
 )
 async def create_rerank(
