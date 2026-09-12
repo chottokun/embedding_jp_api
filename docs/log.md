@@ -1,6 +1,8 @@
 # Knowledge Update Log
 
 ## 2026-09-12
+* **Observability & APM**: Prometheus メトリクスにモデル別トークン消費カウンタ（`http_prompt_tokens_total`）およびエンドポイント別バッチサイズ分布ヒストグラム（`http_request_batch_size`）を追加し、運用監視・リソース予測性能を強化しました（テスト: `src/tests/test_metrics.py`）。
+* **Feature & Performance**: アプリケーション起動時に事前ロードを行う `PRELOAD_MODELS` 設定を新設。初回リクエストのコールドスタート遅延をゼロにする事前ウォームアップ機構を導入しました（テスト: `src/tests/test_config.py`, `src/tests/test_graceful_shutdown.py`）。
 * **SRE & High Availability**: FastAPI Lifespan におけるグレースフルシャットダウン（`SHUTDOWN_DRAIN_TIMEOUT_SECONDS`）および In-Flight リクエスト追跡ミドルウェアを実装。シャットダウン移行中の新規リクエストに対して `503 Service Unavailable` を返却し、処理中リクエストを正常完了させるドレイン機構を導入しました（テスト: `src/tests/test_graceful_shutdown.py`）。
 * **Optimization & Performance**: `TORCH_DTYPE` 環境変数による推論精度切り替え（`bfloat16`, `float16`, `float32`）および `torch.autocast` を統合。SentenceTransformer / CrossEncoder / VisualizedBGE モデルへ型安全に反映しました（テスト: `src/tests/test_torch_dtype.py`）。
 * **Feature**: OpenAI 完全互換の `dimensions`（Matryoshka 次元削減 + L2 再正規化）および `encoding_format: "base64"`（IEEE 754 float32 リトルエンディアン Base64 化）を実装し、ローカル推論・TEIプロキシ・マルチモーダルの全経路に統合しました（テスト: `src/tests/test_dimensions_and_encoding.py`）。

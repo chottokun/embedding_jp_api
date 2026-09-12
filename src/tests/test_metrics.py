@@ -30,3 +30,22 @@ def test_metrics_middleware_increments_counter():
     assert 'endpoint="/health"' in metrics_text
     assert 'endpoint="/ready"' in metrics_text
     assert 'http_status="200"' in metrics_text
+
+
+def test_metrics_prompt_tokens_and_batch_size():
+    """Verify that embeddings and rerank requests track batch sizes and prompt tokens."""
+    # Test embeddings metrics
+    res_emb = client.post(
+        "/v1/embeddings",
+        json={"input": ["こんにちは", "さようなら"], "model": "cl-nagoya/ruri-v3-30m"},
+    )
+    assert res_emb.status_code == 200
+
+    # Fetch /metrics
+    res_metrics = client.get("/metrics")
+    assert res_metrics.status_code == 200
+    metrics_text = res_metrics.text
+
+    assert "http_prompt_tokens_total" in metrics_text
+    assert "http_request_batch_size_bucket" in metrics_text
+    assert 'endpoint="/v1/embeddings"' in metrics_text

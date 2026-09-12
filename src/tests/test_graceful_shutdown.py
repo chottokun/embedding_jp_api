@@ -1,4 +1,5 @@
 import asyncio
+from unittest.mock import patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 from app.main import app, active_requests
@@ -49,6 +50,28 @@ async def test_lifespan_drains_active_requests():
         assert drain_completed is True
     finally:
         active_requests.discard(task)
+        main_module.is_shutting_down = False
+        if hasattr(app.state, "tei_client"):
+            delattr(app.state, "tei_client")
+
+
+@pytest.mark.anyio
+async def test_lifespan_preloads_configured_models():
+    preloaded = []
+
+    def mock_loader(model_name: str):
+        preloaded.append(model_name)
+        return None
+
+    try:
+        with (
+            patch("app.main.PRELOAD_MODELS", ["model-1", "model-2"]),
+            patch("app.main.get_model", side_effect=mock_loader),
+        ):
+            async with main_module.lifespan(app):
+                assert "model-1" in preloaded
+                assert "model-2" in preloaded
+    finally:
         main_module.is_shutting_down = False
         if hasattr(app.state, "tei_client"):
             delattr(app.state, "tei_client")

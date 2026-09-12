@@ -81,6 +81,11 @@ SHUTDOWN_DRAIN_TIMEOUT_SECONDS = float(
 # Inference precision configuration: "float16", "bfloat16", or "" (default/float32)
 TORCH_DTYPE = os.getenv("TORCH_DTYPE", "").lower()
 
+# Preload models on application startup (comma-separated list of model names)
+PRELOAD_MODELS = [
+    m.strip() for m in os.getenv("PRELOAD_MODELS", "").split(",") if m.strip()
+]
+
 # --- TEI Integration Configuration ---
 # If these environment variables are set, the API will proxy requests to TEI.
 EMBEDDING_TEI_URL = os.getenv("EMBEDDING_TEI_URL")

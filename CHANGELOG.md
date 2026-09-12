@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Prometheus Metrics Instrumentation for Token Usage and Batch Size Distribution**:
+  - Added `http_prompt_tokens_total` Counter labeled by model to track total token consumption.
+  - Added `http_request_batch_size` Histogram labeled by endpoint with standard exponential buckets up to 256 items.
+  - Added unit test suite in `src/tests/test_metrics.py`.
+- **Model Warmup & Preloading on Application Startup (`PRELOAD_MODELS`)**:
+  - Implemented `PRELOAD_MODELS` environment variable supporting a comma-separated list of model names to load during application lifespan initialization.
+  - Eliminates first-request cold-start latency for production environments.
+  - Added unit test suite in `src/tests/test_config.py` and `src/tests/test_graceful_shutdown.py`.
 - **Graceful Shutdown & In-Flight Request Draining Middleware**:
   - Implemented request task tracking and graceful drain during FastAPI application lifespan shutdown (`SHUTDOWN_DRAIN_TIMEOUT_SECONDS`, default: 10s).
   - Automatically returns `503 Service Unavailable` with retry message for new incoming requests while shutting down.

@@ -40,6 +40,7 @@ from .config import (
     API_KEY,
     RATE_LIMIT_PER_MINUTE,
     SHUTDOWN_DRAIN_TIMEOUT_SECONDS,
+    PRELOAD_MODELS,
     EMBEDDING_TEI_URL as EMBEDDING_TEI_URL,
     RERANK_TEI_URL as RERANK_TEI_URL,
 )
@@ -107,6 +108,17 @@ REQUEST_LATENCY = Histogram(
     "HTTP request latency in seconds",
     ["method", "endpoint"],
 )
+PROMPT_TOKENS_COUNT = Counter(
+    "http_prompt_tokens_total",
+    "Total number of prompt tokens processed",
+    ["model"],
+)
+BATCH_SIZE_HISTOGRAM = Histogram(
+    "http_request_batch_size",
+    "Distribution of batch sizes (number of inputs per request)",
+    ["endpoint"],
+    buckets=(1, 2, 4, 8, 16, 32, 64, 128, 256),
+)
 
 
 def redact_pii(text: str) -> str:
@@ -127,6 +139,17 @@ async def lifespan(app_instance: FastAPI):
     global is_shutting_down
     # Initialize global HTTP client with connection pooling for TEI proxy requests
     app_instance.state.tei_client = httpx.AsyncClient(timeout=30.0)
+
+    # Preload configured models to eliminate cold-start latency
+    if PRELOAD_MODELS:
+        logging.info(f"Preloading models: {PRELOAD_MODELS}")
+        for model_name in PRELOAD_MODELS:
+            try:
+                await anyio.to_thread.run_sync(get_model, model_name)
+                logging.info(f"Preloaded model '{model_name}' successfully.")
+            except Exception as e:
+                logging.error(f"Failed to preload model '{model_name}': {e}")
+
     try:
         yield
     finally:
@@ -489,7 +512,15 @@ async def create_embeddings(
     Creates embeddings for the given input, following OpenAI's API format.
     Supports text-only and multimodal (image/composite) inputs.
     """
-    return await service.create_embeddings(request)
+    batch_size = len(request.input) if isinstance(request.input, list) else 1
+    BATCH_SIZE_HISTOGRAM.labels(endpoint="/v1/embeddings").observe(batch_size)
+
+    response = await service.create_embeddings(request)
+    if hasattr(response, "usage") and response.usage:
+        PROMPT_TOKENS_COUNT.labels(model=request.model).inc(
+            response.usage.prompt_tokens
+        )
+    return response
 
 
 @app.post(
@@ -505,7 +536,15 @@ async def create_rerank(
     """
     Reranks a list of documents for a given query.
     """
-    return await service.create_rerank(request)
+    batch_size = len(request.documents)
+    BATCH_SIZE_HISTOGRAM.labels(endpoint="/v1/rerank").observe(batch_size)
+
+    response = await service.create_rerank(request)
+    if hasattr(response, "usage") and response.usage:
+        PROMPT_TOKENS_COUNT.labels(model=request.model).inc(
+            response.usage.prompt_tokens
+        )
+    return response
 
 
 @app.get(

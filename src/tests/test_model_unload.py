@@ -7,6 +7,7 @@ client = TestClient(app)
 
 
 def test_model_unload_all():
+    app_models._model_cache.clear()
     mock_m1 = MagicMock()
     mock_m2 = MagicMock()
     app_models._model_cache["test-model-1"] = mock_m1

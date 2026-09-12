@@ -94,6 +94,15 @@ def test_config_models_file_empty():
             assert app.config.RERANK_MODELS == []
 
 
+def test_config_preload_models():
+    """Test PRELOAD_MODELS comma-separated environment variable parsing."""
+    custom_env = {"PRELOAD_MODELS": "model-a, model-b , model-c"}
+    with patch.dict(os.environ, custom_env):
+        with patch("pathlib.Path.exists", return_value=False):
+            importlib.reload(app.config)
+            assert app.config.PRELOAD_MODELS == ["model-a", "model-b", "model-c"]
+
+
 def teardown_module(module):
     """Restore config to original state to avoid affecting other tests."""
     importlib.reload(app.config)
