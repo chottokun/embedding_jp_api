@@ -1,8 +1,11 @@
 # Knowledge Update Log
 
 ## 2026-09-12
-* **SRE & Concurrency Protection**: 推論処理（Embeddings / Reranking）の同時実行数を制限する `asyncio.Semaphore` 制御（`MAX_CONCURRENT_INFERENCES`）およびキュー滞留タイムアウト（`INFERENCE_SEMAPHORE_TIMEOUT_SECONDS`、タイムアウト時 `503 Service Unavailable`）を実装し、高負荷下での GPU/CPU リソース飽和・CUDA OOM を防止（テスト: `src/tests/test_concurrency_edge.py`、実負荷テスト検証済み）。
+* **Performance & Comprehensive Benchmarks**: 全5モデル（ruri-30m, ruri-310m, bge-m3, bge-visualized-m3, ruri-reranker-310m）の実機ベンチマーク、バッチスケーリング（1〜64）、コンテキスト長スケーリング（32〜2048トークン）、マルチモーダル解像度別（64px〜1080p）推論レイテンシ、およびセマフォ制御下での高並行負荷テスト（50リクエスト/10並行、成功率100.0%、スループット 3.42 req/sec）の実測値を `docs/infrastructure/benchmarks.md` に更新・記録しました。
+* **Architecture & Future Roadmap**: プロダクション要件の完備（推論セマフォ、マルチAPIキー認証、OpenAPI 3.x定義拡充、全178テストパス、mainブランチマージ完了）を受け、次期フェーズに向けた改善項目（インメモリ LRU キャッシュ層、Dynamic Request Batching、Helm Chart 整備、Hybrid 検索エンドポイント）をロードマップとして `docs/infrastructure/benchmarks.md` に Take Note 記録しました。
+* **SRE & Concurrency Protection**: 推論処理（Embeddings / Reranking）の同時実行数を制限する `AsyncThreadSemaphore` 制御（`MAX_CONCURRENT_INFERENCES`）およびキュー滞留タイムアウト（`INFERENCE_SEMAPHORE_TIMEOUT_SECONDS`、タイムアウト時 `503 Service Unavailable`）を実装し、マルチイベントループ環境における安全性確保と高負荷下での GPU/CPU リソース飽和・CUDA OOM を防止（テスト: `src/tests/test_concurrency_edge.py`、実負荷テスト検証済み）。
 * **Security & Multi-Tenancy**: クライアント別の個別 API キー管理（`API_KEYS` 環境変数、カンマ区切りまたは JSON 形式）およびキーごとのレート制限個別割り当て機能を実装。定数時間比較（`secrets.compare_digest`）によるタイミング攻撃防御を維持（テスト: `src/tests/test_auth.py`, `src/tests/test_rate_limit.py`）。
+
 * **Infrastructure & Kubernetes**: 本番運用向けの Kubernetes マニフェスト（`deploy/kubernetes/deployment.yaml`, `service.yaml`, `hpa.yaml`）および `docs/deployment.md` を追加。HPA による CPU/メモリ負荷に応じた水平自動スケール（1〜5 Pod）と死活／準備監視・Prometheus スクレイプ定義を標準化しました。
 * **API Documentation & DX**: OpenAPI 3.x / Swagger UI (`/docs`) のスキーマ定義を大幅拡充。エンドポイント別のタグ分類（`Embeddings`, `Reranking`, `Models`, `Health`, `Metrics`）、概要・詳細説明、レスポンスコード（400, 401, 413, 429, 503）、および `EmbeddingRequest` / `RerankRequest` の実例（`json_schema_extra`）を配備しました（テスト: `src/tests/test_extended_features.py`）。
 * **Observability & APM**: Prometheus メトリクスにモデル別トークン消費カウンタ（`http_prompt_tokens_total`）およびエンドポイント別バッチサイズ分布ヒストグラム（`http_request_batch_size`）を追加し、運用監視・リソース予測性能を強化しました（テスト: `src/tests/test_metrics.py`）。

@@ -16,7 +16,7 @@ import httpx
 import numpy as np
 import torch
 from PIL import Image, ImageDraw
-from app.main import app
+from app.main import app, rate_limiter
 
 BASE_URL = "http://testserver"
 API_KEY = "test_api_key_secret"
@@ -62,6 +62,9 @@ async def run_comprehensive_benchmarks():
         headers=HEADERS,
         timeout=180.0,
     ) as client:
+        # Relax rate limiter for benchmarking
+        rate_limiter.requests.clear()
+        rate_limiter.default_limit = 100000
 
         # ======================================================================
         # 1. All Models Head-to-Head Comparison (Single Query Latency & VRAM)

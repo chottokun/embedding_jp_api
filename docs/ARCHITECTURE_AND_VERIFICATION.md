@@ -120,12 +120,13 @@ sequenceDiagram
 
 | 対策項目 | 実装箇所 | 詳細説明 |
 | :--- | :--- | :--- |
-| **SSRF多層防御** | [`src/app/image_utils.py`](file:///home/nobuhiko/project/embedding_jp_api/src/app/image_utils.py) | 非同期DNS解決により `127.0.0.1`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.169.254`（AWSメタデータ等）へのアクセスを即時遮断。<br>**リダイレクト（301/302）発生時も各ホストを逐次再検証**し、リダイレクトを用いた内部侵入を完全阻止。 |
-| **Decompression Bomb 防御** | [`src/app/image_utils.py`](file:///home/nobuhiko/project/embedding_jp_api/src/app/image_utils.py) | `Image.MAX_IMAGE_PIXELS = 20_000_000`（20メガピクセル）制限を設定。数キロバイトの画像から展開時にギガバイト規模のメモリを消費させる攻撃を無力化。 |
-| **ストリームサイズ制限** | [`src/app/image_utils.py`](file:///home/nobuhiko/project/embedding_jp_api/src/app/image_utils.py) | 画像ダウンロード時に 15MB（`MAX_FILE_SIZE`）を超えた時点でストリームを切断しメモリ枯渇を防止。 |
-| **PII 自動マスク** | [`src/app/main.py`](file:///home/nobuhiko/project/embedding_jp_api/src/app/main.py) | 500エラー発生時、例外メッセージやスタックトレースに含まれるメールアドレス等を `[REDACTED]` でマスクしてログ出力。外部には詳細スタックトレースを一切非公開。 |
-| **セキュリティヘッダー** | [`src/app/main.py`](file:///home/nobuhiko/project/embedding_jp_api/src/app/main.py) | 全レスポンスに `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Strict-Transport-Security`, `Content-Security-Policy` を常時付与。 |
-| **タイミング攻撃耐性認証** | [`src/app/main.py`](file:///home/nobuhiko/project/embedding_jp_api/src/app/main.py) | `secrets.compare_digest` による固定時間比較で API Key 照合を実施。 |
+| **SSRF多層防御** | [`src/app/image_utils.py`](../src/app/image_utils.py) | 非同期DNS解決により `127.0.0.1`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.169.254`（AWSメタデータ等）へのアクセスを即時遮断。<br>**リダイレクト（301/302）発生時も各ホストを逐次再検証**し、リダイレクトを用いた内部侵入を完全阻止。 |
+| **Decompression Bomb 防御** | [`src/app/image_utils.py`](../src/app/image_utils.py) | `Image.MAX_IMAGE_PIXELS = 20_000_000`（20メガピクセル）制限を設定。数キロバイトの画像から展開時にギガバイト規模のメモリを消費させる攻撃を無力化。 |
+| **ストリームサイズ制限** | [`src/app/image_utils.py`](../src/app/image_utils.py) | 画像ダウンロード時に 15MB（`MAX_FILE_SIZE`）を超えた時点でストリームを切断しメモリ枯渇を防止。 |
+| **PII 自動マスク** | [`src/app/main.py`](../src/app/main.py) | 500エラー発生時、例外メッセージやスタックトレースに含まれるメールアドレス等を `[REDACTED]` でマスクしてログ出力。外部には詳細スタックトレースを一切非公開。 |
+| **セキュリティヘッダー** | [`src/app/main.py`](../src/app/main.py) | 全レスポンスに `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Strict-Transport-Security`, `Content-Security-Policy` を常時付与。 |
+| **タイミング攻撃耐性認証** | [`src/app/main.py`](../src/app/main.py) | `secrets.compare_digest` による固定時間比較で API Key 照合を実施。 |
+
 
 ---
 
@@ -207,7 +208,7 @@ spec:
 =================================================================
 ```
 
-### 6.2. 実動コンテナ E2E 自動検証 ([`test_e2e_live.py`](file:///home/nobuhiko/project/embedding_jp_api/test_e2e_live.py))
+### 6.2. 実動コンテナ E2E 自動検証 ([`test_e2e_live.py`](../test_e2e_live.py))
 
 ```bash
 uv run python test_e2e_live.py 8000
