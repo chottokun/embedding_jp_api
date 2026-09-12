@@ -64,15 +64,89 @@ class VisualizedBGEEmbeddingModel:
     def encode_multimodal(
         self, items: list[tuple[Optional[str], Optional[Image.Image]]]
     ) -> list[list[float]]:
-        results = []
+        text_only_idx = []
+        text_only_texts = []
+
+        image_only_idx = []
+        image_only_images = []
+
+        mm_idx = []
+        mm_texts = []
+        mm_images = []
+
+        results: list[list[float] | None] = [None] * len(items)
+
+        for i, (text, image) in enumerate(items):
+            if text is not None and image is not None:
+                mm_idx.append(i)
+                mm_texts.append(text)
+                mm_images.append(image)
+            elif image is not None:
+                image_only_idx.append(i)
+                image_only_images.append(image)
+            elif text is not None:
+                text_only_idx.append(i)
+                text_only_texts.append(text)
+            else:
+                results[i] = []
+
+        def preprocess_images(imgs):
+            preprocessed = []
+            for img in imgs:
+                if isinstance(img, str):
+                    pil_img = Image.open(img).convert("RGB")
+                elif isinstance(img, Image.Image):
+                    pil_img = img.convert("RGB")
+                else:
+                    pil_img = Image.open(img).convert("RGB")
+                preprocessed.append(self.model.preprocess_val(pil_img).unsqueeze(0))
+            if preprocessed:
+                return torch.cat(preprocessed, dim=0)
+            return None
+
+        preprocessed_image_only = (
+            preprocess_images(image_only_images) if image_only_images else None
+        )
+        preprocessed_mm = preprocess_images(mm_images) if mm_images else None
+
+        text_only_tok = None
+        mm_tok = None
+
+        with self.tokenizer_lock:
+            if text_only_texts:
+                text_only_tok = self.model.tokenizer(
+                    text_only_texts, return_tensors="pt", padding=True
+                )
+            if mm_texts:
+                mm_tok = self.model.tokenizer(
+                    mm_texts, return_tensors="pt", padding=True
+                )
+
         with self.lock:
             with torch.no_grad():
-                for text, image in items:
-                    vec = self.model.encode(image=image, text=text)
-                    if isinstance(vec, torch.Tensor):
-                        vec = vec.squeeze(0).cpu().tolist()
-                    results.append(vec)
-        return results
+                if text_only_tok is not None:
+                    text_out = self.model.encode_text(text_only_tok.to(self.device))
+                    text_out = text_out.cpu().tolist()
+                    for i, idx in enumerate(text_only_idx):
+                        results[idx] = text_out[i]
+
+                if preprocessed_image_only is not None:
+                    img_out = self.model.encode_image(
+                        preprocessed_image_only.to(self.device)
+                    )
+                    img_out = img_out.cpu().tolist()
+                    for i, idx in enumerate(image_only_idx):
+                        results[idx] = img_out[i]
+
+                if mm_tok is not None and preprocessed_mm is not None:
+                    mm_out = self.model.encode_mm(
+                        preprocessed_mm.to(self.device), mm_tok.to(self.device)
+                    )
+                    mm_out = mm_out.cpu().tolist()
+                    for i, idx in enumerate(mm_idx):
+                        results[idx] = mm_out[i]
+
+        return [r if r is not None else [] for r in results]
 
 
 # --- Model Loader (Factory) ---
