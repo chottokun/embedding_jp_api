@@ -186,3 +186,11 @@ class UnloadRequest(BaseModel):
 class UnloadResponse(BaseModel):
     unloaded_models: list[str]
     remaining_memory: int
+
+
+# --- OpenAPI Error Schema ---
+class ErrorResponse(BaseModel):
+    detail: str = Field(
+        description="Detailed human-readable error message explaining the failure.",
+        examples=["Invalid or missing API Key"],
+    )

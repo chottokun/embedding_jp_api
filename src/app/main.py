@@ -32,6 +32,7 @@ from .schemas import (
     ModelList,
     UnloadRequest,
     UnloadResponse,
+    ErrorResponse,
 )
 from .models import get_model as get_model, unload_model
 from .config import (
@@ -137,7 +138,29 @@ active_requests: set[asyncio.Task] = set()
 is_shutting_down: bool = False
 
 # Concurrency control: limit simultaneous inference executions to prevent OOM/GPU saturation
-inference_semaphore = asyncio.Semaphore(MAX_CONCURRENT_INFERENCES)
+# Using an anyio-based Semaphore wrapper to allow safe concurrency limits across threads/loops
+
+
+class AsyncThreadSemaphore:
+    def __init__(self, initial_value: int):
+        self._val = initial_value
+        import threading
+
+        self._lock = threading.Lock()
+        self._sem = threading.Semaphore(initial_value)
+
+    async def __aenter__(self):
+        # Non-blocking check first, or offload to thread to avoid event loop contention
+        acquired = self._sem.acquire(blocking=False)
+        if not acquired:
+            await anyio.to_thread.run_sync(self._sem.acquire)
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self._sem.release()
+
+
+inference_semaphore = AsyncThreadSemaphore(MAX_CONCURRENT_INFERENCES)
 
 
 @asynccontextmanager
@@ -549,11 +572,26 @@ def get_rerank_service() -> BaseRerankService:
         "(`encoding_format`), and automated Japanese Ruri-v3 task prefixes."
     ),
     responses={
-        400: {"description": "Unsupported model or invalid parameters"},
-        401: {"description": "Invalid or missing Bearer API key"},
-        413: {"description": "Payload exceeds maximum allowed size (32MB)"},
-        429: {"description": "Rate limit exceeded (Too Many Requests)"},
-        503: {"description": "Server is shutting down (Service Unavailable)"},
+        400: {
+            "model": ErrorResponse,
+            "description": "Unsupported model or invalid parameters",
+        },
+        401: {
+            "model": ErrorResponse,
+            "description": "Invalid or missing Bearer API key",
+        },
+        413: {
+            "model": ErrorResponse,
+            "description": "Payload exceeds maximum allowed size (32MB)",
+        },
+        429: {
+            "model": ErrorResponse,
+            "description": "Rate limit exceeded (Too Many Requests)",
+        },
+        503: {
+            "model": ErrorResponse,
+            "description": "Server is shutting down or inference queue timeout",
+        },
     },
 )
 async def create_embeddings(
@@ -596,11 +634,26 @@ async def create_embeddings(
         "using Japanese Cross-Encoder reranking models."
     ),
     responses={
-        400: {"description": "Unsupported model or invalid parameters"},
-        401: {"description": "Invalid or missing Bearer API key"},
-        413: {"description": "Payload exceeds maximum allowed size (32MB)"},
-        429: {"description": "Rate limit exceeded (Too Many Requests)"},
-        503: {"description": "Server is shutting down (Service Unavailable)"},
+        400: {
+            "model": ErrorResponse,
+            "description": "Unsupported model or invalid parameters",
+        },
+        401: {
+            "model": ErrorResponse,
+            "description": "Invalid or missing Bearer API key",
+        },
+        413: {
+            "model": ErrorResponse,
+            "description": "Payload exceeds maximum allowed size (32MB)",
+        },
+        429: {
+            "model": ErrorResponse,
+            "description": "Rate limit exceeded (Too Many Requests)",
+        },
+        503: {
+            "model": ErrorResponse,
+            "description": "Server is shutting down or inference queue timeout",
+        },
     },
 )
 async def create_rerank(
