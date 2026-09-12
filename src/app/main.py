@@ -13,9 +13,11 @@ from contextlib import asynccontextmanager
 
 import anyio
 import httpx
+import time
 from fastapi import FastAPI, HTTPException, Request, Depends, Security
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 from .schemas import (
     EmbeddingRequest,
@@ -44,6 +46,19 @@ from .services.embedding import (
 )
 
 EMAIL_PATTERN = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
+
+
+# Prometheus Metrics
+REQUEST_COUNT = Counter(
+    "http_requests_total",
+    "Total number of HTTP requests",
+    ["method", "endpoint", "http_status"],
+)
+REQUEST_LATENCY = Histogram(
+    "http_request_duration_seconds",
+    "HTTP request latency in seconds",
+    ["method", "endpoint"],
+)
 
 
 def redact_pii(text: str) -> str:
@@ -91,6 +106,14 @@ async def readiness_check():
     }
 
 
+@app.get("/metrics", tags=["Metrics"])
+async def metrics():
+    """
+    Exposes Prometheus metrics.
+    """
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
 # Authentication dependency
 security = HTTPBearer(auto_error=False)
 
@@ -106,6 +129,44 @@ async def verify_api_key(
                 headers={"WWW-Authenticate": "Bearer"},
             )
     return auth
+
+
+@app.middleware("http")
+async def prometheus_metrics_middleware(request: Request, call_next):
+    """
+    Middleware to collect Prometheus metrics for HTTP requests.
+    """
+    method = request.method
+    known_endpoints = {
+        "/v1/embeddings",
+        "/v1/rerank",
+        "/health",
+        "/healthz",
+        "/ready",
+        "/metrics",
+        "/",
+    }
+    endpoint = (
+        request.url.path if request.url.path in known_endpoints else "unmatched_route"
+    )
+
+    start_time = time.perf_counter()
+    status_code = 500
+
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+    except BaseException as e:
+        status_code = 500
+        raise e
+    finally:
+        latency = time.perf_counter() - start_time
+        REQUEST_COUNT.labels(
+            method=method, endpoint=endpoint, http_status=status_code
+        ).inc()
+        REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(latency)
+
+    return response
 
 
 @app.middleware("http")
