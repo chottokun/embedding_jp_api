@@ -72,11 +72,11 @@ def redact_pii(text: str) -> str:
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI):
     # Initialize global HTTP client with connection pooling for TEI proxy requests
-    app_instance.state.tei_client = httpx.Client(timeout=30.0)
+    app_instance.state.tei_client = httpx.AsyncClient(timeout=30.0)
     try:
         yield
     finally:
-        app_instance.state.tei_client.close()
+        await app_instance.state.tei_client.aclose()
 
 
 app = FastAPI(title="OpenAI-Compatible API", lifespan=lifespan)
@@ -216,17 +216,17 @@ async def global_exception_handler(request: Request, exc: Exception):
     return response
 
 
-def _proxy_to_tei(tei_url: str, path: str, json_data: dict) -> Any:
+async def _proxy_to_tei(tei_url: str, path: str, json_data: dict) -> Any:
     """
-    Helper to send a POST request to TEI and return the JSON response.
+    Helper to send an async POST request to TEI and return the JSON response.
     """
     try:
         shared_client = getattr(app.state, "tei_client", None)
         if shared_client is not None:
-            response = shared_client.post(f"{tei_url}{path}", json=json_data)
+            response = await shared_client.post(f"{tei_url}{path}", json=json_data)
         else:
-            with httpx.Client(timeout=30.0) as client:
-                response = client.post(f"{tei_url}{path}", json=json_data)
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(f"{tei_url}{path}", json=json_data)
 
         if response.status_code != 200:
             error_msg = response.text

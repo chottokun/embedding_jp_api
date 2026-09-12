@@ -185,7 +185,7 @@ class EmbeddingService(BaseEmbeddingService):
             inputs = [text for text, _ in parsed_items if text is not None]
             prefix = _determine_ruri_prefix(request)
             processed_inputs = _apply_prefix(inputs, prefix)
-            data = proxy_func(
+            data = await proxy_func(
                 tei_url,
                 "/v1/embeddings",
                 {"input": processed_inputs, "model": request.model},

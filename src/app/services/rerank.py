@@ -72,11 +72,12 @@ class RerankService(BaseRerankService):
         proxy_func = getattr(main_mod, "_proxy_to_tei", self.proxy_to_tei_func)
 
         if tei_url and proxy_func:
-            tei_results = proxy_func(
+            tei_results = await proxy_func(
                 tei_url,
                 "/rerank",
                 {"query": request.query, "texts": request.documents},
             )
+
             results = []
             for item in tei_results:
                 idx = item["index"]

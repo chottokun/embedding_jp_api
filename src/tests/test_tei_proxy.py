@@ -1,6 +1,10 @@
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock, MagicMock
+import pytest
 from fastapi.testclient import TestClient
-from app.main import app
+import httpx
+from fastapi import HTTPException
+
+from app.main import app, _proxy_to_tei
 
 # Create client with server exception raising disabled to inspect error handlers
 client = TestClient(app, raise_server_exceptions=False)
@@ -12,7 +16,7 @@ def test_tei_embeddings_proxy_success():
     with (
         patch("app.main.EMBEDDING_TEI_URL", "http://tei-embedding"),
         patch("app.main.API_KEY", None),
-        patch("app.main._proxy_to_tei") as mock_proxy,
+        patch("app.main._proxy_to_tei", new_callable=AsyncMock) as mock_proxy,
     ):
         # Configure mock TEI response json
         mock_proxy.return_value = {
@@ -44,12 +48,10 @@ def test_tei_embeddings_proxy_success():
 
 def test_tei_embeddings_proxy_failure():
     """Verify that HTTP errors from TEI are propagated correctly as 500 error."""
-    from fastapi import HTTPException
-
     with (
         patch("app.main.EMBEDDING_TEI_URL", "http://tei-embedding"),
         patch("app.main.API_KEY", None),
-        patch("app.main._proxy_to_tei") as mock_proxy,
+        patch("app.main._proxy_to_tei", new_callable=AsyncMock) as mock_proxy,
     ):
         # Simulate proxy function throwing HTTPException (e.g. from 500 remote error)
         mock_proxy.side_effect = HTTPException(
@@ -68,7 +70,7 @@ def test_tei_rerank_proxy_success():
     with (
         patch("app.main.RERANK_TEI_URL", "http://tei-rerank"),
         patch("app.main.API_KEY", None),
-        patch("app.main._proxy_to_tei") as mock_proxy,
+        patch("app.main._proxy_to_tei", new_callable=AsyncMock) as mock_proxy,
     ):
         # TEI /rerank response format: list of objects with index and score
         mock_proxy.return_value = [
@@ -102,12 +104,10 @@ def test_tei_rerank_proxy_success():
 
 def test_tei_rerank_proxy_failure():
     """Verify that Rerank proxy failure is handled."""
-    from fastapi import HTTPException
-
     with (
         patch("app.main.RERANK_TEI_URL", "http://tei-rerank"),
         patch("app.main.API_KEY", None),
-        patch("app.main._proxy_to_tei") as mock_proxy,
+        patch("app.main._proxy_to_tei", new_callable=AsyncMock) as mock_proxy,
     ):
         mock_proxy.side_effect = HTTPException(
             status_code=500, detail="Failed to proxy rerank"
@@ -124,73 +124,65 @@ def test_tei_rerank_proxy_failure():
         assert "proxy" in response.json()["detail"]
 
 
-def test_proxy_to_tei_error_truncation():
+@pytest.mark.anyio
+async def test_proxy_to_tei_error_truncation():
     """Verify that _proxy_to_tei limits the reflected length of response.text on failure."""
-    from app.main import _proxy_to_tei
-    from fastapi import HTTPException
-    import pytest
 
-    # We will mock httpx.Client in _proxy_to_tei to return a non-200 response
     class MockResponse:
         def __init__(self, status_code, text):
             self.status_code = status_code
             self.text = text
 
-    class MockClient:
+    class MockAsyncClient:
         def __init__(self, *args, **kwargs):
             pass
 
-        def __enter__(self):
+        async def __aenter__(self):
             return self
 
-        def __exit__(self, exc_type, exc_val, exc_tb):
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
             pass
 
-        def post(self, url, json):
-            # Return response with long text
+        async def post(self, url, json):
             return MockResponse(500, "A" * 500)
 
-    with patch("httpx.Client", MockClient):
+    with patch("httpx.AsyncClient", MockAsyncClient):
         with pytest.raises(HTTPException) as exc_info:
-            _proxy_to_tei("http://tei-url", "/path", {"data": "test"})
+            await _proxy_to_tei("http://tei-url", "/path", {"data": "test"})
 
         assert exc_info.value.status_code == 500
-        # The detail string should contain truncated response of exactly 200 'A's + "..."
         expected_truncated_text = "A" * 200 + "..."
         assert expected_truncated_text in exc_info.value.detail
         assert len(exc_info.value.detail) < 300
 
     # Test short error is not truncated and doesn't get "..."
-    class MockClientShort:
+    class MockAsyncClientShort:
         def __init__(self, *args, **kwargs):
             pass
 
-        def __enter__(self):
+        async def __aenter__(self):
             return self
 
-        def __exit__(self, exc_type, exc_val, exc_tb):
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
             pass
 
-        def post(self, url, json):
+        async def post(self, url, json):
             return MockResponse(500, "Short error")
 
-    with patch("httpx.Client", MockClientShort):
+    with patch("httpx.AsyncClient", MockAsyncClientShort):
         with pytest.raises(HTTPException) as exc_info:
-            _proxy_to_tei("http://tei-url", "/path", {"data": "test"})
+            await _proxy_to_tei("http://tei-url", "/path", {"data": "test"})
 
         assert exc_info.value.status_code == 500
         assert "Short error" in exc_info.value.detail
         assert "..." not in exc_info.value.detail
 
 
-def test_tei_proxy_uses_pooled_client():
+@pytest.mark.anyio
+async def test_tei_proxy_uses_pooled_client():
     """Verify that _proxy_to_tei correctly uses the pooled client from app.state when initialized,
     and gracefully falls back to a local client when not initialized.
     """
-    from unittest.mock import MagicMock
-    from app.main import _proxy_to_tei, app
-    import httpx
-
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"success": True}
@@ -199,27 +191,25 @@ def test_tei_proxy_uses_pooled_client():
     if hasattr(app.state, "tei_client"):
         delattr(app.state, "tei_client")
 
-    with patch("httpx.Client") as mock_client_class:
-        mock_client_instance = mock_client_class.return_value.__enter__.return_value
-        mock_client_instance.post.return_value = mock_response
+    with patch("httpx.AsyncClient") as mock_client_class:
+        mock_client_instance = mock_client_class.return_value.__aenter__.return_value
+        mock_client_instance.post = AsyncMock(return_value=mock_response)
 
-        res = _proxy_to_tei("http://tei-url", "/path", {"test": "data"})
+        res = await _proxy_to_tei("http://tei-url", "/path", {"test": "data"})
         assert res == {"success": True}
         mock_client_instance.post.assert_called_once_with(
             "http://tei-url/path", json={"test": "data"}
         )
 
     # 2. Test when app.state.tei_client IS initialized
-    mock_pooled_client = MagicMock(spec=httpx.Client)
-    mock_pooled_client.post.return_value = mock_response
+    mock_pooled_client = MagicMock(spec=httpx.AsyncClient)
+    mock_pooled_client.post = AsyncMock(return_value=mock_response)
     app.state.tei_client = mock_pooled_client
 
-    with patch("httpx.Client") as mock_client_class:
-        res = _proxy_to_tei("http://tei-url", "/path", {"test": "data"})
+    with patch("httpx.AsyncClient") as mock_client_class:
+        res = await _proxy_to_tei("http://tei-url", "/path", {"test": "data"})
         assert res == {"success": True}
-        # Verify that httpx.Client constructor was NOT called (i.e. local client not instantiated)
         mock_client_class.assert_not_called()
-        # Verify pooled client was called
         mock_pooled_client.post.assert_called_once_with(
             "http://tei-url/path", json={"test": "data"}
         )
