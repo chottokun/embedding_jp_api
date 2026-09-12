@@ -183,9 +183,9 @@ async def test_ssrf_redirect_to_private_ip_rejected():
 
             return StreamCtx()
 
-    with patch("app.image_utils.is_safe_url_async") as mock_safe:
+    with patch("app.image_utils.resolve_safe_url_async") as mock_safe:
         # First request to example.com is safe, but second to 127.0.0.1 is not safe
-        mock_safe.side_effect = [True, False]
+        mock_safe.side_effect = [(True, "93.184.216.34"), (False, None)]
         with pytest.raises(ValueError, match="拒否されたURL"):
             await load_image_from_source(
                 "http://example.com/image.png", MockAsyncClient()
