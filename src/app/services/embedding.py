@@ -5,9 +5,8 @@ import httpx
 from PIL import Image
 from fastapi import HTTPException
 
-from .base import BaseEmbeddingService
+from .base import BaseEmbeddingService, get_validated_model
 from ..image_utils import load_image_from_source
-from ..models import get_model_or_400
 from ..schemas import (
     EmbeddingRequest,
     EmbeddingResponse,
@@ -143,17 +142,18 @@ def _tokenize_and_truncate_embeddings(
     return processed_inputs, usage
 
 
-def _get_model_or_400(model_name: str) -> Any:
-    return get_model_or_400(model_name, EMBEDDING_MODELS, "embedding")
-
-
 class EmbeddingService(BaseEmbeddingService):
     """
     Default production implementation of BaseEmbeddingService.
     """
 
-    def __init__(self, proxy_to_tei_func: Optional[Any] = None):
+    def __init__(
+        self,
+        proxy_to_tei_func: Optional[Any] = None,
+        model_loader: Optional[Any] = None,
+    ):
         self.proxy_to_tei_func = proxy_to_tei_func
+        self.model_loader = model_loader
 
     async def create_embeddings(self, request: EmbeddingRequest) -> EmbeddingResponse:
         import app.main as main_mod
@@ -192,7 +192,12 @@ class EmbeddingService(BaseEmbeddingService):
             )
             return EmbeddingResponse(**data)
 
-        model = _get_model_or_400(request.model)
+        model = get_validated_model(
+            request.model,
+            EMBEDDING_MODELS,
+            "embedding",
+            loader=self.model_loader,
+        )
         is_multimodal = getattr(model, "supports_multimodal", False) is True
 
         if has_image and not is_multimodal:

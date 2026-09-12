@@ -2,8 +2,7 @@ import heapq
 from typing import Any, List, Optional
 from fastapi import HTTPException
 
-from .base import BaseRerankService
-from ..models import get_model_or_400
+from .base import BaseRerankService, get_validated_model
 from ..schemas import RerankRequest, RerankResponse, RerankData, Usage
 from ..config import RERANK_MODELS
 
@@ -47,17 +46,18 @@ def _sort_and_format_rerank_results(
     return [RerankData(**result) for result in sorted_results]
 
 
-def _get_model_or_400(model_name: str) -> Any:
-    return get_model_or_400(model_name, RERANK_MODELS, "rerank")
-
-
 class RerankService(BaseRerankService):
     """
     Default production implementation of BaseRerankService.
     """
 
-    def __init__(self, proxy_to_tei_func: Optional[Any] = None):
+    def __init__(
+        self,
+        proxy_to_tei_func: Optional[Any] = None,
+        model_loader: Optional[Any] = None,
+    ):
         self.proxy_to_tei_func = proxy_to_tei_func
+        self.model_loader = model_loader
 
     async def create_rerank(self, request: RerankRequest) -> RerankResponse:
         import app.main as main_mod
@@ -95,7 +95,12 @@ class RerankService(BaseRerankService):
                 usage=usage,
             )
 
-        model = _get_model_or_400(request.model)
+        model = get_validated_model(
+            request.model,
+            RERANK_MODELS,
+            "rerank",
+            loader=self.model_loader,
+        )
 
         pairs = [[request.query, doc] for doc in request.documents]
         usage = _calculate_rerank_tokens(model, request.query, request.documents)

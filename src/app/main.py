@@ -23,7 +23,7 @@ from .schemas import (
     RerankRequest,
     RerankResponse,
 )
-from .models import get_model as get_model, get_model_or_400
+from .models import get_model as get_model
 from .config import (
     EMBEDDING_MODELS,
     RERANK_MODELS,
@@ -37,6 +37,7 @@ from .services import (
     EmbeddingService,
     RerankService,
 )
+from .services.base import get_validated_model
 from .services.embedding import (
     _determine_ruri_prefix as _determine_ruri_prefix,
     _apply_prefix as _apply_prefix,
@@ -173,7 +174,7 @@ def _get_model_or_400(model_name: str, model_type: str) -> Any:
     Helper for backwards compatibility with legacy tests calling _get_model_or_400.
     """
     supported_models = EMBEDDING_MODELS if model_type == "embedding" else RERANK_MODELS
-    return get_model_or_400(model_name, supported_models, model_type)
+    return get_validated_model(model_name, supported_models, model_type)
 
 
 # Dependency Injection Providers
