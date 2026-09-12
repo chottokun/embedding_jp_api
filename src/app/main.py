@@ -38,7 +38,10 @@ from .config import (
     EMBEDDING_MODELS,
     RERANK_MODELS,
     API_KEY,
+    API_KEYS_MAP,
     RATE_LIMIT_PER_MINUTE,
+    MAX_CONCURRENT_INFERENCES,
+    INFERENCE_SEMAPHORE_TIMEOUT_SECONDS,
     SHUTDOWN_DRAIN_TIMEOUT_SECONDS,
     PRELOAD_MODELS,
     EMBEDDING_TEI_URL as EMBEDDING_TEI_URL,
@@ -132,6 +135,9 @@ def redact_pii(text: str) -> str:
 # In-flight request tracking for graceful shutdown
 active_requests: set[asyncio.Task] = set()
 is_shutting_down: bool = False
+
+# Concurrency control: limit simultaneous inference executions to prevent OOM/GPU saturation
+inference_semaphore = asyncio.Semaphore(MAX_CONCURRENT_INFERENCES)
 
 
 @asynccontextmanager
@@ -244,8 +250,25 @@ security = HTTPBearer(auto_error=False)
 async def verify_api_key(
     auth: Optional[HTTPAuthorizationCredentials] = Security(security),
 ):
-    if API_KEY:
-        if auth is None or not secrets.compare_digest(auth.credentials, API_KEY):
+    # Support both single API_KEY and multiple client keys in API_KEYS_MAP
+    configured_keys = list(API_KEYS_MAP.keys()) if API_KEYS_MAP else []
+    if API_KEY and API_KEY not in configured_keys:
+        configured_keys.append(API_KEY)
+
+    if configured_keys:
+        if auth is None:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or missing API Key",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        # Constant-time comparison across configured keys to prevent timing attacks
+        matched = False
+        for valid_key in configured_keys:
+            if secrets.compare_digest(auth.credentials, valid_key):
+                matched = True
+                break
+        if not matched:
             raise HTTPException(
                 status_code=401,
                 detail="Invalid or missing API Key",
@@ -317,15 +340,16 @@ async def payload_size_limit_middleware(request: Request, call_next):
 
 # --- Rate Limiting (Token Bucket / Sliding Window) ---
 class RateLimiter:
-    def __init__(self, limit: int, window: int = 60):
-        self.limit = limit
+    def __init__(self, default_limit: int, window: int = 60):
+        self.default_limit = default_limit
         self.window = window
         self.requests: dict[str, list[float]] = {}
         from threading import Lock
 
         self.lock = Lock()
 
-    def is_allowed(self, client_id: str) -> bool:
+    def is_allowed(self, client_id: str, limit: Optional[int] = None) -> bool:
+        max_allowed = limit if limit is not None else self.default_limit
         now = time.time()
         with self.lock:
             if client_id not in self.requests:
@@ -334,7 +358,7 @@ class RateLimiter:
             self.requests[client_id] = [
                 t for t in self.requests[client_id] if now - t < self.window
             ]
-            if len(self.requests[client_id]) >= self.limit:
+            if len(self.requests[client_id]) >= max_allowed:
                 return False
             self.requests[client_id].append(now)
             return True
@@ -349,7 +373,7 @@ class RateLimiter:
             return max(1, retry_after)
 
 
-rate_limiter = RateLimiter(limit=RATE_LIMIT_PER_MINUTE, window=60)
+rate_limiter = RateLimiter(default_limit=RATE_LIMIT_PER_MINUTE, window=60)
 EXEMPT_RATE_LIMIT_PATHS = {"/health", "/healthz", "/ready", "/metrics"}
 
 
@@ -358,16 +382,21 @@ async def rate_limit_middleware(request: Request, call_next):
     """
     Applies per-minute rate limiting based on Authorization key or client host IP.
     Bypasses health and monitoring endpoints. Returns 429 Too Many Requests on breach.
+    Supports individual rate limits per API key configured in API_KEYS_MAP.
     """
     if request.url.path in EXEMPT_RATE_LIMIT_PATHS:
         return await call_next(request)
 
     client_id = request.client.host if request.client else "unknown"
+    client_limit = None
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
-        client_id = auth_header[7:]
+        token = auth_header[7:]
+        client_id = token
+        if token in API_KEYS_MAP:
+            client_limit = API_KEYS_MAP[token]
 
-    if not rate_limiter.is_allowed(client_id):
+    if not rate_limiter.is_allowed(client_id, limit=client_limit):
         retry_after = rate_limiter.get_retry_after(client_id)
         return JSONResponse(
             status_code=429,
@@ -538,7 +567,16 @@ async def create_embeddings(
     batch_size = len(request.input) if isinstance(request.input, list) else 1
     BATCH_SIZE_HISTOGRAM.labels(endpoint="/v1/embeddings").observe(batch_size)
 
-    response = await service.create_embeddings(request)
+    try:
+        async with asyncio.timeout(INFERENCE_SEMAPHORE_TIMEOUT_SECONDS):
+            async with inference_semaphore:
+                response = await service.create_embeddings(request)
+    except TimeoutError:
+        raise HTTPException(
+            status_code=503,
+            detail="Inference queue timeout. Server is under high load, please retry shortly.",
+        )
+
     if hasattr(response, "usage") and response.usage:
         PROMPT_TOKENS_COUNT.labels(model=request.model).inc(
             response.usage.prompt_tokens
@@ -575,7 +613,16 @@ async def create_rerank(
     batch_size = len(request.documents)
     BATCH_SIZE_HISTOGRAM.labels(endpoint="/v1/rerank").observe(batch_size)
 
-    response = await service.create_rerank(request)
+    try:
+        async with asyncio.timeout(INFERENCE_SEMAPHORE_TIMEOUT_SECONDS):
+            async with inference_semaphore:
+                response = await service.create_rerank(request)
+    except TimeoutError:
+        raise HTTPException(
+            status_code=503,
+            detail="Inference queue timeout. Server is under high load, please retry shortly.",
+        )
+
     if hasattr(response, "usage") and response.usage:
         PROMPT_TOKENS_COUNT.labels(model=request.model).inc(
             response.usage.prompt_tokens

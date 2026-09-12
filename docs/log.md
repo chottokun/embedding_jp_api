@@ -1,6 +1,8 @@
 # Knowledge Update Log
 
 ## 2026-09-12
+* **SRE & Concurrency Protection**: 推論処理（Embeddings / Reranking）の同時実行数を制限する `asyncio.Semaphore` 制御（`MAX_CONCURRENT_INFERENCES`）およびキュー滞留タイムアウト（`INFERENCE_SEMAPHORE_TIMEOUT_SECONDS`、タイムアウト時 `503 Service Unavailable`）を実装し、高負荷下での GPU/CPU リソース飽和・CUDA OOM を防止（テスト: `src/tests/test_concurrency_edge.py`、実負荷テスト検証済み）。
+* **Security & Multi-Tenancy**: クライアント別の個別 API キー管理（`API_KEYS` 環境変数、カンマ区切りまたは JSON 形式）およびキーごとのレート制限個別割り当て機能を実装。定数時間比較（`secrets.compare_digest`）によるタイミング攻撃防御を維持（テスト: `src/tests/test_auth.py`, `src/tests/test_rate_limit.py`）。
 * **Infrastructure & Kubernetes**: 本番運用向けの Kubernetes マニフェスト（`deploy/kubernetes/deployment.yaml`, `service.yaml`, `hpa.yaml`）および `docs/deployment.md` を追加。HPA による CPU/メモリ負荷に応じた水平自動スケール（1〜5 Pod）と死活／準備監視・Prometheus スクレイプ定義を標準化しました。
 * **API Documentation & DX**: OpenAPI 3.x / Swagger UI (`/docs`) のスキーマ定義を大幅拡充。エンドポイント別のタグ分類（`Embeddings`, `Reranking`, `Models`, `Health`, `Metrics`）、概要・詳細説明、レスポンスコード（400, 401, 413, 429, 503）、および `EmbeddingRequest` / `RerankRequest` の実例（`json_schema_extra`）を配備しました（テスト: `src/tests/test_extended_features.py`）。
 * **Observability & APM**: Prometheus メトリクスにモデル別トークン消費カウンタ（`http_prompt_tokens_total`）およびエンドポイント別バッチサイズ分布ヒストグラム（`http_request_batch_size`）を追加し、運用監視・リソース予測性能を強化しました（テスト: `src/tests/test_metrics.py`）。

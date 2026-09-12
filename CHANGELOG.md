@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Inference Concurrency Control with Semaphore Protection (`MAX_CONCURRENT_INFERENCES`)**:
+  - Implemented `asyncio.Semaphore` limit around neural network embedding and reranking inference to prevent GPU/CPU saturation and CUDA OOM crashes.
+  - Added configurable queue timeout (`INFERENCE_SEMAPHORE_TIMEOUT_SECONDS`, default 30s) returning `503 Service Unavailable` on sustained overload.
+  - Added concurrency safety test in `src/tests/test_concurrency_edge.py`.
+- **Client-Specific API Keys & Individual Rate Limits (`API_KEYS_MAP`)**:
+  - Supported multiple API keys via `API_KEYS` environment variable (comma-separated or JSON dictionary `{key: limit_per_minute}`).
+  - Applied constant-time `secrets.compare_digest` across all configured keys to prevent timing attacks.
+  - Integrated per-key custom rate limit overrides into `RateLimiter` middleware.
+  - Added unit test suites in `src/tests/test_auth.py` and `src/tests/test_rate_limit.py`.
 - **Production Kubernetes Deployment Manifests & Documentation (`deploy/kubernetes/`)**:
   - Provided production-ready Kubernetes manifests: `deployment.yaml` (with liveness/readiness probes and Prometheus annotations), `service.yaml` (ClusterIP), and `hpa.yaml` (HorizontalPodAutoscaler scaling 1-5 pods based on CPU/Memory targets).
   - Added deployment guide in `docs/deployment.md`.

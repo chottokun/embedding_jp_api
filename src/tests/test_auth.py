@@ -152,3 +152,31 @@ async def test_verify_api_key_with_key_correct_auth():
         auth = HTTPAuthorizationCredentials(scheme="Bearer", credentials="secret-key")
         result = await verify_api_key(auth)
         assert result == auth
+
+
+@pytest.mark.anyio
+async def test_verify_api_key_multi_key_support():
+    """verify_api_key should support multiple keys from API_KEYS_MAP."""
+    with patch("app.main.API_KEYS_MAP", {"client-a": 120, "client-b": 300}):
+        with patch("app.main.API_KEY", None):
+            # Valid client-a
+            auth_a = HTTPAuthorizationCredentials(
+                scheme="Bearer", credentials="client-a"
+            )
+            res_a = await verify_api_key(auth_a)
+            assert res_a == auth_a
+
+            # Valid client-b
+            auth_b = HTTPAuthorizationCredentials(
+                scheme="Bearer", credentials="client-b"
+            )
+            res_b = await verify_api_key(auth_b)
+            assert res_b == auth_b
+
+            # Invalid client-c
+            auth_c = HTTPAuthorizationCredentials(
+                scheme="Bearer", credentials="client-c"
+            )
+            with pytest.raises(HTTPException) as exc_info:
+                await verify_api_key(auth_c)
+            assert exc_info.value.status_code == 401
