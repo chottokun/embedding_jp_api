@@ -123,3 +123,30 @@ class RerankResponse(BaseModel):
     data: list[RerankData]
     model: str
     usage: Optional[Usage] = None
+
+
+# --- For /v1/models ---
+class ModelCard(BaseModel):
+    id: str
+    object: str = "model"
+    created: int
+    owned_by: str = "custom"
+    permission: list = Field(default_factory=list)
+
+
+class ModelList(BaseModel):
+    object: str = "list"
+    data: list[ModelCard]
+
+
+# --- For /v1/models/unload ---
+class UnloadRequest(BaseModel):
+    model: Optional[str] = Field(
+        None,
+        description="The name of the model to unload. If omitted, all models are unloaded.",
+    )
+
+
+class UnloadResponse(BaseModel):
+    unloaded_models: list[str]
+    remaining_memory: int

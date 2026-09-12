@@ -194,3 +194,34 @@ def get_model(model_name: str, device: str | None = None):
         _model_cache[model_name] = model
         logging.info(f"Model '{model_name}' loaded successfully.")
         return model
+
+
+def unload_model(model_name: Optional[str] = None) -> tuple[list[str], int]:
+    """
+    Unloads a specific model or all models from the in-memory cache.
+    Reclaims CUDA VRAM (if GPU is available) and triggers garbage collection.
+    Returns a tuple of (unloaded_model_names, remaining_memory_bytes).
+    """
+    import gc
+    import psutil
+
+    unloaded = []
+    with _model_lock:
+        if model_name:
+            if model_name in _model_cache:
+                del _model_cache[model_name]
+                unloaded.append(model_name)
+        else:
+            unloaded = list(_model_cache.keys())
+            _model_cache.clear()
+
+    if unloaded:
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    if torch.cuda.is_available():
+        free_bytes, _ = torch.cuda.mem_get_info()
+        return unloaded, free_bytes
+    else:
+        return unloaded, psutil.virtual_memory().available

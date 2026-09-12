@@ -27,8 +27,12 @@ from .schemas import (
     EmbeddingResponse,
     RerankRequest,
     RerankResponse,
+    ModelCard,
+    ModelList,
+    UnloadRequest,
+    UnloadResponse,
 )
-from .models import get_model as get_model
+from .models import get_model as get_model, unload_model
 from .config import (
     EMBEDDING_MODELS,
     RERANK_MODELS,
@@ -172,6 +176,9 @@ async def verify_api_key(
     return auth
 
 
+MAX_PAYLOAD_SIZE = 32 * 1024 * 1024  # 32MB
+
+
 @app.middleware("http")
 async def prometheus_metrics_middleware(request: Request, call_next):
     """
@@ -181,6 +188,8 @@ async def prometheus_metrics_middleware(request: Request, call_next):
     known_endpoints = {
         "/v1/embeddings",
         "/v1/rerank",
+        "/v1/models",
+        "/v1/models/unload",
         "/health",
         "/healthz",
         "/ready",
@@ -208,6 +217,24 @@ async def prometheus_metrics_middleware(request: Request, call_next):
         REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(latency)
 
     return response
+
+
+@app.middleware("http")
+async def payload_size_limit_middleware(request: Request, call_next):
+    """
+    Rejects requests exceeding MAX_PAYLOAD_SIZE (32MB) with 413 Payload Too Large.
+    """
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            if int(content_length) > MAX_PAYLOAD_SIZE:
+                return JSONResponse(
+                    status_code=413, content={"detail": "Payload Too Large"}
+                )
+        except ValueError:
+            pass
+
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -367,3 +394,44 @@ async def create_rerank(
     Reranks a list of documents for a given query.
     """
     return await service.create_rerank(request)
+
+
+@app.get(
+    "/v1/models",
+    response_model=ModelList,
+    dependencies=[Depends(verify_api_key)],
+    tags=["Models"],
+)
+async def list_models():
+    """
+    Lists all available models in the OpenAI-compatible format.
+    """
+    all_models = set(EMBEDDING_MODELS + RERANK_MODELS)
+    current_time = int(time.time())
+
+    models = [
+        ModelCard(
+            id=model_id,
+            created=current_time,
+        )
+        for model_id in sorted(list(all_models))
+    ]
+
+    return ModelList(data=models)
+
+
+@app.post(
+    "/v1/models/unload",
+    response_model=UnloadResponse,
+    dependencies=[Depends(verify_api_key)],
+    tags=["Models"],
+)
+async def unload_models(request: UnloadRequest):
+    """
+    Unloads a specific model or all models from cache, freeing memory / VRAM.
+    """
+    unloaded_models, remaining_memory = unload_model(request.model)
+    return UnloadResponse(
+        unloaded_models=unloaded_models,
+        remaining_memory=remaining_memory,
+    )
