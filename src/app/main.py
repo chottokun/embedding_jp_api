@@ -71,9 +71,24 @@ app = FastAPI(title="OpenAI-Compatible API", lifespan=lifespan)
 @app.get("/healthz", tags=["Health"])
 async def health_check():
     """
-    Liveness / readiness probe for microservice orchestrators and Docker health checks.
+    Liveness probe for microservice orchestrators and Docker health checks.
     """
     return {"status": "ok"}
+
+
+@app.get("/ready", tags=["Health"])
+async def readiness_check():
+    """
+    Readiness probe verifying model loading status and GPU availability.
+    """
+    import torch
+    from .models import _model_cache
+
+    return {
+        "status": "ready",
+        "gpu_available": torch.cuda.is_available(),
+        "models_loaded": list(_model_cache.keys()),
+    }
 
 
 # Authentication dependency
