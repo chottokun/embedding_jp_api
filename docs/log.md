@@ -1,5 +1,10 @@
 # Knowledge Update Log
 
+## 2026-09-12
+* **Feature**: `/ready` エンドポイントを新設し、Liveness (`/health`, `/healthz`) と分離して GPU 状態およびロード済みモデルを監視可能にしました。
+* **CI & Security**: GitHub Actions CI に `uv audit`（依存関係脆弱性診断）および `gitleaks`（シークレット漏洩スキャン）を組み込み、リポジトリ全体の静的解析（`ruff check .`）を適用しました。
+* **Code Health**: Jules との連携により、`scratch/` および `scripts/` に残存していた Lint エラーを完全解消しました。
+
 ## 2026-08-29
 * **Creation**: `docs/architecture/services.md` を作成し、サービス層（`src/app/services/`）の抽象基底クラス、FastAPI `Depends` による依存性注入（DI）、および `MockEmbeddingService`/`MockRerankService` のモック設計を文書化しました。
 * **Update**: PR #84（モジュール構成の責務分離・DI化および GitHub Actions CI の高速化）のマージに伴い、CI/テスト分離ポリシー（`not integration` による高速ユニットテスト）と実機ベンチマーク/実動統合テストの動作検証結果を反映しました。

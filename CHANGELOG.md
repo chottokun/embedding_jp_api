@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Readiness Probe Endpoint (`/ready`)**:
+  - Added dedicated `/ready` endpoint verifying GPU availability and loaded model cache keys, decoupling readiness from liveness (`/health`, `/healthz`).
+  - Added unit test suite in `src/tests/test_ready.py`.
+- **CI / CD Automated Auditing & Secret Scanning**:
+  - Enforced `uv audit` and `gitleaks` in GitHub Actions CI workflow (`.github/workflows/ci.yml`) per `.rules/ci.md`.
+  - Expanded `ruff check` to entire repository (`.`).
+
 - **Multimodal (Diagram + Text) Full Support**:
   - Integrated `bge-visualized-m3` model for composite image + text and image-only embeddings in 1024 dimensions.
   - Added support for Flat schema (`FlatMultimodalItem`) and OpenAI ContentPart format (`[{"type": "text"}, {"type": "image_url"}]`).
