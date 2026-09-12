@@ -1,10 +1,14 @@
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 import numpy as np
+import pytest
+import httpx
 
 # Corrected imports for a 'src' layout
 from app.main import app
 from app.config import EMBEDDING_MODELS
+from app.services.embedding import _normalize_raw_inputs, parse_input_item
+from app.schemas import ContentPartText
 
 client = TestClient(app)
 
@@ -145,3 +149,36 @@ def test_create_embeddings_empty_string():
     request_payload = {"input": "", "model": SUPPORTED_EMBED_MODEL}
     response = client.post("/v1/embeddings", json=request_payload)
     assert response.status_code == 422
+
+
+def test_normalize_raw_inputs():
+    """
+    Tests _normalize_raw_inputs for various input shapes.
+    """
+    # Single string
+    assert _normalize_raw_inputs("hello") == ["hello"]
+
+    # List of strings
+    assert _normalize_raw_inputs(["hello", "world"]) == ["hello", "world"]
+
+    # Empty list
+    assert _normalize_raw_inputs([]) == []
+
+    # Content part array representing a single item
+    parts = [ContentPartText(type="text", text="hello")]
+    assert _normalize_raw_inputs(parts) == [parts]
+
+    # Dict representation of parts representing a single item
+    dict_parts = [{"type": "text", "text": "hello"}]
+    assert _normalize_raw_inputs(dict_parts) == [dict_parts]
+
+
+@pytest.mark.anyio
+async def test_parse_input_item_invalid():
+    """
+    Tests parse_input_item with invalid input type.
+    """
+    async with httpx.AsyncClient() as async_client:
+        with pytest.raises(ValueError) as exc_info:
+            await parse_input_item(12345, async_client)
+        assert "不正な入力形式" in str(exc_info.value)

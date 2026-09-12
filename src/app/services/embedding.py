@@ -21,6 +21,14 @@ from ..config import EMBEDDING_MODELS, RURI_PREFIX_MAP
 
 
 def _determine_ruri_prefix(request: EmbeddingRequest) -> str:
+    """Determines the appropriate Ruri-v3 prefix based on request input type or input shape.
+
+    Args:
+        request: The embedding request containing model name, input type, and input shape.
+
+    Returns:
+        The prefix string to prepend to inputs.
+    """
     prefix = ""
     if "ruri-v3" in request.model:
         if request.input_type in RURI_PREFIX_MAP:
@@ -34,12 +42,29 @@ def _determine_ruri_prefix(request: EmbeddingRequest) -> str:
 
 
 def _apply_prefix(inputs: List[str], prefix: str) -> List[str]:
+    """Applies a prefix to a list of text inputs if not already prefixed.
+
+    Args:
+        inputs: List of string inputs.
+        prefix: Prefix string to apply.
+
+    Returns:
+        List of prefixed strings.
+    """
     if not prefix:
         return inputs
     return [text if text.startswith(prefix) else f"{prefix}{text}" for text in inputs]
 
 
-def _normalize_raw_inputs(input_data: Any) -> list:
+def _normalize_raw_inputs(input_data: Any) -> List[Any]:
+    """Normalizes raw input data into a list of individual items to be processed.
+
+    Args:
+        input_data: Input data from EmbeddingRequest (string, multimodal item, or list).
+
+    Returns:
+        List of single input items or content part arrays.
+    """
     if isinstance(input_data, list):
         if not input_data:
             return []
@@ -56,6 +81,18 @@ def _normalize_raw_inputs(input_data: Any) -> list:
 async def parse_input_item(
     item: Any, client: httpx.AsyncClient
 ) -> Tuple[Optional[str], Optional[Image.Image]]:
+    """Parses an individual input item into text and/or PIL Image.
+
+    Args:
+        item: Input item (string, FlatMultimodalItem, or content part list).
+        client: Async HTTP client for loading remote image sources.
+
+    Returns:
+        A tuple of optional text and optional PIL Image.
+
+    Raises:
+        ValueError: If the input item format is invalid.
+    """
     if isinstance(item, str):
         return item, None
 
@@ -111,6 +148,15 @@ async def parse_input_item(
 def _tokenize_and_truncate_embeddings(
     model: Any, inputs: List[str]
 ) -> Tuple[List[str], Usage]:
+    """Tokenizes inputs and truncates any sequences exceeding max sequence length.
+
+    Args:
+        model: Model instance containing tokenizer and sequence length bounds.
+        inputs: List of input strings to tokenize/truncate.
+
+    Returns:
+        Tuple of truncated text list and token Usage calculations.
+    """
     max_seq_length = getattr(model, "max_seq_length", 8192)
     if not isinstance(max_seq_length, int):
         max_seq_length = 8192
@@ -143,17 +189,9 @@ def _tokenize_and_truncate_embeddings(
 
 
 def _get_model_or_400(model_name: str) -> Any:
-    from app.main import get_model
+    from app.models import get_model_or_400
 
-    if model_name not in EMBEDDING_MODELS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Model '{model_name}' not found for embeddings.",
-        )
-    try:
-        return get_model(model_name)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return get_model_or_400(model_name, "embedding")
 
 
 class EmbeddingService(BaseEmbeddingService):

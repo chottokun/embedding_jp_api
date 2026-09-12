@@ -6,6 +6,7 @@ import threading
 from typing import Optional, Any
 from PIL import Image
 from unittest.mock import MagicMock
+from fastapi import HTTPException
 
 # --- Multimodal Model Wrapper ---
 
@@ -120,3 +121,26 @@ def get_model(model_name: str, device: str | None = None):
         _model_cache[model_name] = model
         logging.info(f"Model '{model_name}' loaded successfully.")
         return model
+
+
+def get_model_or_400(model_name: str, model_type: str = "embedding") -> Any:
+    """
+    Centralized model retriever with HTTP 400 validation for unsupported models or load failures.
+    """
+    supported_models = EMBEDDING_MODELS if model_type == "embedding" else RERANK_MODELS
+    if model_name not in supported_models:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model '{model_name}' not found for {model_type}s.",
+        )
+
+    try:
+        import sys
+
+        main_mod = sys.modules.get("app.main")
+        get_model_fn = (
+            getattr(main_mod, "get_model", get_model) if main_mod else get_model
+        )
+        return get_model_fn(model_name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
