@@ -9,6 +9,9 @@ import logging
 import re
 import secrets
 import traceback
+import json
+import uuid
+from contextvars import ContextVar
 from contextlib import asynccontextmanager
 
 import anyio
@@ -46,6 +49,44 @@ from .services.embedding import (
 )
 
 EMAIL_PATTERN = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
+
+request_id_var: ContextVar[str] = ContextVar("request_id", default="")
+
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        log_data = {
+            "timestamp": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "message": record.getMessage(),
+        }
+
+        req_id = request_id_var.get()
+        if req_id:
+            log_data["request_id"] = req_id
+
+        if hasattr(record, "path"):
+            log_data["path"] = record.path
+        if hasattr(record, "method"):
+            log_data["method"] = record.method
+        if hasattr(record, "status_code"):
+            log_data["status_code"] = record.status_code
+        if hasattr(record, "latency"):
+            log_data["latency"] = record.latency
+
+        if record.exc_info:
+            log_data["exception"] = self.formatException(record.exc_info)
+
+        return json.dumps(log_data)
+
+
+logger = logging.getLogger("app")
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(JsonFormatter())
+    logger.addHandler(handler)
+    logger.propagate = False
 
 
 # Prometheus Metrics
@@ -170,11 +211,36 @@ async def prometheus_metrics_middleware(request: Request, call_next):
 
 
 @app.middleware("http")
-async def add_security_headers(request: Request, call_next):
+async def request_logging_and_security_headers(request: Request, call_next):
     """
-    Middleware that adds security headers to every response.
+    Middleware that generates/propagates request ID, logs request details in JSON,
+    and adds security headers to every response.
     """
-    response = await call_next(request)
+    req_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+    token = request_id_var.set(req_id)
+
+    start_time = time.perf_counter()
+    status_code = 500
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+    except Exception as e:
+        status_code = 500
+        raise e
+    finally:
+        latency = time.perf_counter() - start_time
+        logger.info(
+            f"{request.method} {request.url.path} - {status_code}",
+            extra={
+                "path": request.url.path,
+                "method": request.method,
+                "status_code": status_code,
+                "latency": latency,
+            },
+        )
+        request_id_var.reset(token)
+
+    response.headers["X-Request-ID"] = req_id
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
@@ -194,15 +260,22 @@ async def global_exception_handler(request: Request, exc: Exception):
     redacted_exc = redact_pii(str(exc))
     redacted_tb = redact_pii(tb_str)
 
-    await anyio.to_thread.run_sync(
-        lambda: logging.error(
+    req_id = request_id_var.get()
+
+    def _log_error():
+        if req_id:
+            request_id_var.set(req_id)
+        logger.error(
             f"Unhandled exception: {redacted_exc}\n{redacted_tb}", exc_info=False
         )
-    )
+
+    await anyio.to_thread.run_sync(_log_error)
     response = JSONResponse(
         status_code=500,
         content={"detail": "Internal Server Error"},
     )
+    if req_id:
+        response.headers["X-Request-ID"] = req_id
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
