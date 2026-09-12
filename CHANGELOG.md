@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Graceful Shutdown & In-Flight Request Draining Middleware**:
+  - Implemented request task tracking and graceful drain during FastAPI application lifespan shutdown (`SHUTDOWN_DRAIN_TIMEOUT_SECONDS`, default: 10s).
+  - Automatically returns `503 Service Unavailable` with retry message for new incoming requests while shutting down.
+  - Added unit test suite in `src/tests/test_graceful_shutdown.py`.
+- **Configurable Precision & Mixed-Precision Inference (`TORCH_DTYPE`)**:
+  - Added `TORCH_DTYPE` configuration supporting `float16`, `bfloat16`, and `float32`.
+  - Integrated `torch.autocast` in multimodal model inference and passed `torch_dtype` to SentenceTransformer and CrossEncoder.
+  - Added unit test suite in `src/tests/test_torch_dtype.py`.
 - **OpenAI-Compatible `dimensions` & `encoding_format: "base64"` Support**:
   - Added Matryoshka dimension truncation with automatic L2 re-normalization.
   - Added IEEE 754 float32 little-endian Base64 embedding serialization (`encoding_format="base64"`).

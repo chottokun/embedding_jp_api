@@ -9,6 +9,7 @@ import logging
 import re
 import secrets
 import traceback
+import asyncio
 import json
 import uuid
 from contextvars import ContextVar
@@ -38,6 +39,7 @@ from .config import (
     RERANK_MODELS,
     API_KEY,
     RATE_LIMIT_PER_MINUTE,
+    SHUTDOWN_DRAIN_TIMEOUT_SECONDS,
     EMBEDDING_TEI_URL as EMBEDDING_TEI_URL,
     RERANK_TEI_URL as RERANK_TEI_URL,
 )
@@ -115,17 +117,60 @@ def redact_pii(text: str) -> str:
     return EMAIL_PATTERN.sub("[REDACTED]", text)
 
 
+# In-flight request tracking for graceful shutdown
+active_requests: set[asyncio.Task] = set()
+is_shutting_down: bool = False
+
+
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI):
+    global is_shutting_down
     # Initialize global HTTP client with connection pooling for TEI proxy requests
     app_instance.state.tei_client = httpx.AsyncClient(timeout=30.0)
     try:
         yield
     finally:
+        is_shutting_down = True
+        # Drain in-flight requests up to SHUTDOWN_DRAIN_TIMEOUT_SECONDS
+        if active_requests:
+            logging.info(
+                f"Graceful shutdown initiated. Waiting for {len(active_requests)} in-flight request(s) "
+                f"to drain (max timeout: {SHUTDOWN_DRAIN_TIMEOUT_SECONDS}s)..."
+            )
+            try:
+                # Wait for active request tasks to finish
+                await asyncio.wait(
+                    active_requests,
+                    timeout=SHUTDOWN_DRAIN_TIMEOUT_SECONDS,
+                )
+            except Exception as e:
+                logging.warning(f"Error during in-flight request drain: {e}")
         await app_instance.state.tei_client.aclose()
 
 
 app = FastAPI(title="OpenAI-Compatible API", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def graceful_shutdown_drain_middleware(request: Request, call_next):
+    """
+    Tracks active in-flight request tasks. Rejects incoming requests with 503 Service Unavailable
+    when the server is in the graceful shutdown phase.
+    """
+    if is_shutting_down:
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Server is shutting down. Please retry shortly."},
+        )
+
+    current_task = asyncio.current_task()
+    if current_task is not None:
+        active_requests.add(current_task)
+    try:
+        return await call_next(request)
+    finally:
+        if current_task is not None:
+            active_requests.discard(current_task)
 
 
 @app.get("/health", tags=["Health"])
@@ -386,7 +431,10 @@ async def _proxy_to_tei(tei_url: str, path: str, json_data: dict) -> Any:
     """
     try:
         shared_client = getattr(app.state, "tei_client", None)
-        if shared_client is not None:
+        if (
+            shared_client is not None
+            and getattr(shared_client, "is_closed", False) is not True
+        ):
             response = await shared_client.post(f"{tei_url}{path}", json=json_data)
         else:
             async with httpx.AsyncClient(timeout=30.0) as client:

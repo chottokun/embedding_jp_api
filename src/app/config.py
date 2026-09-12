@@ -73,6 +73,14 @@ API_KEY = os.getenv("API_KEY")
 # Rate limit configuration (requests per minute per client)
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
 
+# Graceful shutdown configuration (seconds to wait for in-flight requests to complete)
+SHUTDOWN_DRAIN_TIMEOUT_SECONDS = float(
+    os.getenv("SHUTDOWN_DRAIN_TIMEOUT_SECONDS", "10.0")
+)
+
+# Inference precision configuration: "float16", "bfloat16", or "" (default/float32)
+TORCH_DTYPE = os.getenv("TORCH_DTYPE", "").lower()
+
 # --- TEI Integration Configuration ---
 # If these environment variables are set, the API will proxy requests to TEI.
 EMBEDDING_TEI_URL = os.getenv("EMBEDDING_TEI_URL")

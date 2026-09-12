@@ -1,6 +1,8 @@
 # Knowledge Update Log
 
 ## 2026-09-12
+* **SRE & High Availability**: FastAPI Lifespan におけるグレースフルシャットダウン（`SHUTDOWN_DRAIN_TIMEOUT_SECONDS`）および In-Flight リクエスト追跡ミドルウェアを実装。シャットダウン移行中の新規リクエストに対して `503 Service Unavailable` を返却し、処理中リクエストを正常完了させるドレイン機構を導入しました（テスト: `src/tests/test_graceful_shutdown.py`）。
+* **Optimization & Performance**: `TORCH_DTYPE` 環境変数による推論精度切り替え（`bfloat16`, `float16`, `float32`）および `torch.autocast` を統合。SentenceTransformer / CrossEncoder / VisualizedBGE モデルへ型安全に反映しました（テスト: `src/tests/test_torch_dtype.py`）。
 * **Feature**: OpenAI 完全互換の `dimensions`（Matryoshka 次元削減 + L2 再正規化）および `encoding_format: "base64"`（IEEE 754 float32 リトルエンディアン Base64 化）を実装し、ローカル推論・TEIプロキシ・マルチモーダルの全経路に統合しました（テスト: `src/tests/test_dimensions_and_encoding.py`）。
 * **Security & SRE**: API キー／クライアント IP 単位で毎分リクエスト数を制限するスライディングウィンドウ型 `RateLimiter`（`RATE_LIMIT_PER_MINUTE`、超過時 `429 Too Many Requests` + `Retry-After`）を導入し、死活監視エンドポイントの自動除外を適用しました（テスト: `src/tests/test_rate_limit.py`）。
 * **Feature**: OpenAI 互換のモデル一覧取得エンドポイント (`GET /v1/models`) を新設し、テスト `src/tests/test_models_endpoint.py` を追加しました。

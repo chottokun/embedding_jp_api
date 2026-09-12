@@ -1,11 +1,30 @@
-from .config import EMBEDDING_MODELS, RERANK_MODELS
+from .config import EMBEDDING_MODELS, RERANK_MODELS, TORCH_DTYPE
 from sentence_transformers import SentenceTransformer, CrossEncoder
 import torch
 import logging
 import threading
+from contextlib import nullcontext
 from typing import Optional, Any
 from PIL import Image
 from unittest.mock import MagicMock
+
+
+def get_torch_dtype() -> Optional[torch.dtype]:
+    """
+    Parses TORCH_DTYPE configuration into a torch.dtype.
+    Supports float16, bfloat16, and float32. Returns None if unset.
+    """
+    if not TORCH_DTYPE:
+        return None
+    dtype_str = TORCH_DTYPE.lower().strip()
+    if dtype_str in {"float16", "fp16"}:
+        return torch.float16
+    elif dtype_str in {"bfloat16", "bf16"}:
+        return torch.bfloat16
+    elif dtype_str in {"float32", "fp32"}:
+        return torch.float32
+    return None
+
 
 # --- Multimodal Model Wrapper ---
 
@@ -124,27 +143,47 @@ class VisualizedBGEEmbeddingModel:
 
         with self.lock:
             with torch.no_grad():
-                if text_only_tok is not None:
-                    text_out = self.model.encode_text(text_only_tok.to(self.device))
-                    text_out = text_out.cpu().tolist()
-                    for i, idx in enumerate(text_only_idx):
-                        results[idx] = text_out[i]
-
-                if preprocessed_image_only is not None:
-                    img_out = self.model.encode_image(
-                        preprocessed_image_only.to(self.device)
+                target_dtype = get_torch_dtype()
+                device_type = "cuda" if "cuda" in self.device else "cpu"
+                autocast_enabled = target_dtype is not None and (
+                    device_type == "cuda"
+                    or (
+                        device_type == "cpu"
+                        and target_dtype in {torch.bfloat16, torch.float32}
                     )
-                    img_out = img_out.cpu().tolist()
-                    for i, idx in enumerate(image_only_idx):
-                        results[idx] = img_out[i]
-
-                if mm_tok is not None and preprocessed_mm is not None:
-                    mm_out = self.model.encode_mm(
-                        preprocessed_mm.to(self.device), mm_tok.to(self.device)
+                )
+                autocast_ctx = (
+                    torch.autocast(
+                        device_type=device_type,
+                        dtype=target_dtype,
+                        enabled=autocast_enabled,
                     )
-                    mm_out = mm_out.cpu().tolist()
-                    for i, idx in enumerate(mm_idx):
-                        results[idx] = mm_out[i]
+                    if target_dtype is not None
+                    else nullcontext()
+                )
+
+                with autocast_ctx:
+                    if text_only_tok is not None:
+                        text_out = self.model.encode_text(text_only_tok.to(self.device))
+                        text_out = text_out.cpu().tolist()
+                        for i, idx in enumerate(text_only_idx):
+                            results[idx] = text_out[i]
+
+                    if preprocessed_image_only is not None:
+                        img_out = self.model.encode_image(
+                            preprocessed_image_only.to(self.device)
+                        )
+                        img_out = img_out.cpu().tolist()
+                        for i, idx in enumerate(image_only_idx):
+                            results[idx] = img_out[i]
+
+                    if mm_tok is not None and preprocessed_mm is not None:
+                        mm_out = self.model.encode_mm(
+                            preprocessed_mm.to(self.device), mm_tok.to(self.device)
+                        )
+                        mm_out = mm_out.cpu().tolist()
+                        for i, idx in enumerate(mm_idx):
+                            results[idx] = mm_out[i]
 
         return [r if r is not None else [] for r in results]
 
@@ -168,6 +207,11 @@ def get_model(model_name: str, device: str | None = None):
             device = "cuda" if torch.cuda.is_available() else "cpu"
         logging.info(f"Loading model '{model_name}' on device '{device}'...")
 
+        dtype = get_torch_dtype()
+        model_kwargs = (
+            {"torch_dtype": dtype} if dtype in {torch.float16, torch.bfloat16} else {}
+        )
+
         if model_name in {"bge-visualized-m3", "BAAI/bge-visualized-m3"}:
             model = VisualizedBGEEmbeddingModel(
                 model_name="BAAI/bge-m3",
@@ -175,9 +219,21 @@ def get_model(model_name: str, device: str | None = None):
                 device=device,
             )
         elif model_name in EMBEDDING_MODELS:
-            model = SentenceTransformer(model_name, device=device)
+            if model_kwargs:
+                model = SentenceTransformer(
+                    model_name, device=device, model_kwargs=model_kwargs
+                )
+            else:
+                model = SentenceTransformer(model_name, device=device)
         elif model_name in RERANK_MODELS:
-            model = CrossEncoder(model_name, device=device)
+            if model_kwargs:
+                model = CrossEncoder(
+                    model_name,
+                    device=device,
+                    automodel_args=model_kwargs,
+                )
+            else:
+                model = CrossEncoder(model_name, device=device)
         else:
             raise ValueError(f"Model '{model_name}' is not supported.")
 
