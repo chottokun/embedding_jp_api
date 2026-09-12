@@ -1,4 +1,3 @@
-import os
 import sys
 import time
 import base64
@@ -11,8 +10,7 @@ from PIL import Image, ImageDraw
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 import torch
-from app.models import get_model, VisualizedBGEEmbeddingModel
-from app.config import EMBEDDING_MODELS, RERANK_MODELS
+from app.models import get_model
 
 
 def cosine_similarity(v1: list[float], v2: list[float]) -> float:
@@ -263,6 +261,6 @@ if __name__ == "__main__":
     run_fastapi_endpoints_real_verification()
     
     total_sec = time.perf_counter() - t_start
-    print(f"\n========================================================")
+    print("\n========================================================")
     print(f"🎉 全ての実データ・デバイス検証テストに合格しました！ (総所要時間: {total_sec:.2f}秒)")
-    print(f"========================================================")
+    print("========================================================")

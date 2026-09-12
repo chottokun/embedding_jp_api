@@ -70,6 +70,59 @@ MAX_INPUT_ITEMS = int(os.getenv("MAX_INPUT_ITEMS", "256"))
 # API Key for authentication. If not set, authentication is disabled.
 API_KEY = os.getenv("API_KEY")
 
+
+# Multiple API Keys & client-specific rate limits:
+# Format in env: "key1,key2" or JSON: '{"key1": 120, "key2": 300}'
+def _load_api_keys():
+    raw = os.getenv("API_KEYS", "").strip()
+    keys_map = {}
+    if not raw:
+        if API_KEY:
+            keys_map[API_KEY] = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
+        return keys_map
+    if raw.startswith("{"):
+        import json
+
+        try:
+            parsed = json.loads(raw)
+            for k, limit in parsed.items():
+                keys_map[str(k)] = int(limit)
+            return keys_map
+        except Exception as e:
+            logging.warning(f"Failed to parse API_KEYS JSON: {e}")
+    for item in raw.split(","):
+        k = item.strip()
+        if k:
+            keys_map[k] = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
+    if API_KEY and API_KEY not in keys_map:
+        keys_map[API_KEY] = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
+    return keys_map
+
+
+API_KEYS_MAP = _load_api_keys()
+
+# Rate limit configuration (requests per minute per client)
+RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
+
+# Maximum concurrent inference requests (semaphore limit to protect GPU/CPU from OOM/saturation)
+MAX_CONCURRENT_INFERENCES = int(os.getenv("MAX_CONCURRENT_INFERENCES", "4"))
+INFERENCE_SEMAPHORE_TIMEOUT_SECONDS = float(
+    os.getenv("INFERENCE_SEMAPHORE_TIMEOUT_SECONDS", "30.0")
+)
+
+# Graceful shutdown configuration (seconds to wait for in-flight requests to complete)
+SHUTDOWN_DRAIN_TIMEOUT_SECONDS = float(
+    os.getenv("SHUTDOWN_DRAIN_TIMEOUT_SECONDS", "10.0")
+)
+
+# Inference precision configuration: "float16", "bfloat16", or "" (default/float32)
+TORCH_DTYPE = os.getenv("TORCH_DTYPE", "").lower()
+
+# Preload models on application startup (comma-separated list of model names)
+PRELOAD_MODELS = [
+    m.strip() for m in os.getenv("PRELOAD_MODELS", "").split(",") if m.strip()
+]
+
 # --- TEI Integration Configuration ---
 # If these environment variables are set, the API will proxy requests to TEI.
 EMBEDDING_TEI_URL = os.getenv("EMBEDDING_TEI_URL")

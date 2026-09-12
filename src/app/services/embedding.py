@@ -1,5 +1,8 @@
 import asyncio
-from typing import Any, List, Tuple, Optional
+import base64
+import math
+import struct
+from typing import Any, List, Tuple, Optional, Union
 import anyio
 import httpx
 from PIL import Image
@@ -142,6 +145,25 @@ def _tokenize_and_truncate_embeddings(
     return processed_inputs, usage
 
 
+def _format_embedding(
+    vector: List[float], dimensions: Optional[int], encoding_format: str
+) -> Union[List[float], str]:
+    # Matryoshka dimensionality reduction
+    if dimensions is not None and dimensions > 0 and dimensions < len(vector):
+        vector = vector[:dimensions]
+        # L2 re-normalization
+        norm = math.sqrt(sum(x * x for x in vector))
+        if norm > 0:
+            vector = [x / norm for x in vector]
+
+    if encoding_format == "base64":
+        # Pack list of floats as float32 little-endian binary (<f) and base64 encode
+        packed = struct.pack(f"<{len(vector)}f", *vector)
+        return base64.b64encode(packed).decode("utf-8")
+
+    return vector
+
+
 class EmbeddingService(BaseEmbeddingService):
     """
     Default production implementation of BaseEmbeddingService.
@@ -185,11 +207,21 @@ class EmbeddingService(BaseEmbeddingService):
             inputs = [text for text, _ in parsed_items if text is not None]
             prefix = _determine_ruri_prefix(request)
             processed_inputs = _apply_prefix(inputs, prefix)
-            data = proxy_func(
+            data = await proxy_func(
                 tei_url,
                 "/v1/embeddings",
                 {"input": processed_inputs, "model": request.model},
             )
+            # Apply dimensions and encoding_format post-processing to TEI response
+            processed_data = []
+            for item in data.get("data", []):
+                raw_emb = item["embedding"]
+                idx = item["index"]
+                formatted_emb = _format_embedding(
+                    raw_emb, request.dimensions, request.encoding_format
+                )
+                processed_data.append(EmbeddingData(embedding=formatted_emb, index=idx))
+            data["data"] = [d.model_dump() for d in processed_data]
             return EmbeddingResponse(**data)
 
         model = get_validated_model(
@@ -221,7 +253,12 @@ class EmbeddingService(BaseEmbeddingService):
                 model.encode_multimodal, processed_items
             )
             response_data = [
-                EmbeddingData(embedding=emb, index=i)
+                EmbeddingData(
+                    embedding=_format_embedding(
+                        emb, request.dimensions, request.encoding_format
+                    ),
+                    index=i,
+                )
                 for i, emb in enumerate(embeddings)
             ]
             usage = Usage(prompt_tokens=0, total_tokens=0)
@@ -244,7 +281,12 @@ class EmbeddingService(BaseEmbeddingService):
         vectors = await anyio.to_thread.run_sync(_run_inference)
 
         response_data = [
-            EmbeddingData(embedding=vector, index=i)
+            EmbeddingData(
+                embedding=_format_embedding(
+                    vector, request.dimensions, request.encoding_format
+                ),
+                index=i,
+            )
             for i, vector in enumerate(vectors.tolist())
         ]
 

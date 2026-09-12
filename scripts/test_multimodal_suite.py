@@ -9,7 +9,7 @@ import io
 import time
 import httpx
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 from app.main import app
 
 BASE_URL = "http://testserver"

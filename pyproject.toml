@@ -26,6 +26,7 @@ dependencies = [
     "ftfy>=6.0.0",
     "einops>=0.7.0",
     "flagembedding>=1.2.0",
+    "prometheus-client>=0.26.0",
 ]
 
 [project.optional-dependencies]

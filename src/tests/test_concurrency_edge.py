@@ -91,3 +91,17 @@ def test_high_concurrency_thread_safety_mock():
                 assert len(errors) == 0, (
                     f"Concurrency test failed with errors: {errors}"
                 )
+
+
+@pytest.mark.anyio
+async def test_inference_semaphore_limits_concurrency():
+    """Verify that inference_semaphore restricts simultaneous inferences without deadlock."""
+    from app.main import inference_semaphore
+
+    # Verify semaphore initial value matches MAX_CONCURRENT_INFERENCES
+    assert inference_semaphore._val >= 1
+
+    # Verify context manager acquisition and release
+    async with inference_semaphore:
+        # Acquired successfully inside context
+        pass

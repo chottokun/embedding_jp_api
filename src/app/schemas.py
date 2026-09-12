@@ -71,11 +71,32 @@ class EmbeddingRequest(BaseModel):
         False,
         description="Automatically apply prefixes based on input shape if true (fallback/compatibility).",
     )
+    dimensions: Optional[int] = Field(
+        None,
+        ge=1,
+        description="The number of dimensions the resulting output embeddings should have. Supports Matryoshka models.",
+    )
+    encoding_format: Literal["float", "base64"] = Field(
+        "float",
+        description="The format to return the embeddings in. Can be either float or base64.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "input": "日本語のテキスト埋め込みテスト",
+                "model": "cl-nagoya/ruri-v3-small",
+                "input_type": "query",
+                "dimensions": 512,
+                "encoding_format": "float",
+            }
+        }
+    )
 
 
 class EmbeddingData(BaseModel):
     object: str = "embedding"
-    embedding: list[float]
+    embedding: Union[list[float], str]
     index: int
 
 
@@ -109,7 +130,22 @@ class RerankRequest(BaseModel):
     )
     return_documents: Optional[bool] = None
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "query": "日本の首都は？",
+                "documents": [
+                    "東京都は日本の首都であり、最大の都市です。",
+                    "京都府は日本の古都として知られています。",
+                    "富士山は日本で最も高い山です。",
+                ],
+                "model": "BAAI/bge-reranker-v2-m3",
+                "top_n": 2,
+                "return_documents": True,
+            }
+        },
+    )
 
 
 class RerankData(BaseModel):
@@ -123,3 +159,38 @@ class RerankResponse(BaseModel):
     data: list[RerankData]
     model: str
     usage: Optional[Usage] = None
+
+
+# --- For /v1/models ---
+class ModelCard(BaseModel):
+    id: str
+    object: str = "model"
+    created: int
+    owned_by: str = "custom"
+    permission: list = Field(default_factory=list)
+
+
+class ModelList(BaseModel):
+    object: str = "list"
+    data: list[ModelCard]
+
+
+# --- For /v1/models/unload ---
+class UnloadRequest(BaseModel):
+    model: Optional[str] = Field(
+        None,
+        description="The name of the model to unload. If omitted, all models are unloaded.",
+    )
+
+
+class UnloadResponse(BaseModel):
+    unloaded_models: list[str]
+    remaining_memory: int
+
+
+# --- OpenAPI Error Schema ---
+class ErrorResponse(BaseModel):
+    detail: str = Field(
+        description="Detailed human-readable error message explaining the failure.",
+        examples=["Invalid or missing API Key"],
+    )

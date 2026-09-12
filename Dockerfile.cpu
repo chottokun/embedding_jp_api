@@ -54,7 +54,8 @@ EXPOSE 8000
 ENV GUNICORN_WORKERS=2
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=20s --retries=3 \
-  CMD python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)" || exit 1
+  CMD python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)" || exit 1
+
 
 # Command to run the application using Gunicorn from the virtual environment
 CMD ["sh", "-c", "gunicorn --workers ${GUNICORN_WORKERS} --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 120 --worker-tmp-dir /dev/shm --keep-alive 5 src.app.main:app"]
