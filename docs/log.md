@@ -1,6 +1,7 @@
 # Knowledge Update Log
 
 ## 2026-09-12
+* **Observability**: 構造化 JSON ロギングおよび `X-Request-ID` によるリクエスト追跡（ContextVars連携）を実装し、テスト `src/tests/test_logger.py` を追加しました。
 * **Feature**: `/ready` エンドポイントを新設し、Liveness (`/health`, `/healthz`) と分離して GPU 状態およびロード済みモデルを監視可能にしました。
 * **Observability**: `prometheus_client` を導入し、リクエスト数・レイテンシを計測する `/metrics` エンドポイントを新設しました。
 * **Optimization**: `VisualizedBGEEmbeddingModel.encode_multimodal` における画像テンソル・テキストのバッチ一括処理化を実装し、マルチモーダル推論のスループットを向上させました。

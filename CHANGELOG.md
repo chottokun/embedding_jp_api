@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Structured JSON Logging with Request ID Tracking**:
+  - Integrated JSON log formatting and `X-Request-ID` correlation via ContextVars in HTTP middleware.
+  - Automatically captures HTTP method, endpoint, status code, and latency in standard JSON output for APM/log aggregation.
+  - Added dedicated test suite in `src/tests/test_logger.py`.
 - **Prometheus Metrics Instrumentation (`/metrics`)**:
   - Integrated `prometheus_client` exposing standard Prometheus metrics for HTTP request count and latency histograms with endpoint grouping.
   - Added dedicated test suite `src/tests/test_metrics.py`.
