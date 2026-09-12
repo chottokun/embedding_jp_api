@@ -175,3 +175,33 @@ def test_rerank_top_k_alias(mock_get_model):
     assert response.status_code == 200
     data = response.json()["data"]
     assert len(data) == 1
+
+
+def test_openapi_schema_metadata_and_tags():
+    """Verify OpenAPI 3.x schema contains enriched tags, summaries, and status codes."""
+    response = client.get("/openapi.json")
+    assert response.status_code == 200
+    schema = response.json()
+
+    assert schema["info"]["title"] == "Japanese Embedding & Reranking API"
+    assert schema["info"]["version"] == "1.0.0"
+
+    paths = schema["paths"]
+    assert "/v1/embeddings" in paths
+    assert "/v1/rerank" in paths
+    assert "/v1/models" in paths
+    assert "/v1/models/unload" in paths
+
+    # Embeddings endpoint checks
+    embed_post = paths["/v1/embeddings"]["post"]
+    assert "Embeddings" in embed_post["tags"]
+    assert "400" in embed_post["responses"]
+    assert "401" in embed_post["responses"]
+    assert "413" in embed_post["responses"]
+    assert "429" in embed_post["responses"]
+    assert "503" in embed_post["responses"]
+
+    # Rerank endpoint checks
+    rerank_post = paths["/v1/rerank"]["post"]
+    assert "Reranking" in rerank_post["tags"]
+    assert "429" in rerank_post["responses"]

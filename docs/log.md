@@ -1,6 +1,8 @@
 # Knowledge Update Log
 
 ## 2026-09-12
+* **Infrastructure & Kubernetes**: 本番運用向けの Kubernetes マニフェスト（`deploy/kubernetes/deployment.yaml`, `service.yaml`, `hpa.yaml`）および `docs/deployment.md` を追加。HPA による CPU/メモリ負荷に応じた水平自動スケール（1〜5 Pod）と死活／準備監視・Prometheus スクレイプ定義を標準化しました。
+* **API Documentation & DX**: OpenAPI 3.x / Swagger UI (`/docs`) のスキーマ定義を大幅拡充。エンドポイント別のタグ分類（`Embeddings`, `Reranking`, `Models`, `Health`, `Metrics`）、概要・詳細説明、レスポンスコード（400, 401, 413, 429, 503）、および `EmbeddingRequest` / `RerankRequest` の実例（`json_schema_extra`）を配備しました（テスト: `src/tests/test_extended_features.py`）。
 * **Observability & APM**: Prometheus メトリクスにモデル別トークン消費カウンタ（`http_prompt_tokens_total`）およびエンドポイント別バッチサイズ分布ヒストグラム（`http_request_batch_size`）を追加し、運用監視・リソース予測性能を強化しました（テスト: `src/tests/test_metrics.py`）。
 * **Feature & Performance**: アプリケーション起動時に事前ロードを行う `PRELOAD_MODELS` 設定を新設。初回リクエストのコールドスタート遅延をゼロにする事前ウォームアップ機構を導入しました（テスト: `src/tests/test_config.py`, `src/tests/test_graceful_shutdown.py`）。
 * **SRE & High Availability**: FastAPI Lifespan におけるグレースフルシャットダウン（`SHUTDOWN_DRAIN_TIMEOUT_SECONDS`）および In-Flight リクエスト追跡ミドルウェアを実装。シャットダウン移行中の新規リクエストに対して `503 Service Unavailable` を返却し、処理中リクエストを正常完了させるドレイン機構を導入しました（テスト: `src/tests/test_graceful_shutdown.py`）。

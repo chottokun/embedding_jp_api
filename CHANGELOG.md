@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Production Kubernetes Deployment Manifests & Documentation (`deploy/kubernetes/`)**:
+  - Provided production-ready Kubernetes manifests: `deployment.yaml` (with liveness/readiness probes and Prometheus annotations), `service.yaml` (ClusterIP), and `hpa.yaml` (HorizontalPodAutoscaler scaling 1-5 pods based on CPU/Memory targets).
+  - Added deployment guide in `docs/deployment.md`.
+- **OpenAPI & Swagger Documentation Enhancements**:
+  - Added OpenAPI tags (`Embeddings`, `Reranking`, `Models`, `Health`, `Metrics`), endpoint summaries, descriptions, and standard response codes (400, 401, 413, 429, 503).
+  - Added realistic schema examples (`json_schema_extra`) for `EmbeddingRequest` and `RerankRequest`.
+  - Added unit test in `src/tests/test_extended_features.py`.
 - **Prometheus Metrics Instrumentation for Token Usage and Batch Size Distribution**:
   - Added `http_prompt_tokens_total` Counter labeled by model to track total token consumption.
   - Added `http_request_batch_size` Histogram labeled by endpoint with standard exponential buckets up to 256 items.

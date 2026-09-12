@@ -81,6 +81,18 @@ class EmbeddingRequest(BaseModel):
         description="The format to return the embeddings in. Can be either float or base64.",
     )
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "input": "日本語のテキスト埋め込みテスト",
+                "model": "cl-nagoya/ruri-v3-small",
+                "input_type": "query",
+                "dimensions": 512,
+                "encoding_format": "float",
+            }
+        }
+    )
+
 
 class EmbeddingData(BaseModel):
     object: str = "embedding"
@@ -118,7 +130,22 @@ class RerankRequest(BaseModel):
     )
     return_documents: Optional[bool] = None
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "query": "日本の首都は？",
+                "documents": [
+                    "東京都は日本の首都であり、最大の都市です。",
+                    "京都府は日本の古都として知られています。",
+                    "富士山は日本で最も高い山です。",
+                ],
+                "model": "BAAI/bge-reranker-v2-m3",
+                "top_n": 2,
+                "return_documents": True,
+            }
+        },
+    )
 
 
 class RerankData(BaseModel):

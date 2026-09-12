@@ -36,4 +36,3 @@ def test_rate_limit_enforced_and_retry_after():
     finally:
         rate_limiter.requests.clear()
         rate_limiter.limit = orig_limit
-

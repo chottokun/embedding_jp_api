@@ -171,7 +171,16 @@ async def lifespan(app_instance: FastAPI):
         await app_instance.state.tei_client.aclose()
 
 
-app = FastAPI(title="OpenAI-Compatible API", lifespan=lifespan)
+app = FastAPI(
+    title="Japanese Embedding & Reranking API",
+    version="1.0.0",
+    description=(
+        "Production-grade, OpenAI-compatible REST API providing high-performance text and "
+        "multimodal embeddings (Ruri-v3, Visual-BGE) and reranking (bge-reranker-v2-m3) "
+        "tailored for Japanese NLP tasks."
+    ),
+    lifespan=lifespan,
+)
 
 
 @app.middleware("http")
@@ -503,6 +512,20 @@ def get_rerank_service() -> BaseRerankService:
     "/v1/embeddings",
     response_model=EmbeddingResponse,
     dependencies=[Depends(verify_api_key)],
+    tags=["Embeddings"],
+    summary="Create text or multimodal embeddings",
+    description=(
+        "Creates embedding vectors for input text or multimodal elements. "
+        "Supports Matryoshka dimension reduction (`dimensions`), base64 encoding "
+        "(`encoding_format`), and automated Japanese Ruri-v3 task prefixes."
+    ),
+    responses={
+        400: {"description": "Unsupported model or invalid parameters"},
+        401: {"description": "Invalid or missing Bearer API key"},
+        413: {"description": "Payload exceeds maximum allowed size (32MB)"},
+        429: {"description": "Rate limit exceeded (Too Many Requests)"},
+        503: {"description": "Server is shutting down (Service Unavailable)"},
+    },
 )
 async def create_embeddings(
     request: EmbeddingRequest,
@@ -528,6 +551,19 @@ async def create_embeddings(
     response_model=RerankResponse,
     response_model_exclude_none=True,
     dependencies=[Depends(verify_api_key)],
+    tags=["Reranking"],
+    summary="Rerank candidate documents for a query",
+    description=(
+        "Reorders candidate documents by relevance score for a given query "
+        "using Japanese Cross-Encoder reranking models."
+    ),
+    responses={
+        400: {"description": "Unsupported model or invalid parameters"},
+        401: {"description": "Invalid or missing Bearer API key"},
+        413: {"description": "Payload exceeds maximum allowed size (32MB)"},
+        429: {"description": "Rate limit exceeded (Too Many Requests)"},
+        503: {"description": "Server is shutting down (Service Unavailable)"},
+    },
 )
 async def create_rerank(
     request: RerankRequest,
@@ -552,6 +588,12 @@ async def create_rerank(
     response_model=ModelList,
     dependencies=[Depends(verify_api_key)],
     tags=["Models"],
+    summary="List available models",
+    description="Lists all currently supported embedding and reranking models in OpenAI format.",
+    responses={
+        401: {"description": "Invalid or missing Bearer API key"},
+        429: {"description": "Rate limit exceeded (Too Many Requests)"},
+    },
 )
 async def list_models():
     """
@@ -576,6 +618,15 @@ async def list_models():
     response_model=UnloadResponse,
     dependencies=[Depends(verify_api_key)],
     tags=["Models"],
+    summary="Unload models from cache",
+    description=(
+        "Unloads a specific model or all models from memory/VRAM, triggering garbage collection "
+        "and CUDA cache clearance."
+    ),
+    responses={
+        401: {"description": "Invalid or missing Bearer API key"},
+        429: {"description": "Rate limit exceeded (Too Many Requests)"},
+    },
 )
 async def unload_models(request: UnloadRequest):
     """
