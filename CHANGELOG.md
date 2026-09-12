@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Asynchronous TEI Proxy**:
   - Upgraded TEI proxy client in `src/app/main.py` to use `httpx.AsyncClient` with pooled connections, and converted `_proxy_to_tei` and service callers to full `async/await` execution to eliminate event loop blocking.
 
+### Fixed
+- **DNS Rebinding & TOCTOU Mitigation in Multimodal Image Downloads**:
+  - Implemented `SafeNetworkBackend` in `src/app/image_utils.py` with custom `httpcore.AsyncNetworkBackend` that pins the TCP connection target to the validated, safe IP address resolved during SSRF validation while retaining the original Host and SNI headers.
+  - Eliminated the vulnerability window between DNS resolution and HTTP stream connection.
+
 
 - **Multimodal (Diagram + Text) Full Support**:
   - Integrated `bge-visualized-m3` model for composite image + text and image-only embeddings in 1024 dimensions.

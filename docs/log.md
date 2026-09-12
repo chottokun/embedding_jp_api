@@ -1,6 +1,7 @@
 # Knowledge Update Log
 
 ## 2026-09-12
+* **Security**: マルチモーダル画像ダウンロードにおける DNS Rebinding / TOCTOU 脆弱性対策として、SSRF 検査時に解決した安全な IP アドレスを TCP 接続先として直接固定（IP Pinning）する `SafeNetworkBackend` を実装しました。
 * **Observability**: 構造化 JSON ロギングおよび `X-Request-ID` によるリクエスト追跡（ContextVars連携）を実装し、テスト `src/tests/test_logger.py` を追加しました。
 * **Feature**: `/ready` エンドポイントを新設し、Liveness (`/health`, `/healthz`) と分離して GPU 状態およびロード済みモデルを監視可能にしました。
 * **Observability**: `prometheus_client` を導入し、リクエスト数・レイテンシを計測する `/metrics` エンドポイントを新設しました。
