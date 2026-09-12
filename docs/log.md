@@ -2,8 +2,12 @@
 
 ## 2026-09-12
 * **Feature**: `/ready` エンドポイントを新設し、Liveness (`/health`, `/healthz`) と分離して GPU 状態およびロード済みモデルを監視可能にしました。
+* **Observability**: `prometheus_client` を導入し、リクエスト数・レイテンシを計測する `/metrics` エンドポイントを新設しました。
+* **Optimization**: `VisualizedBGEEmbeddingModel.encode_multimodal` における画像テンソル・テキストのバッチ一括処理化を実装し、マルチモーダル推論のスループットを向上させました。
+* **Refactor**: TEI プロキシ処理を `httpx.AsyncClient` による完全非同期呼び出し（`async/await`）へ刷新し、I/Oブロッキングを解消しました。
 * **CI & Security**: GitHub Actions CI に `uv audit`（依存関係脆弱性診断）および `gitleaks`（シークレット漏洩スキャン）を組み込み、リポジトリ全体の静的解析（`ruff check .`）を適用しました。
 * **Code Health**: Jules との連携により、`scratch/` および `scripts/` に残存していた Lint エラーを完全解消しました。
+
 
 ## 2026-08-29
 * **Creation**: `docs/architecture/services.md` を作成し、サービス層（`src/app/services/`）の抽象基底クラス、FastAPI `Depends` による依存性注入（DI）、および `MockEmbeddingService`/`MockRerankService` のモック設計を文書化しました。

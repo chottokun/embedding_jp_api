@@ -8,12 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Prometheus Metrics Instrumentation (`/metrics`)**:
+  - Integrated `prometheus_client` exposing standard Prometheus metrics for HTTP request count and latency histograms with endpoint grouping.
+  - Added dedicated test suite `src/tests/test_metrics.py`.
 - **Readiness Probe Endpoint (`/ready`)**:
   - Added dedicated `/ready` endpoint verifying GPU availability and loaded model cache keys, decoupling readiness from liveness (`/health`, `/healthz`).
   - Added unit test suite in `src/tests/test_ready.py`.
 - **CI / CD Automated Auditing & Secret Scanning**:
   - Enforced `uv audit` and `gitleaks` in GitHub Actions CI workflow (`.github/workflows/ci.yml`) per `.rules/ci.md`.
   - Expanded `ruff check` to entire repository (`.`).
+
+### Changed
+- **Multimodal Batch Inference Optimization**:
+  - Refactored `VisualizedBGEEmbeddingModel.encode_multimodal` in `src/app/models.py` to batch preprocessed image tensors and tokenized text together instead of processing items sequentially, drastically improving multi-item inference throughput.
+- **Asynchronous TEI Proxy**:
+  - Upgraded TEI proxy client in `src/app/main.py` to use `httpx.AsyncClient` with pooled connections, and converted `_proxy_to_tei` and service callers to full `async/await` execution to eliminate event loop blocking.
+
 
 - **Multimodal (Diagram + Text) Full Support**:
   - Integrated `bge-visualized-m3` model for composite image + text and image-only embeddings in 1024 dimensions.
