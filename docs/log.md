@@ -1,5 +1,9 @@
 # Knowledge Update Log
 
+## 2026-09-14
+* **Security & CI Remediation**: `accelerate` パッケージの脆弱性（CVE-2026-69112）を `uv lock --upgrade-package accelerate` によりパッチ版 `1.15.0` へアップデートし、`uv audit`（検出ゼロ）を達成。また GitHub Actions の Gitleaks アクション向けに `actions/checkout` へ `fetch-depth: 0` を適用し、CI セキュリティパイプラインおよび実データテスト（`scratch/verify_real_data.py`）をすべてグリーン（合格）に同期しました（PR #92 マージ完了）。
+* **Code Health**: `scratch/` および `scripts/` の全コードに `ruff format` を適用し、リポジトリ全体のフォーマット整合性を完全担保しました。
+
 ## 2026-09-12
 * **Performance & Comprehensive Benchmarks**: 全5モデル（ruri-30m, ruri-310m, bge-m3, bge-visualized-m3, ruri-reranker-310m）の実機ベンチマーク、バッチスケーリング（1〜64）、コンテキスト長スケーリング（32〜2048トークン）、マルチモーダル解像度別（64px〜1080p）推論レイテンシ、およびセマフォ制御下での高並行負荷テスト（50リクエスト/10並行、成功率100.0%、スループット 3.42 req/sec）の実測値を `docs/infrastructure/benchmarks.md` に更新・記録しました。
 * **Architecture & Future Roadmap**: プロダクション要件の完備（推論セマフォ、マルチAPIキー認証、OpenAPI 3.x定義拡充、全178テストパス、mainブランチマージ完了）を受け、次期フェーズに向けた改善項目（インメモリ LRU キャッシュ層、Dynamic Request Batching、Helm Chart 整備、Hybrid 検索エンドポイント）をロードマップとして `docs/infrastructure/benchmarks.md` に Take Note 記録しました。

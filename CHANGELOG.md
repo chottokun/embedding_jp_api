@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Patched Accelerate Dependency Vulnerability (CVE-2026-69112)**:
+  - Upgraded `accelerate` package to `1.15.0` to resolve path traversal and denial of service vulnerabilities in checkpoint weight maps, achieving clean `uv audit` scans.
+
+### Fixed
+- **CI Gitleaks History Depth**:
+  - Configured `fetch-depth: 0` in GitHub Actions checkout step to allow `gitleaks` secret detection to inspect the full commit history correctly.
+
+### Changed
+- **Code Style Alignment**:
+  - Formatted all scripts in `scratch/` and `scripts/` using `ruff format` to meet repo coding standards.
+
 ### Added
 - **Inference Concurrency Control with Semaphore Protection (`MAX_CONCURRENT_INFERENCES`)**:
   - Implemented `asyncio.Semaphore` limit around neural network embedding and reranking inference to prevent GPU/CPU saturation and CUDA OOM crashes.
