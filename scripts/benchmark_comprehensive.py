@@ -27,8 +27,17 @@ def create_mock_image(width: int = 400, height: int = 260) -> str:
     """Creates a sample mock diagram Base64 Data URL."""
     img = Image.new("RGB", (width, height), color=(240, 245, 250))
     draw = ImageDraw.Draw(img)
-    draw.rectangle([20, 20, width - 20, height - 20], fill=(33, 150, 243), outline=(25, 118, 210), width=2)
-    draw.text((width // 4, height // 2), f"Benchmark Diagram {width}x{height}", fill=(255, 255, 255))
+    draw.rectangle(
+        [20, 20, width - 20, height - 20],
+        fill=(33, 150, 243),
+        outline=(25, 118, 210),
+        width=2,
+    )
+    draw.text(
+        (width // 4, height // 2),
+        f"Benchmark Diagram {width}x{height}",
+        fill=(255, 255, 255),
+    )
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
@@ -47,13 +56,17 @@ async def run_comprehensive_benchmarks():
     print("📊 COMPREHENSIVE BENCHMARK & HARDWARE PROFILING SUITE")
     print("=" * 80)
 
-    device_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "Host CPU"
+    device_name = (
+        torch.cuda.get_device_name(0) if torch.cuda.is_available() else "Host CPU"
+    )
     print("\n[Environment Information]")
     print(f"  • Compute Device : {device_name}")
     print(f"  • PyTorch Version: {torch.__version__}")
     print(f"  • CUDA Available : {torch.cuda.is_available()}")
     if torch.cuda.is_available():
-        total_vram = torch.cuda.get_device_properties(0).total_memory / (1024 * 1024 * 1024)
+        total_vram = torch.cuda.get_device_properties(0).total_memory / (
+            1024 * 1024 * 1024
+        )
         print(f"  • Total GPU VRAM : {total_vram:.2f} GB")
 
     async with httpx.AsyncClient(
@@ -80,23 +93,28 @@ async def run_comprehensive_benchmarks():
             ("bge-visualized-m3", "Multimodal (800M / 1024d)"),
         ]
 
-        print(f"{'Model Name':<28} | {'Type':<22} | {'P50 (ms)':>8} | {'P95 (ms)':>8} | {'P99 (ms)':>8} | {'VRAM (MB)':>9}")
+        print(
+            f"{'Model Name':<28} | {'Type':<22} | {'P50 (ms)':>8} | {'P95 (ms)':>8} | {'P99 (ms)':>8} | {'VRAM (MB)':>9}"
+        )
         print("-" * 88)
 
         for model_id, model_desc in embedding_models:
             # Warm up / Load model
             if torch.cuda.is_available():
                 torch.cuda.reset_peak_memory_stats()
-            
+
             # 50 iterations
             latencies = []
             for i in range(50):
                 t0 = time.perf_counter()
-                resp = await client.post("/v1/embeddings", json={
-                    "model": model_id,
-                    "input": f"東京都千代田区における自然言語処理技術のベンチマーク測定サンプル {i}",
-                    "input_type": "query"
-                })
+                resp = await client.post(
+                    "/v1/embeddings",
+                    json={
+                        "model": model_id,
+                        "input": f"東京都千代田区における自然言語処理技術のベンチマーク測定サンプル {i}",
+                        "input_type": "query",
+                    },
+                )
                 dt = (time.perf_counter() - t0) * 1000
                 assert resp.status_code == 200, f"Error {resp.status_code}: {resp.text}"
                 latencies.append(dt)
@@ -106,7 +124,9 @@ async def run_comprehensive_benchmarks():
             p99 = np.percentile(latencies, 99)
             vram = get_vram_mb()
 
-            print(f"{model_id:<28} | {model_desc:<22} | {p50:8.2f} | {p95:8.2f} | {p99:8.2f} | {vram:9.1f}")
+            print(
+                f"{model_id:<28} | {model_desc:<22} | {p50:8.2f} | {p95:8.2f} | {p99:8.2f} | {vram:9.1f}"
+            )
 
         # Reranker Model
         print("-" * 88)
@@ -114,18 +134,21 @@ async def run_comprehensive_benchmarks():
         rerank_lats = []
         for i in range(30):
             t0 = time.perf_counter()
-            resp = await client.post("/v1/rerank", json={
-                "model": rerank_model,
-                "query": "日本の首都はどこですか？",
-                "documents": [
-                    "東京は日本の首都であり、最大の都市です。",
-                    "京都はかつての日本の古都です。",
-                    "大阪は西日本の主要な経済都市です。",
-                    "名古屋は中部地方の中心都市です。",
-                    "福岡は九州地方の主要都市です。"
-                ],
-                "top_n": 3
-            })
+            resp = await client.post(
+                "/v1/rerank",
+                json={
+                    "model": rerank_model,
+                    "query": "日本の首都はどこですか？",
+                    "documents": [
+                        "東京は日本の首都であり、最大の都市です。",
+                        "京都はかつての日本の古都です。",
+                        "大阪は西日本の主要な経済都市です。",
+                        "名古屋は中部地方の中心都市です。",
+                        "福岡は九州地方の主要都市です。",
+                    ],
+                    "top_n": 3,
+                },
+            )
             dt = (time.perf_counter() - t0) * 1000
             assert resp.status_code == 200
             rerank_lats.append(dt)
@@ -134,7 +157,9 @@ async def run_comprehensive_benchmarks():
         r_p95 = np.percentile(rerank_lats, 95)
         r_p99 = np.percentile(rerank_lats, 99)
         r_vram = get_vram_mb()
-        print(f"{rerank_model:<28} | {'Reranker (5 docs)':<22} | {r_p50:8.2f} | {r_p95:8.2f} | {r_p99:8.2f} | {r_vram:9.1f}")
+        print(
+            f"{rerank_model:<28} | {'Reranker (5 docs)':<22} | {r_p50:8.2f} | {r_p95:8.2f} | {r_p99:8.2f} | {r_vram:9.1f}"
+        )
 
         # ======================================================================
         # 2. Batch Scaling & Peak Throughput (ruri-v3-30m vs ruri-v3-310m)
@@ -146,17 +171,20 @@ async def run_comprehensive_benchmarks():
         batch_sizes = [1, 8, 32, 64]
         for m_id in ["cl-nagoya/ruri-v3-30m", "cl-nagoya/ruri-v3-310m"]:
             print(f"\n--- Model: {m_id} ---")
-            print(f"{'Batch Size':>10} | {'Total Time (ms)':>15} | {'Throughput (items/s)':>20} | {'Per-Item (ms)':>13}")
+            print(
+                f"{'Batch Size':>10} | {'Total Time (ms)':>15} | {'Throughput (items/s)':>20} | {'Per-Item (ms)':>13}"
+            )
             print("-" * 65)
-            sample_txt = "高度な自然言語処理技術を用いたベクトル検索エンジンの性能テスト。"
+            sample_txt = (
+                "高度な自然言語処理技術を用いたベクトル検索エンジンの性能テスト。"
+            )
             for bs in batch_sizes:
                 b_inputs = [f"{sample_txt} (seq_{j})" for j in range(bs)]
                 t0 = time.perf_counter()
-                resp = await client.post("/v1/embeddings", json={
-                    "model": m_id,
-                    "input": b_inputs,
-                    "input_type": "document"
-                })
+                resp = await client.post(
+                    "/v1/embeddings",
+                    json={"model": m_id, "input": b_inputs, "input_type": "document"},
+                )
                 dt = (time.perf_counter() - t0) * 1000
                 assert resp.status_code == 200
                 qps = bs / (dt / 1000)
@@ -171,9 +199,13 @@ async def run_comprehensive_benchmarks():
         print("=" * 80)
 
         seq_lengths = [32, 128, 512, 1024, 2048]
-        base_phrase = "自然言語処理における埋め込みベクトルの計算速度とメモリ使用量を検証する。"
-        
-        print(f"{'Target Tokens (approx)':<25} | {'Char Length':>12} | {'ruri-30m (ms)':>13} | {'ruri-310m (ms)':>14}")
+        base_phrase = (
+            "自然言語処理における埋め込みベクトルの計算速度とメモリ使用量を検証する。"
+        )
+
+        print(
+            f"{'Target Tokens (approx)':<25} | {'Char Length':>12} | {'ruri-30m (ms)':>13} | {'ruri-310m (ms)':>14}"
+        )
         print("-" * 72)
 
         for target_tokens in seq_lengths:
@@ -184,17 +216,25 @@ async def run_comprehensive_benchmarks():
 
             # Measure ruri-30m
             t0 = time.perf_counter()
-            r1 = await client.post("/v1/embeddings", json={"model": "cl-nagoya/ruri-v3-30m", "input": text_payload})
+            r1 = await client.post(
+                "/v1/embeddings",
+                json={"model": "cl-nagoya/ruri-v3-30m", "input": text_payload},
+            )
             t_30m = (time.perf_counter() - t0) * 1000
             assert r1.status_code == 200
 
             # Measure ruri-310m
             t0 = time.perf_counter()
-            r2 = await client.post("/v1/embeddings", json={"model": "cl-nagoya/ruri-v3-310m", "input": text_payload})
+            r2 = await client.post(
+                "/v1/embeddings",
+                json={"model": "cl-nagoya/ruri-v3-310m", "input": text_payload},
+            )
             t_310m = (time.perf_counter() - t0) * 1000
             assert r2.status_code == 200
 
-            print(f"{target_tokens:<25d} | {char_len:12d} | {t_30m:13.1f} | {t_310m:14.1f}")
+            print(
+                f"{target_tokens:<25d} | {char_len:12d} | {t_30m:13.1f} | {t_310m:14.1f}"
+            )
 
         # ======================================================================
         # 4. Multimodal Modality & Image Resolution Breakdown
@@ -212,21 +252,29 @@ async def run_comprehensive_benchmarks():
             ("Image Only (Thumbnail 64x64)", {"image_url": img_64}),
             ("Image Only (Standard 224x224)", {"image_url": img_224}),
             ("Image Only (Full HD 1080p)", {"image_url": img_1080}),
-            ("Multimodal (Standard 224 + Text)", {"text": "マイクロサービス構成図", "image_url": img_224}),
-            ("Multimodal (Full HD 1080p + Text)", {"text": "高解像度インフラ構成図", "image_url": img_1080}),
+            (
+                "Multimodal (Standard 224 + Text)",
+                {"text": "マイクロサービス構成図", "image_url": img_224},
+            ),
+            (
+                "Multimodal (Full HD 1080p + Text)",
+                {"text": "高解像度インフラ構成図", "image_url": img_1080},
+            ),
         ]
 
-        print(f"{'Input Modality / Resolution':<36} | {'Avg Latency (ms)':>16} | {'Output Dim':>10}")
+        print(
+            f"{'Input Modality / Resolution':<36} | {'Avg Latency (ms)':>16} | {'Output Dim':>10}"
+        )
         print("-" * 68)
 
         for case_name, payload_input in mm_cases:
             lats = []
             for _ in range(5):
                 t0 = time.perf_counter()
-                resp = await client.post("/v1/embeddings", json={
-                    "model": "bge-visualized-m3",
-                    "input": payload_input
-                })
+                resp = await client.post(
+                    "/v1/embeddings",
+                    json={"model": "bge-visualized-m3", "input": payload_input},
+                )
                 dt = (time.perf_counter() - t0) * 1000
                 assert resp.status_code == 200
                 lats.append(dt)
