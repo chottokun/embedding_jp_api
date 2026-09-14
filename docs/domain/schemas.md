@@ -27,6 +27,8 @@ sources:
   "input": "日本語テキスト",
   "input_type": "query",
   "apply_ruri_prefix": false,
+  "dimensions": 512,
+  "encoding_format": "float",
   "user": "user-123"
 }
 ```
@@ -35,6 +37,7 @@ sources:
 - `MAX_INPUT_LENGTH`: 単一文字列の最大文字数 = 65,536 文字
 - `MAX_INPUT_ITEMS`: バッチ配列の最大要素数 = 256 件
 - `ImageSourceString`: Base64 / URL 画像の最大文字列長 = 25,000,000 文字 (~18MB Base64)
+- `MAX_PAYLOAD_SIZE`: HTTP リクエストボディ最大長 = 32MB (413 Payload Too Large)
 
 ### レスポンス (`EmbeddingResponse`)
 ```json
@@ -54,6 +57,7 @@ sources:
   }
 }
 ```
+> ※ `encoding_format: "base64"` 指定時は、`embedding` が IEEE 754 リトルエンディアン float32 の Base64 文字列として返却されます。
 
 ---
 
@@ -94,5 +98,63 @@ sources:
     "prompt_tokens": 48,
     "total_tokens": 48
   }
+}
+```
+
+---
+
+## 3. モデル一覧エンドポイント (`GET /v1/models`)
+
+### レスポンス (`ModelList`)
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "cl-nagoya/ruri-v3-30m",
+      "object": "model",
+      "created": 1726315200,
+      "owned_by": "custom",
+      "permission": []
+    }
+  ]
+}
+```
+
+---
+
+## 4. モデルアンロードエンドポイント (`POST /v1/models/unload`)
+
+### リクエスト (`UnloadRequest`)
+```json
+{
+  "model": "cl-nagoya/ruri-v3-310m"
+}
+```
+
+### レスポンス (`UnloadResponse`)
+```json
+{
+  "unloaded_models": ["cl-nagoya/ruri-v3-310m"],
+  "remaining_memory": 128450560
+}
+```
+
+---
+
+## 5. ヘルス・レディネス・メトリクス
+
+- `GET /health`, `GET /healthz`: `{"status": "ok"}`
+- `GET /ready`: `{"status": "ready", "gpu_available": true, "models_loaded": [...]}`
+- `GET /metrics`: Prometheus テキスト形式メトリクス
+
+---
+
+## 6. 標準エラーレスポンス (`ErrorResponse`)
+
+HTTP 400, 401, 413, 429, 500, 503 時の共通レスポンス構造:
+```json
+{
+  "detail": "エラー内容を示すメッセージ"
 }
 ```

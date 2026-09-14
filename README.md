@@ -21,9 +21,12 @@ OpenAI標準パラメータに加え、Ruri-v3等のモデル性能を最大限�
 | --- | --- | --- | --- |
 | `input` | string \| array | Yes | 埋め込み対象のテキストまたはテキストのリスト。 |
 | `model` | string | Yes | 使用するモデルID（例: `cl-nagoya/ruri-v3-310m`）。 |
+| `dimensions` | integer | No | 出力埋め込みベクトルの次元数（Matryoshka 次元削減 + L2 再正規化）。 |
+| `encoding_format` | string | No | 埋め込みベクトルの返却形式（`float` または `base64`。デフォルト: `float`）。 |
 | `input_type` | string | No | タスクの種類を指定。Ruri-v3のプレフィックスに自動マッピングされます。 |
 | `instruction` | string | No | モデルへの具体的な指示文。将来的な指示ベースモデルへの対応用。 |
 | `apply_ruri_prefix` | boolean | No | `true`の場合、`input_type`が未指定でも入力形式に基づき自動でプレフィックスを付与します（互換性用）。 |
+| `user` | string | No | エンドユーザーの一意識別子（監査・追跡用）。 |
 
 #### `input_type` とプレフィックスのマッピング
 
@@ -155,6 +158,93 @@ curl -X POST "http://localhost:8000/v1/rerank" \
   "return_documents": true
 }'
 ```
+
+---
+
+### 2.5. モデル一覧取得 (Models)
+
+`GET /v1/models`
+
+OpenAI完全互換のモデル一覧取得エンドポイントです。現在サポートされている全モデルのメタデータを返却します。
+
+#### レスポンス例 (JSON)
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "cl-nagoya/ruri-v3-30m",
+      "object": "model",
+      "created": 1726315200,
+      "owned_by": "custom",
+      "permission": []
+    },
+    {
+      "id": "BAAI/bge-reranker-v2-m3",
+      "object": "model",
+      "created": 1726315200,
+      "owned_by": "custom",
+      "permission": []
+    }
+  ]
+}
+```
+
+---
+
+### 2.6. モデル動的アンロード (Model Unload)
+
+`POST /v1/models/unload`
+
+メモリまたはVRAM上のモデルキャッシュを動的に解放し、ガベージコレクションおよびCUDAキャッシュのクリアを実行します。
+
+#### リクエストボディ (JSON)
+```json
+{
+  "model": "cl-nagoya/ruri-v3-310m"
+}
+```
+> ※ `model` フィールドを省略または `null` に指定した場合、キャッシュされているすべてのモデルを一括アンロードします。
+
+#### レスポンス例 (JSON)
+```json
+{
+  "unloaded_models": ["cl-nagoya/ruri-v3-310m"],
+  "remaining_memory": 128450560
+}
+```
+
+---
+
+### 2.7. 準備状態プローブ (Readiness Check)
+
+`GET /ready`
+
+Kubernetes等のオーケストレーター向けReadinessプローブです。GPUの可用性および現在ロード済みのモデル一覧を返却します（認証不要）。
+
+#### レスポンス例 (JSON)
+```json
+{
+  "status": "ready",
+  "gpu_available": true,
+  "models_loaded": ["cl-nagoya/ruri-v3-310m"]
+}
+```
+
+---
+
+### 2.8. 運用メトリクス (Prometheus Metrics)
+
+`GET /metrics`
+
+Prometheus形式の運用監視メトリクスを出力します（認証不要）。
+
+- `http_requests_total`: メソッド、エンドポイント、HTTPステータス別リクエスト数
+- `http_request_duration_seconds`: レスポンスレイテンシヒストグラム
+- `http_prompt_tokens_total`: モデル別消費プロンプトトークン数
+- `http_request_batch_size`: エンドポイント別バッチサイズ分布
+
+---
 
 ## 3. セットアップと実行
 
