@@ -161,6 +161,19 @@ sources:
 
 * **VRAM リーク検証**: モデルキャッシュ完全消去、GC、`torch.cuda.empty_cache()` の実行により、モデル本体の VRAM が **100% 解放** されることを確認（VRAM リーク実質 0MB）。
 
+### 7.5. 従来型 Cross-Encoder (`ruri-310m`) との直接対決ベンチマーク ($N=108$)
+
+同一の評価データセット（$N=108$、Positive 36, Near-Miss 36, Unanswerable 36）における、従来型 Cross-Encoder と Logit Gate の比較結果です。詳細は [docs/infrastructure/comparative_benchmark_results.md](./comparative_benchmark_results.md) を参照。
+
+| 比較項目 | 従来型 Cross-Encoder (`ruri-310m`) | Logit Gate (`Qwen2.5-1.5B`) | 所見・トレードオフ |
+| :--- | :---: | :---: | :--- |
+| **モデルサイズ** | **310M** | 1,540M | Cross-Encoder が 1/5 の軽量フットプリント |
+| **推論レイテンシ** | **`8.21 ms / doc`** | `38.65 ms / doc` | Cross-Encoder が **約 4.7 倍高速** |
+| **スループット** | **`121.9 docs / s`** | `25.9 docs / s` | 大量候補の粗選別には Cross-Encoder が圧倒的有利 |
+| **ニアミス負例 最大スコア** | **`0.9355` (誤爆通過)** | **`0.2018` (完全遮断)** | Cross-Encoder は「同トピックの回答欠落」に高スコアを付与 |
+| **$\tau=0.50$ 時のニアミス遮断率** | `91.7%` (3件漏洩) | **`100.0%` (0件漏洩)** | Logit Gate は偽情報を 100% シャットアウト |
+| **推奨運用** | Stage 1 (Top 100 $\to$ Top 10 高速粗選別) | Stage 2 (Top 10 $\to$ 最終回答十分性ゲート) | **二段階カスケード（Cascade Reranking）が最適解** |
+
 ---
 
 ## 8. 将来の性能改善ロードマップ (Take Note)
