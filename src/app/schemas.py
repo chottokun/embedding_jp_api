@@ -129,6 +129,18 @@ class RerankRequest(BaseModel):
         None, validation_alias="top_k", ge=0, le=MAX_INPUT_ITEMS
     )
     return_documents: Optional[bool] = None
+    threshold: Optional[float] = Field(
+        None,
+        description="Sufficiency probability threshold (defaults to LOGIT_GATE_THRESHOLD)",
+    )
+    drop_failed: bool = Field(
+        False,
+        description="If True, documents with score < threshold are removed. If False (default), all documents are kept and sorted.",
+    )
+    use_ascii_boost: Optional[bool] = Field(
+        None,
+        description="Enable/disable ASCII 3-gram boost (None uses LOGIT_GATE_ASCII_BOOST_WEIGHT > 0)",
+    )
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -152,6 +164,10 @@ class RerankData(BaseModel):
     document: int  # As per the doc, this is the index
     score: float
     text: Optional[LimitedString] = None
+    passed: Optional[bool] = None
+    logit_margin: Optional[float] = None
+    containment_score: Optional[float] = None
+    entropy: Optional[float] = None
 
 
 class RerankResponse(BaseModel):
