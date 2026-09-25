@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Patched AnyIO Dependency Vulnerabilities (GHSA-5p39-cfhj-2xmp, GHSA-82r6-8w77-94w6, GHSA-3w57-8xmc-8v26)**:
+  - Upgraded `anyio` package to `4.15.1` via `uv lock --upgrade-package anyio` resolving process-pool worker blocking, TLS certificate spoofing, and supplementary group retention issues, passing `uv audit`.
 - **Patched Accelerate Dependency Vulnerability (CVE-2026-69112)**:
   - Upgraded `accelerate` package to `1.15.0` to resolve path traversal and denial of service vulnerabilities in checkpoint weight maps, achieving clean `uv audit` scans.
 
