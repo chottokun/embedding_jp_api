@@ -20,6 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Formatted all scripts in `scratch/` and `scripts/` using `ruff format` to meet repo coding standards.
 
 ### Added
+- **Logit Gate & Hybrid Rerank Engine (`Qwen/Qwen2.5-1.5B-Instruct`)**:
+  - Implemented dynamic dispatch on `POST /v1/rerank` using CausalLM single-forward-pass next-token logit evaluation for decisive near-miss rejection and answerability gating.
+  - Added ChatML prompt template evaluating positive target tokens (`Yes,yes,はい`) and negative target tokens (`No,no,いいえ`) via LogSumExp margin $\Delta z = z_{\text{pos}} - z_{\text{neg}}$.
+  - Implemented ASCII Matcher extracting alphanumeric/symbol technical identifiers and calculating 3-gram containment ratio.
+  - Fused scores in logit space: $\Delta z_{\text{final}} = \Delta z + (\beta \cdot \text{Containment})$ with numerically stable sigmoid $\sigma(\Delta z_{\text{final}})$.
+  - Computed normalized binary Shannon entropy $H_{\text{binary}}$ to provide model uncertainty/hesitation observability.
+  - Added fail-safe sorting (`drop_failed=False` default) to prevent array mismatch crashes in upstream clients (Dify, LangChain).
+  - Evaluated on expanded $N=108$ dataset on NVIDIA GeForce RTX 3060: achieved 100.0% near-miss rejection, 100.0% unanswerable rejection, 95.4% accuracy ($\tau=0.30$), 30ms/doc GPU latency, and 0.00MB VRAM leak on model unload.
 - **Inference Concurrency Control with Semaphore Protection (`MAX_CONCURRENT_INFERENCES`)**:
   - Implemented `asyncio.Semaphore` limit around neural network embedding and reranking inference to prevent GPU/CPU saturation and CUDA OOM crashes.
   - Added configurable queue timeout (`INFERENCE_SEMAPHORE_TIMEOUT_SECONDS`, default 30s) returning `503 Service Unavailable` on sustained overload.

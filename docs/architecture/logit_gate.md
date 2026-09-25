@@ -1,3 +1,28 @@
+---
+type: Concept
+title: Logit Gate & ハイブリッド再ランキング アーキテクチャ
+description: Qwen2.5-1.5B 因果言語モデルによる単一フォワードパス十分性判定、ASCII Matcher 3-gram ブースト、およびロジット空間スコア統合
+status: stable
+generated:
+  by: agent/antigravity
+  at: 2026-09-25T14:10:00Z
+tags:
+  - rerank
+  - logit-gate
+  - ascii-matcher
+  - causal-lm
+  - entropy
+sources:
+  - resource: /src/app/services/logit_gate.py
+    title: Logit Gate Service Implementation
+  - resource: /src/app/services/ascii_matcher.py
+    title: ASCII Matcher Service Implementation
+  - resource: /src/app/services/rerank.py
+    title: Rerank Service Dynamic Dispatch
+  - resource: /plan/logit.md
+    title: Logit Gate Implementation Plan
+---
+
 # Logit Gate & Hybrid Reranking Architecture
 
 ## 1. Overview & Problem Definition
@@ -77,13 +102,17 @@ $$H_{\text{binary}}(P) = - P \log_2(P) - (1 - P) \log_2(1 - P)$$
 
 ## 4. Benchmark Verification Summary
 
-Measured on $N=54$ evaluation dataset (`benchmarks/datasets/sufficiency_eval.json`):
+Measured on $N=108$ expanded evaluation dataset (`benchmarks/datasets/sufficiency_eval.json`) on GPU (NVIDIA RTX 3060):
 
-| Metric | Measured Value | Target |
+| Metric | Measured Value ($N=108$) | Target / Baseline |
 | :--- | :---: | :---: |
-| **Near-Miss Rejection Rate** | **100.0%** | $\ge 90.0\%$ |
-| **Unanswerable Rejection Rate** | **100.0%** | $\ge 90.0\%$ |
+| **Near-Miss Rejection Rate** | **100.0%** (36/36) | $\ge 90.0\%$ |
+| **Unanswerable Rejection Rate** | **100.0%** (36/36) | $\ge 90.0\%$ |
 | **Precision** | **100.0%** | $\ge 85.0\%$ |
-| **Overall Accuracy ($\tau=0.30$)** | **96.3%** | $\ge 85.0\%$ |
-| **F1 Score ($\tau=0.30$)** | **94.1%** | $\ge 85.0\%$ |
+| **Overall Accuracy ($\tau=0.30$)** | **95.4%** | $\ge 85.0\%$ |
+| **F1 Score ($\tau=0.30$)** | **92.5%** | $\ge 85.0\%$ |
+| **Overall Accuracy ($\tau=0.55$)** | **91.7%** | $\ge 85.0\%$ |
+| **Inference Latency (GPU)** | **~30 ms / doc** | Realtime SLA |
 | **VRAM Memory Leak** | **0.00 MB** | Zero leak |
+
+See detailed benchmark reports in [docs/infrastructure/benchmarks.md](/docs/infrastructure/benchmarks.md).

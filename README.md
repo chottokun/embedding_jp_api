@@ -382,6 +382,17 @@ APIサーバーの動作は以下の環境変数で調整可能です。これ�
 | `MKL_NUM_THREADS` | `1` | Intel MKLのスレッド数。`1`に設定することでCPUコア競合を防止します。 |
 | `TOKENIZERS_PARALLELISM` | `false` | HuggingFace Tokenizersの並列処理。`false`に設定することでGunicornワーカー内でのデッドロックを防止します。 |
 | `OFFLINE_MODE` | `false` | `true`に設定すると、Hugging Face Hubへのアクセスを行いません。事前にモデルをダウンロードしておく必要があります。 |
+| `MAX_CONCURRENT_INFERENCES` | `4` | 推論処理（Embeddings/Rerank）の最大同時実行セマフォ数。GPU/CPU飽和・CUDA OOMを防御。 |
+| `INFERENCE_SEMAPHORE_TIMEOUT_SECONDS` | `30.0` | セマフォ取得待ちタイムアウト秒数。超過時は 503 Service Unavailable を返却。 |
+| `API_KEYS` | (空) | クライアント個別APIキー設定（カンマ区切りまたは JSON形式 `{キー: 分間レート}`）。 |
+| `RATE_LIMIT_PER_MINUTE` | `120` | APIキー/IP単位のデフォルト分間リクエスト上限。 |
+| `LOGIT_GATE_ENABLED` | `true` | Logit Gate リランカー機能の有効/無効フラグ。 |
+| `LOGIT_GATE_DEFAULT_MODEL` | `Qwen/Qwen2.5-1.5B-Instruct` | Logit Gate 評価用デフォルト因果言語モデル。 |
+| `LOGIT_GATE_THRESHOLD` | `0.55` | 回答十分性判定の確率足切り閾値 $\tau$。 |
+| `LOGIT_GATE_ASCII_BOOST_WEIGHT` | `1.2` | ASCII Matcher 英数字 3-gram 包含率のロジット加算重み係数 $\beta$。 |
+| `LOGIT_GATE_BATCH_SIZE` | `8` | Logit Gate 推論時のドキュメントミニバッチサイズ。 |
+| `LOGIT_GATE_MAX_DOC_CHARS` | `1500` | Logit Gate 推論時のドキュメント最大文字数（DoS防御切り詰め）。 |
+| `LOGIT_GATE_BASELINE_MARGIN` | `0.0` | 判定バイアス補正用ベースラインマージン。 |
 
 ### 5.1. .env ファイルでの設定
 プロジェクト直下に `.env` ファイルを作成して設定を記述できます。
@@ -492,6 +503,16 @@ uv run locust -f scripts/locustfile.py --host http://localhost:8000
 
 # ヘッドレスモードでの実行（30秒間、20同時ユーザー）
 uv run locust -f scripts/locustfile.py --headless -u 20 -r 5 --run-time 30s --host http://localhost:8000
+```
+
+### 8.7. Logit Gate 精度・負荷ベンチマーク (`benchmarks/`)
+$N=108$ 評価データセット（社内規程・IT障害・Cloud/DevOps・型番・人事法務）に対する正解率・遮断率測定、および 5〜50件バッチ時の推論レイテンシ・VRAMリークを検証します。
+```bash
+# 精度ベンチマーク（Yes/No vs 1/0, β感度, 閾値スイープ）
+uv run python benchmarks/benchmark_logit_gate_accuracy.py
+
+# 負荷・VRAMリークベンチマーク（5, 10, 20, 50 件バッチ推論レイテンシ & メモリ解放）
+uv run python benchmarks/benchmark_logit_gate_load.py
 ```
 
 ## 9. ビルドパフォーマンスの最適化
