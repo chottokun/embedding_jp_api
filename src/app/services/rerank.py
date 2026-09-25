@@ -20,7 +20,9 @@ def _calculate_rerank_tokens(model: Any, query: str, documents: List[str]) -> Us
         tokenizer = model.tokenizer
         q_tokens = len(tokenizer.encode(query, add_special_tokens=False))
         special_tokens_func = getattr(tokenizer, "num_special_tokens_to_add", None)
-        special_tokens = special_tokens_func(True) if callable(special_tokens_func) else 0
+        special_tokens = (
+            special_tokens_func(True) if callable(special_tokens_func) else 0
+        )
 
         try:
             from collections.abc import Mapping

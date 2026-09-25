@@ -58,7 +58,9 @@ def run_load_benchmark(
     init_vram = get_vram_usage_mb()
     init_vram_res = get_vram_reserved_mb()
     init_ram = get_ram_usage_mb()
-    print(f"Initial State  | VRAM Alloc: {init_vram:.1f} MB (Res: {init_vram_res:.1f} MB) | RAM: {init_ram:.1f} MB")
+    print(
+        f"Initial State  | VRAM Alloc: {init_vram:.1f} MB (Res: {init_vram_res:.1f} MB) | RAM: {init_ram:.1f} MB"
+    )
 
     # 2. Model Loading
     t0 = time.time()
@@ -88,7 +90,9 @@ def run_load_benchmark(
     repeats = 5
     latency_results = {}
 
-    sample_query = "VPN接続時のエラー 0x80070035 の対処法と設定手順について教えてください。"
+    sample_query = (
+        "VPN接続時のエラー 0x80070035 の対処法と設定手順について教えてください。"
+    )
     sample_doc_base = (
         "ネットワーク共有またはVPN接続時にエラーコード 0x80070035 が発生する場合、"
         "SMBプロトコルの設定、NetBIOS over TCP/IP の有効化、またはファイアウォール規則の確認が必要です。"
@@ -105,7 +109,10 @@ def run_load_benchmark(
             containment = ascii_matcher.score_documents(sample_query, docs)
             gate_out = gate_service.predict_margins(sample_query, docs)
             # score fusion
-            _ = [_sigmoid(g["logit_margin"] + 1.2 * c) for g, c in zip(gate_out, containment)]
+            _ = [
+                _sigmoid(g["logit_margin"] + 1.2 * c)
+                for g, c in zip(gate_out, containment)
+            ]
             t_end = time.perf_counter()
             times.append((t_end - t_start) * 1000.0)  # ms
 
@@ -138,7 +145,9 @@ def run_load_benchmark(
     peak_vram = get_vram_usage_mb()
     peak_vram_res = get_vram_reserved_mb()
     peak_ram = get_ram_usage_mb()
-    print(f"\nPeak Memory    | VRAM Alloc: {peak_vram:.1f} MB (Res: {peak_vram_res:.1f} MB) | RAM: {peak_ram:.1f} MB")
+    print(
+        f"\nPeak Memory    | VRAM Alloc: {peak_vram:.1f} MB (Res: {peak_vram_res:.1f} MB) | RAM: {peak_ram:.1f} MB"
+    )
 
     # 5. Unload Lifecycle Test
     print("\n--- Testing Model Dynamic Unload Lifecycle ---")
@@ -160,8 +169,8 @@ def run_load_benchmark(
     report_md = f"""# Logit Gate & Hybrid Rerank Load & Performance Benchmark Report
 
 - **Model**: `{model_name}`
-- **Device**: `{device}` ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})
-- **Execution Date**: {time.strftime('%Y-%m-%d %H:%M:%S')}
+- **Device**: `{device}` ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"})
+- **Execution Date**: {time.strftime("%Y-%m-%d %H:%M:%S")}
 
 ## 1. Latency & Throughput Profile across Candidate Document Counts
 

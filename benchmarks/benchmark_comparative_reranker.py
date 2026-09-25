@@ -29,7 +29,9 @@ from src.app.services.ascii_matcher import AsciiMatcher  # noqa: E402
 
 
 DATASET_PATH = PROJECT_ROOT / "benchmarks" / "datasets" / "sufficiency_eval.json"
-REPORT_PATH = PROJECT_ROOT / "docs" / "infrastructure" / "comparative_benchmark_results.md"
+REPORT_PATH = (
+    PROJECT_ROOT / "docs" / "infrastructure" / "comparative_benchmark_results.md"
+)
 
 
 def load_dataset() -> list[dict[str, Any]]:
@@ -221,22 +223,48 @@ def run_benchmark():
     print("=" * 70)
     print(f"{'Metric':<32} | {'Cross-Encoder (310M)':<20} | {'Logit Gate (1.5B)':<20}")
     print("-" * 78)
-    print(f"{'Total Inference Time':<32} | {ce_inference_time:<18.2f}s | {lg_inference_time:<18.2f}s")
-    print(f"{'Per-Item Latency':<32} | {ce_ms_per_item:<16.2f}ms | {lg_ms_per_item:<16.2f}ms")
-    print(f"{'Throughput':<32} | {len(items)/ce_inference_time:<14.1f}docs/s | {len(items)/lg_inference_time:<14.1f}docs/s")
+    print(
+        f"{'Total Inference Time':<32} | {ce_inference_time:<18.2f}s | {lg_inference_time:<18.2f}s"
+    )
+    print(
+        f"{'Per-Item Latency':<32} | {ce_ms_per_item:<16.2f}ms | {lg_ms_per_item:<16.2f}ms"
+    )
+    print(
+        f"{'Throughput':<32} | {len(items) / ce_inference_time:<14.1f}docs/s | {len(items) / lg_inference_time:<14.1f}docs/s"
+    )
     print("-" * 78)
     print(f"{'Mean Score: Positive':<32} | {ce_mean_pos:<20.4f} | {lg_mean_pos:<20.4f}")
-    print(f"{'Mean Score: Near-Miss':<32} | {ce_mean_near:<20.4f} | {lg_mean_near:<20.4f}")
-    print(f"{'Mean Score: Unanswerable':<32} | {ce_mean_unans:<20.4f} | {lg_mean_unans:<20.4f}")
-    print(f"{'Separation Gap (Pos - Near)':<32} | {(ce_mean_pos - ce_mean_near):<+20.4f} | {(lg_mean_pos - lg_mean_near):<+20.4f}")
-    print(f"{'Separation Gap (Pos - Unans)':<32} | {(ce_mean_pos - ce_mean_unans):<+20.4f} | {(lg_mean_pos - lg_mean_unans):<+20.4f}")
+    print(
+        f"{'Mean Score: Near-Miss':<32} | {ce_mean_near:<20.4f} | {lg_mean_near:<20.4f}"
+    )
+    print(
+        f"{'Mean Score: Unanswerable':<32} | {ce_mean_unans:<20.4f} | {lg_mean_unans:<20.4f}"
+    )
+    print(
+        f"{'Separation Gap (Pos - Near)':<32} | {(ce_mean_pos - ce_mean_near):<+20.4f} | {(lg_mean_pos - lg_mean_near):<+20.4f}"
+    )
+    print(
+        f"{'Separation Gap (Pos - Unans)':<32} | {(ce_mean_pos - ce_mean_unans):<+20.4f} | {(lg_mean_pos - lg_mean_unans):<+20.4f}"
+    )
     print("-" * 78)
-    print(f"{'Best F1 Score':<32} | {ce_best['f1']*100:<19.1f}% | {lg_best['f1']*100:<19.1f}%")
-    print(f"{'Accuracy (at Best F1)':<32} | {ce_best['accuracy']*100:<19.1f}% | {lg_best['accuracy']*100:<19.1f}%")
-    print(f"{'Precision (at Best F1)':<32} | {ce_best['precision']*100:<19.1f}% | {lg_best['precision']*100:<19.1f}%")
-    print(f"{'Recall (at Best F1)':<32} | {ce_best['recall']*100:<19.1f}% | {lg_best['recall']*100:<19.1f}%")
-    print(f"{'Near-Miss Rejection Rate':<32} | {ce_best['near_miss_rej']*100:<19.1f}% | {lg_best['near_miss_rej']*100:<19.1f}%")
-    print(f"{'Unanswerable Rejection Rate':<32} | {ce_best['unanswerable_rej']*100:<19.1f}% | {lg_best['unanswerable_rej']*100:<19.1f}%")
+    print(
+        f"{'Best F1 Score':<32} | {ce_best['f1'] * 100:<19.1f}% | {lg_best['f1'] * 100:<19.1f}%"
+    )
+    print(
+        f"{'Accuracy (at Best F1)':<32} | {ce_best['accuracy'] * 100:<19.1f}% | {lg_best['accuracy'] * 100:<19.1f}%"
+    )
+    print(
+        f"{'Precision (at Best F1)':<32} | {ce_best['precision'] * 100:<19.1f}% | {lg_best['precision'] * 100:<19.1f}%"
+    )
+    print(
+        f"{'Recall (at Best F1)':<32} | {ce_best['recall'] * 100:<19.1f}% | {lg_best['recall'] * 100:<19.1f}%"
+    )
+    print(
+        f"{'Near-Miss Rejection Rate':<32} | {ce_best['near_miss_rej'] * 100:<19.1f}% | {lg_best['near_miss_rej'] * 100:<19.1f}%"
+    )
+    print(
+        f"{'Unanswerable Rejection Rate':<32} | {ce_best['unanswerable_rej'] * 100:<19.1f}% | {lg_best['unanswerable_rej'] * 100:<19.1f}%"
+    )
     print("=" * 70)
 
     # Save Markdown report
@@ -257,13 +285,13 @@ def run_benchmark():
 | **Model Size** | **310M** params | 1,540M params (4.9x larger) | Cross-Encoder is smaller in weight footprint |
 | **Inference Time (Total $N=108$)** | **{ce_inference_time:.2f}s** | {lg_inference_time:.2f}s | Cross-Encoder batch is faster ({ce_inference_time:.2f}s vs {lg_inference_time:.2f}s) |
 | **Latency per Item** | **{ce_ms_per_item:.1f} ms** | {lg_ms_per_item:.1f} ms | Both operate within real-time SLA (<50ms) |
-| **Throughput** | **{len(items)/ce_inference_time:.1f} docs/s** | {len(items)/lg_inference_time:.1f} docs/s | Cross-Encoder is faster for pure bulk ranking |
-| **Near-Miss Rejection Rate** | {ce_best['near_miss_rej']*100:.1f}% | **{lg_best['near_miss_rej']*100:.1f}%** | **Logit Gate achieves 100% rejection (Cross-Encoder fails)** |
-| **Unanswerable Rejection Rate** | {ce_best['unanswerable_rej']*100:.1f}% | **{lg_best['unanswerable_rej']*100:.1f}%** | **Logit Gate completely rejects off-target queries** |
-| **Score Separation Gap (Pos - Near)** | **{ce_mean_pos - ce_mean_near:+.4f}** | **{lg_mean_pos - lg_mean_near:+.4f}** | **Logit Gate has {abs((lg_mean_pos - lg_mean_near)/(ce_mean_pos - ce_mean_near + 1e-6)):.1f}x wider score separation** |
-| **Best F1 Score** | {ce_best['f1']*100:.1f}% | **{lg_best['f1']*100:.1f}%** | **Logit Gate F1 is +{(lg_best['f1'] - ce_best['f1'])*100:.1f}pt higher** |
-| **Overall Accuracy** | {ce_best['accuracy']*100:.1f}% | **{lg_best['accuracy']*100:.1f}%** | **Logit Gate Accuracy is +{(lg_best['accuracy'] - ce_best['accuracy'])*100:.1f}pt higher** |
-| **Precision** | {ce_best['precision']*100:.1f}% | **{lg_best['precision']*100:.1f}%** | **Zero false-positive leakage with Logit Gate** |
+| **Throughput** | **{len(items) / ce_inference_time:.1f} docs/s** | {len(items) / lg_inference_time:.1f} docs/s | Cross-Encoder is faster for pure bulk ranking |
+| **Near-Miss Rejection Rate** | {ce_best["near_miss_rej"] * 100:.1f}% | **{lg_best["near_miss_rej"] * 100:.1f}%** | **Logit Gate achieves 100% rejection (Cross-Encoder fails)** |
+| **Unanswerable Rejection Rate** | {ce_best["unanswerable_rej"] * 100:.1f}% | **{lg_best["unanswerable_rej"] * 100:.1f}%** | **Logit Gate completely rejects off-target queries** |
+| **Score Separation Gap (Pos - Near)** | **{ce_mean_pos - ce_mean_near:+.4f}** | **{lg_mean_pos - lg_mean_near:+.4f}** | **Logit Gate has {abs((lg_mean_pos - lg_mean_near) / (ce_mean_pos - ce_mean_near + 1e-6)):.1f}x wider score separation** |
+| **Best F1 Score** | {ce_best["f1"] * 100:.1f}% | **{lg_best["f1"] * 100:.1f}%** | **Logit Gate F1 is +{(lg_best["f1"] - ce_best["f1"]) * 100:.1f}pt higher** |
+| **Overall Accuracy** | {ce_best["accuracy"] * 100:.1f}% | **{lg_best["accuracy"] * 100:.1f}%** | **Logit Gate Accuracy is +{(lg_best["accuracy"] - ce_best["accuracy"]) * 100:.1f}pt higher** |
+| **Precision** | {ce_best["precision"] * 100:.1f}% | **{lg_best["precision"] * 100:.1f}%** | **Zero false-positive leakage with Logit Gate** |
 
 ---
 

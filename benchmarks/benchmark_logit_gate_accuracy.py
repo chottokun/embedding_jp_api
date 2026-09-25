@@ -103,7 +103,11 @@ def evaluate_predictions(
     accuracy = (tp + tn) / total
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
     near_miss_rej = near_miss_rejected / near_miss_total if near_miss_total > 0 else 0.0
     unans_rej = unans_rejected / unans_total if unans_total > 0 else 0.0
 
@@ -165,12 +169,16 @@ def run_accuracy_benchmark(
         containment = ascii_matcher.score_document(
             ascii_matcher.extract_identifiers(q), d
         )
-        raw_results.append({
-            "logit_margin": gate_out["logit_margin"],
-            "containment": containment,
-        })
+        raw_results.append(
+            {
+                "logit_margin": gate_out["logit_margin"],
+                "containment": containment,
+            }
+        )
     elapsed = time.time() - t_start
-    print(f"Evaluated {len(dataset)} items in {elapsed:.2f}s ({elapsed/len(dataset)*1000:.1f}ms/item)")
+    print(
+        f"Evaluated {len(dataset)} items in {elapsed:.2f}s ({elapsed / len(dataset) * 1000:.1f}ms/item)"
+    )
 
     # 1. Sweep Beta (\u03b2) with fixed threshold 0.55
     beta_values = [0.0, 0.5, 1.0, 1.2, 1.5, 2.0, 2.5]
@@ -183,18 +191,20 @@ def run_accuracy_benchmark(
             delta_final = r["logit_margin"] + (beta * r["containment"])
             score = _sigmoid(delta_final)
             entropy = _binary_entropy(score)
-            preds.append({
-                "score": score,
-                "logit_margin": delta_final,
-                "entropy": entropy,
-            })
+            preds.append(
+                {
+                    "score": score,
+                    "logit_margin": delta_final,
+                    "entropy": entropy,
+                }
+            )
         metrics = evaluate_predictions(dataset, preds, fixed_threshold)
         beta_results[beta] = metrics
         print(
-            f"  \u03b2={beta:3.1f} | Acc: {metrics['accuracy']*100:5.1f}% | "
-            f"F1: {metrics['f1']*100:5.1f}% | "
-            f"Near-Miss Rej: {metrics['near_miss_rejection_rate']*100:5.1f}% | "
-            f"Unans Rej: {metrics['unanswerable_rejection_rate']*100:5.1f}%"
+            f"  \u03b2={beta:3.1f} | Acc: {metrics['accuracy'] * 100:5.1f}% | "
+            f"F1: {metrics['f1'] * 100:5.1f}% | "
+            f"Near-Miss Rej: {metrics['near_miss_rejection_rate'] * 100:5.1f}% | "
+            f"Unans Rej: {metrics['unanswerable_rejection_rate'] * 100:5.1f}%"
         )
 
     # 2. Sweep Threshold (\u03c4) with optimal beta (\u03b2 = 1.2)
@@ -208,19 +218,21 @@ def run_accuracy_benchmark(
             delta_final = r["logit_margin"] + (optimal_beta * r["containment"])
             score = _sigmoid(delta_final)
             entropy = _binary_entropy(score)
-            preds.append({
-                "score": score,
-                "logit_margin": delta_final,
-                "entropy": entropy,
-            })
+            preds.append(
+                {
+                    "score": score,
+                    "logit_margin": delta_final,
+                    "entropy": entropy,
+                }
+            )
         metrics = evaluate_predictions(dataset, preds, th)
         threshold_results[th] = metrics
         print(
-            f"  \u03c4={th:4.2f} | Acc: {metrics['accuracy']*100:5.1f}% | "
-            f"Prec: {metrics['precision']*100:5.1f}% | "
-            f"Rec: {metrics['recall']*100:5.1f}% | "
-            f"F1: {metrics['f1']*100:5.1f}% | "
-            f"Near-Miss Rej: {metrics['near_miss_rejection_rate']*100:5.1f}%"
+            f"  \u03c4={th:4.2f} | Acc: {metrics['accuracy'] * 100:5.1f}% | "
+            f"Prec: {metrics['precision'] * 100:5.1f}% | "
+            f"Rec: {metrics['recall'] * 100:5.1f}% | "
+            f"F1: {metrics['f1'] * 100:5.1f}% | "
+            f"Near-Miss Rej: {metrics['near_miss_rejection_rate'] * 100:5.1f}%"
         )
 
     # 3. Token Comparison: Yes/No vs 1/0
@@ -231,8 +243,16 @@ def run_accuracy_benchmark(
     for r in raw_results:
         delta_final = r["logit_margin"] + (optimal_beta * r["containment"])
         score = _sigmoid(delta_final)
-        preds_yes_no.append({"score": score, "logit_margin": delta_final, "entropy": _binary_entropy(score)})
-    token_comparison["Yes/No"] = evaluate_predictions(dataset, preds_yes_no, fixed_threshold)
+        preds_yes_no.append(
+            {
+                "score": score,
+                "logit_margin": delta_final,
+                "entropy": _binary_entropy(score),
+            }
+        )
+    token_comparison["Yes/No"] = evaluate_predictions(
+        dataset, preds_yes_no, fixed_threshold
+    )
 
     # Switch to 1/0
     print("Testing 1/0 tokens...")
@@ -245,14 +265,20 @@ def run_accuracy_benchmark(
         containment = raw_results[i]["containment"]
         delta_final = gate_out["logit_margin"] + (optimal_beta * containment)
         score = _sigmoid(delta_final)
-        preds_1_0.append({"score": score, "logit_margin": delta_final, "entropy": _binary_entropy(score)})
+        preds_1_0.append(
+            {
+                "score": score,
+                "logit_margin": delta_final,
+                "entropy": _binary_entropy(score),
+            }
+        )
     token_comparison["1/0"] = evaluate_predictions(dataset, preds_1_0, fixed_threshold)
 
     for token_name, met in token_comparison.items():
         print(
-            f"  Token '{token_name}' | Acc: {met['accuracy']*100:5.1f}% | "
-            f"F1: {met['f1']*100:5.1f}% | "
-            f"Near-Miss Rej: {met['near_miss_rejection_rate']*100:5.1f}% | "
+            f"  Token '{token_name}' | Acc: {met['accuracy'] * 100:5.1f}% | "
+            f"F1: {met['f1'] * 100:5.1f}% | "
+            f"Near-Miss Rej: {met['near_miss_rejection_rate'] * 100:5.1f}% | "
             f"Mean \u0394z (Pos/Near): {met['mean_margin_positive']:+.2f} / {met['mean_margin_near_miss']:+.2f}"
         )
 
@@ -263,18 +289,18 @@ def run_accuracy_benchmark(
 - **Model**: `{model_name}`
 - **Device**: `{device}`
 - **Dataset**: `{DATASET_PATH.name}` (Total $N = {len(dataset)}$, Breakdown: {type_counts})
-- **Execution Date**: {time.strftime('%Y-%m-%d %H:%M:%S')}
+- **Execution Date**: {time.strftime("%Y-%m-%d %H:%M:%S")}
 
 ## 1. Executive Summary
 
 | Metric | Measured Value | Target / Baseline |
 | :--- | :--- | :--- |
-| **Overall Accuracy** | **{best_metrics['accuracy']*100:.1f}%** | \u2265 85.0% |
-| **Precision** | **{best_metrics['precision']*100:.1f}%** | \u2265 85.0% |
-| **Recall** | **{best_metrics['recall']*100:.1f}%** | \u2265 80.0% |
-| **F1 Score** | **{best_metrics['f1']*100:.1f}%** | \u2265 85.0% |
-| **Near-Miss Rejection Rate** | **{best_metrics['near_miss_rejection_rate']*100:.1f}%** | \u2265 90.0% |
-| **Unanswerable Rejection Rate** | **{best_metrics['unanswerable_rejection_rate']*100:.1f}%** | \u2265 90.0% |
+| **Overall Accuracy** | **{best_metrics["accuracy"] * 100:.1f}%** | \u2265 85.0% |
+| **Precision** | **{best_metrics["precision"] * 100:.1f}%** | \u2265 85.0% |
+| **Recall** | **{best_metrics["recall"] * 100:.1f}%** | \u2265 80.0% |
+| **F1 Score** | **{best_metrics["f1"] * 100:.1f}%** | \u2265 85.0% |
+| **Near-Miss Rejection Rate** | **{best_metrics["near_miss_rejection_rate"] * 100:.1f}%** | \u2265 90.0% |
+| **Unanswerable Rejection Rate** | **{best_metrics["unanswerable_rejection_rate"] * 100:.1f}%** | \u2265 90.0% |
 
 ## 2. Beta (\u03b2) Boost Sensitivity Analysis (\u03c4 = {fixed_threshold})
 
@@ -282,7 +308,7 @@ def run_accuracy_benchmark(
 | :---: | :---: | :---: | :---: | :---: |
 """
     for beta, met in beta_results.items():
-        report_md += f"| {beta:.1f} | {met['accuracy']*100:.1f}% | {met['f1']*100:.1f}% | {met['near_miss_rejection_rate']*100:.1f}% | {met['unanswerable_rejection_rate']*100:.1f}% |\n"
+        report_md += f"| {beta:.1f} | {met['accuracy'] * 100:.1f}% | {met['f1'] * 100:.1f}% | {met['near_miss_rejection_rate'] * 100:.1f}% | {met['unanswerable_rejection_rate'] * 100:.1f}% |\n"
 
     report_md += f"""
 ## 3. Threshold (\u03c4) Sensitivity Analysis (\u03b2 = {optimal_beta})
@@ -291,7 +317,7 @@ def run_accuracy_benchmark(
 | :---: | :---: | :---: | :---: | :---: | :---: |
 """
     for th, met in threshold_results.items():
-        report_md += f"| {th:.2f} | {met['accuracy']*100:.1f}% | {met['precision']*100:.1f}% | {met['recall']*100:.1f}% | {met['f1']*100:.1f}% | {met['near_miss_rejection_rate']*100:.1f}% |\n"
+        report_md += f"| {th:.2f} | {met['accuracy'] * 100:.1f}% | {met['precision'] * 100:.1f}% | {met['recall'] * 100:.1f}% | {met['f1'] * 100:.1f}% | {met['near_miss_rejection_rate'] * 100:.1f}% |\n"
 
     report_md += """
 ## 4. Token Vocabulary Comparison (Yes/No vs 1/0)
@@ -300,16 +326,16 @@ def run_accuracy_benchmark(
 | :--- | :---: | :---: | :---: | :---: | :---: |
 """
     for t_name, met in token_comparison.items():
-        report_md += f"| `{t_name}` | {met['accuracy']*100:.1f}% | {met['f1']*100:.1f}% | {met['near_miss_rejection_rate']*100:.1f}% | {met['mean_margin_positive']:+.2f} | {met['mean_margin_near_miss']:+.2f} |\n"
+        report_md += f"| `{t_name}` | {met['accuracy'] * 100:.1f}% | {met['f1'] * 100:.1f}% | {met['near_miss_rejection_rate'] * 100:.1f}% | {met['mean_margin_positive']:+.2f} | {met['mean_margin_near_miss']:+.2f} |\n"
 
     report_md += f"""
 ## 5. Binary Entropy & Uncertainty Distribution
 
 | Sample Category | Mean Logit Margin \u0394z | Mean Binary Entropy $H_{{binary}}$ | Interpretation |
 | :--- | :---: | :---: | :--- |
-| **Positive ($N=18$)** | `{best_metrics['mean_margin_positive']:+.2f}` | `{best_metrics['mean_entropy_positive']:.3f}` | High confidence sufficiency |
-| **Near-Miss ($N=18$)** | `{best_metrics['mean_margin_near_miss']:+.2f}` | `{best_metrics['mean_entropy_near_miss']:.3f}` | Decisive rejection of topical non-evidence |
-| **Unanswerable ($N=18$)** | `{best_metrics['mean_margin_unanswerable']:+.2f}` | `{best_metrics['mean_entropy_unanswerable']:.3f}` | Decisive rejection of off-topic context |
+| **Positive ($N=18$)** | `{best_metrics["mean_margin_positive"]:+.2f}` | `{best_metrics["mean_entropy_positive"]:.3f}` | High confidence sufficiency |
+| **Near-Miss ($N=18$)** | `{best_metrics["mean_margin_near_miss"]:+.2f}` | `{best_metrics["mean_entropy_near_miss"]:.3f}` | Decisive rejection of topical non-evidence |
+| **Unanswerable ($N=18$)** | `{best_metrics["mean_margin_unanswerable"]:+.2f}` | `{best_metrics["mean_entropy_unanswerable"]:.3f}` | Decisive rejection of off-topic context |
 """
 
     if output_report_path:

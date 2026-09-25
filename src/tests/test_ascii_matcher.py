@@ -41,7 +41,9 @@ def test_extract_ascii_identifiers():
     assert len([t for t in tokens if t == "v3"]) == 1
 
     # Trailing sentence punctuation stripping
-    tokens = matcher.extract_identifiers("Check docker-compose.yml. And error 0x80070035?")
+    tokens = matcher.extract_identifiers(
+        "Check docker-compose.yml. And error 0x80070035?"
+    )
     assert "docker-compose.yml" in tokens
     assert "0x80070035" in tokens
 

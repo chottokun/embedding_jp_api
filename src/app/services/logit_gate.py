@@ -22,7 +22,10 @@ def _sigmoid(x: float) -> float:
 def _binary_entropy(p: float, eps: float = 1e-12) -> float:
     """Normalized binary Shannon entropy in range [0.0, 1.0]."""
     p_clamped = max(eps, min(1.0 - eps, p))
-    h = -(p_clamped * math.log2(p_clamped) + (1.0 - p_clamped) * math.log2(1.0 - p_clamped))
+    h = -(
+        p_clamped * math.log2(p_clamped)
+        + (1.0 - p_clamped) * math.log2(1.0 - p_clamped)
+    )
     return max(0.0, min(1.0, float(h)))
 
 
