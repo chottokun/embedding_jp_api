@@ -143,9 +143,23 @@ def test_predict_margins(mock_model_wrapper):
             assert res["text"] == docs[i]
 
             # Since we mock the same logits for calibrate and predict, delta_z should be 0
-            # which means p_sufficient = sigmoid(0) = 0.5
+            # which means p_sufficient = sigmoid(0) = 0.5, and binary entropy should be 1.0
             assert math.isclose(res["logit_margin"], 0.0, abs_tol=1e-5)
             assert math.isclose(res["sufficiency_prob"], 0.5, abs_tol=1e-5)
+            assert "entropy" in res
+            assert math.isclose(res["entropy"], 1.0, abs_tol=1e-5)
+
+
+def test_binary_entropy():
+    from app.services.logit_gate import _binary_entropy
+
+    # Maximum uncertainty at p=0.5
+    assert math.isclose(_binary_entropy(0.5), 1.0, abs_tol=1e-5)
+    # Zero uncertainty at boundaries
+    assert math.isclose(_binary_entropy(0.0), 0.0, abs_tol=1e-4)
+    assert math.isclose(_binary_entropy(1.0), 0.0, abs_tol=1e-4)
+    # Intermediate values
+    assert 0.0 < _binary_entropy(0.8) < 1.0
 
 
 def test_mini_batching(mock_model_wrapper):

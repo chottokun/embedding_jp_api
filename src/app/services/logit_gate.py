@@ -19,6 +19,13 @@ def _sigmoid(x: float) -> float:
         return z / (1.0 + z)
 
 
+def _binary_entropy(p: float, eps: float = 1e-12) -> float:
+    """Normalized binary Shannon entropy in range [0.0, 1.0]."""
+    p_clamped = max(eps, min(1.0 - eps, p))
+    h = -(p_clamped * math.log2(p_clamped) + (1.0 - p_clamped) * math.log2(1.0 - p_clamped))
+    return max(0.0, min(1.0, float(h)))
+
+
 class LogitGateService:
     def __init__(self, model_wrapper: Any):
         self.model_wrapper = model_wrapper
@@ -133,6 +140,7 @@ class LogitGateService:
                         "document_index": batch_indices[j],
                         "logit_margin": delta_z,
                         "sufficiency_prob": p_sufficient,
+                        "entropy": _binary_entropy(p_sufficient),
                         "text": batch_docs[j],
                     }
                 )
