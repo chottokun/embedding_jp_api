@@ -45,6 +45,31 @@ if MODELS_FILE.exists():
 EMBEDDING_MODELS = SUPPORTED_MODELS.get("embedding_models", [])
 RERANK_MODELS = SUPPORTED_MODELS.get("rerank_models", [])
 
+# --- Logit Gate Configuration ---
+LOGIT_GATE_MODELS = SUPPORTED_MODELS.get(
+    "logit_gate_models", ["Qwen/Qwen2.5-1.5B-Instruct"]
+)
+LOGIT_GATE_ENABLED = os.getenv("LOGIT_GATE_ENABLED", "true").lower() in {
+    "true",
+    "1",
+    "yes",
+}
+LOGIT_GATE_THRESHOLD = float(os.getenv("LOGIT_GATE_THRESHOLD", "0.55"))
+LOGIT_GATE_ASCII_BOOST_WEIGHT = float(os.getenv("LOGIT_GATE_ASCII_BOOST_WEIGHT", "1.2"))
+LOGIT_GATE_ASCII_MIN_TOKEN_LEN = int(os.getenv("LOGIT_GATE_ASCII_MIN_TOKEN_LEN", "3"))
+LOGIT_GATE_MAX_DOC_CHARS = int(os.getenv("LOGIT_GATE_MAX_DOC_CHARS", "1500"))
+LOGIT_GATE_BATCH_SIZE = int(os.getenv("LOGIT_GATE_BATCH_SIZE", "8"))
+LOGIT_GATE_POS_TOKENS = [
+    t.strip()
+    for t in os.getenv("LOGIT_GATE_POS_TOKENS", "Yes,yes,はい").split(",")
+    if t.strip()
+]
+LOGIT_GATE_NEG_TOKENS = [
+    t.strip()
+    for t in os.getenv("LOGIT_GATE_NEG_TOKENS", "No,no,いいえ").split(",")
+    if t.strip()
+]
+
 # --- Ruri-v3 Prefix Mapping ---
 RURI_PREFIX_MAP = {
     "query": "検索クエリ: ",
