@@ -4,14 +4,25 @@ from fastapi import HTTPException
 
 from .base import BaseRerankService, get_validated_model
 from ..schemas import RerankRequest, RerankResponse, RerankData, Usage
-from ..config import RERANK_MODELS
+from ..config import (
+    RERANK_MODELS,
+    LOGIT_GATE_MODELS,
+    LOGIT_GATE_ASCII_MIN_TOKEN_LEN,
+    LOGIT_GATE_ASCII_BOOST_WEIGHT,
+    LOGIT_GATE_THRESHOLD,
+)
+from .logit_gate import LogitGateService, _sigmoid, _binary_entropy
+from .ascii_matcher import AsciiMatcher
 
 
 def _calculate_rerank_tokens(model: Any, query: str, documents: List[str]) -> Usage:
     with model.tokenizer_lock:
         tokenizer = model.tokenizer
         q_tokens = len(tokenizer.encode(query, add_special_tokens=False))
-        special_tokens = tokenizer.num_special_tokens_to_add(True)
+        special_tokens_func = getattr(tokenizer, "num_special_tokens_to_add", None)
+        special_tokens = (
+            special_tokens_func(True) if callable(special_tokens_func) else 0
+        )
 
         try:
             from collections.abc import Mapping
@@ -62,7 +73,10 @@ class RerankService(BaseRerankService):
     async def create_rerank(self, request: RerankRequest) -> RerankResponse:
         import app.main as main_mod
 
-        if request.model not in RERANK_MODELS:
+        if (
+            request.model not in RERANK_MODELS
+            and request.model not in LOGIT_GATE_MODELS
+        ):
             raise HTTPException(
                 status_code=400,
                 detail=f"Model '{request.model}' not found for reranks.",
@@ -89,6 +103,67 @@ class RerankService(BaseRerankService):
 
             response_data = _sort_and_format_rerank_results(results, request.top_n)
             usage = Usage(prompt_tokens=0, total_tokens=0)
+            return RerankResponse(
+                query=request.query,
+                data=response_data,
+                model=request.model,
+                usage=usage,
+            )
+
+        if request.model in LOGIT_GATE_MODELS:
+            model = get_validated_model(
+                request.model,
+                LOGIT_GATE_MODELS,
+                "logit gate",
+                loader=self.model_loader,
+            )
+
+            gate_service = LogitGateService(model)
+            matcher = AsciiMatcher(min_token_len=LOGIT_GATE_ASCII_MIN_TOKEN_LEN)
+            gate_results = gate_service.predict_margins(
+                request.query, request.documents
+            )
+
+            beta = (
+                0.0
+                if request.use_ascii_boost is False
+                else LOGIT_GATE_ASCII_BOOST_WEIGHT
+            )
+            containment_scores = matcher.score_documents(
+                request.query, request.documents
+            )
+
+            results = []
+            for i in range(len(request.documents)):
+                delta_z_base = gate_results[i]["logit_margin"]
+                containment = containment_scores[i]
+                delta_z_final = delta_z_base + (beta * containment)
+                score = _sigmoid(delta_z_final)
+                th = (
+                    request.threshold
+                    if request.threshold is not None
+                    else LOGIT_GATE_THRESHOLD
+                )
+                passed = score >= th
+                entropy = _binary_entropy(score)
+
+                result_item = {
+                    "document": i,
+                    "score": float(score),
+                    "passed": bool(passed),
+                    "logit_margin": float(delta_z_final),
+                    "containment_score": float(containment),
+                    "entropy": float(entropy),
+                }
+                if request.return_documents:
+                    result_item["text"] = request.documents[i]
+                results.append(result_item)
+
+            if request.drop_failed:
+                results = [r for r in results if r["passed"]]
+
+            response_data = _sort_and_format_rerank_results(results, request.top_n)
+            usage = _calculate_rerank_tokens(model, request.query, request.documents)
             return RerankResponse(
                 query=request.query,
                 data=response_data,

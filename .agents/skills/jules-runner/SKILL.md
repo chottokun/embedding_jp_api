@@ -14,7 +14,10 @@ Delegate code authoring, test generation, or multi-step tasks to Google Jules as
 2. Start a new Jules task:
    `jules remote new --session "<task_prompt>"`
    (If running multiple variations, use `--parallel <number>`)
-3. When the session finishes, pull the diff into the local branch:
+3. Watch session status automatically (Completed / Awaiting User Feedback):
+   `uv run python .agents/skills/jules-runner/scripts/watch_jules.py --session <session_id>`
+   (Options: `--auto-pull` to automatically pull diffs on completion, `--interval <seconds>`, `--repo <repo_name>`)
+4. When the session finishes, pull the diff into the local branch (if not auto-pulled):
    `jules remote pull --session <session_id>`
 
 ## Constraints

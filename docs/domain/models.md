@@ -35,6 +35,7 @@ sources:
 | モデルID | タイプ | 最大コンテキスト長 | 特徴 |
 | :--- | :---: | :---: | :--- |
 | `cl-nagoya/ruri-v3-reranker-310m` | Cross-Encoder | 8,192 tokens | 質問と文書のペアを高精度にスコアリング（Top-N 絞り込み用） |
+| `Qwen/Qwen2.5-1.5B-Instruct` | Causal-LM (Logit Gate) | 32,768 tokens | 単一フォワードパス十分性ロジット判定＋半角英数 3-gram ブースト（ニアミス・回答不能負例の完全遮断） |
 
 ## 3. Ruri-v3 日本語タスク別プレフィックス
 

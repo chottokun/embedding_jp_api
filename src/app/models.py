@@ -1,4 +1,9 @@
-from .config import EMBEDDING_MODELS, RERANK_MODELS, TORCH_DTYPE
+from .config import (
+    EMBEDDING_MODELS,
+    RERANK_MODELS,
+    TORCH_DTYPE,
+    LOGIT_GATE_MODELS,
+)
 from sentence_transformers import SentenceTransformer, CrossEncoder
 import torch
 import logging
@@ -7,6 +12,7 @@ from contextlib import nullcontext
 from typing import Optional, Any
 from PIL import Image
 from unittest.mock import MagicMock
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 
 def get_torch_dtype() -> Optional[torch.dtype]:
@@ -24,6 +30,52 @@ def get_torch_dtype() -> Optional[torch.dtype]:
     elif dtype_str in {"float32", "fp32"}:
         return torch.float32
     return None
+
+
+# --- Logit Gate Model Wrapper ---
+
+
+class LogitGateModelWrapper:
+    def __init__(
+        self, model_name: str, device: str = "cuda", dtype: Optional[torch.dtype] = None
+    ):
+        import threading
+
+        self.device = (
+            device if torch.cuda.is_available() and device == "cuda" else "cpu"
+        )
+        self.lock = threading.Lock()
+        self.tokenizer_lock = threading.Lock()
+
+        # Load Tokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            model_name, padding_side="left", trust_remote_code=True
+        )
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+
+        # Load Model
+        model_kwargs = {}
+        if dtype is not None:
+            model_kwargs["torch_dtype"] = dtype
+
+        try:
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                attn_implementation="sdpa",
+                trust_remote_code=True,
+                **model_kwargs,
+            )
+        except Exception:
+            # Fallback if sdpa is not supported
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                trust_remote_code=True,
+                **model_kwargs,
+            )
+
+        self.model.to(self.device)
+        self.model.eval()
 
 
 # --- Multimodal Model Wrapper ---
@@ -234,6 +286,12 @@ def get_model(model_name: str, device: str | None = None):
                 )
             else:
                 model = CrossEncoder(model_name, device=device)
+        elif model_name in LOGIT_GATE_MODELS:
+            model = LogitGateModelWrapper(
+                model_name=model_name,
+                device=device,
+                dtype=dtype,
+            )
         else:
             raise ValueError(f"Model '{model_name}' is not supported.")
 

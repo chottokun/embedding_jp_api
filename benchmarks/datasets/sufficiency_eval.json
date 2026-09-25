@@ -1,0 +1,758 @@
+[
+  {
+    "id": "pos_1",
+    "query": "日本の首都はどこですか？",
+    "document": "日本（にっぽん、にほん）は、東アジアに位置する島国。首都は東京都。日本列島およびその周辺の島々から構成される。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_1",
+    "query": "日本の首都はどこですか？",
+    "document": "日本（にっぽん、にほん）は、東アジアに位置する島国。日本列島およびその周辺の島々から構成され、四季折々の美しい自然が特徴である。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "pos_2",
+    "query": "富士山の標高は何メートルですか？",
+    "document": "富士山は、静岡県と山梨県に跨る活火山である。標高は3776.12メートルで、日本最高峰の独立峰である。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_2",
+    "query": "富士山の標高は何メートルですか？",
+    "document": "富士山は、静岡県と山梨県に跨る活火山である。古くから霊峰として信仰の対象となっており、多くの登山客が訪れる。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_1",
+    "query": "2024年のパリオリンピックの開催期間はいつですか？",
+    "document": "オリンピックは、国際オリンピック委員会（IOC）が開催する世界的なスポーツ競技大会である。夏季大会と冬季大会がある。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_2",
+    "query": "Python 3.11のリリース日はいつですか？",
+    "document": "Pythonは、広く使用されている汎用のプログラミング言語である。コードの可読性を重視した設計となっており、様々な分野で活用されている。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_corp_1",
+    "query": "育児休業は最大で子供が何歳になるまで取得可能ですか？",
+    "document": "当社の育児休業規程によれば、原則として子供が1歳に達するまで取得可能です。ただし、保育所に入所できないなどの特別な事情がある場合は、最大で子供が2歳になるまで延長して取得することができます。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "pos_corp_2",
+    "query": "出張時の日当は、国内と海外でそれぞれいくらですか？",
+    "document": "旅費規程第5条に基づき、国内出張時の日当は一律で1日あたり3,000円支給されます。一方、海外出張時の日当は、渡航先に関わらず1日あたり8,000円が支給されます。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "pos_corp_3",
+    "query": "夏季休暇は毎年何日付与されますか？",
+    "document": "正社員および契約社員に対し、毎年7月1日から9月30日までの期間中に取得可能な夏季休暇を特別休暇として5日付与します。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "pos_corp_4",
+    "query": "退職届は退職希望日の何日前までに提出する必要がありますか？",
+    "document": "就業規則第30条により、従業員が自己都合により退職しようとするときは、少なくとも退職希望日の30日前までに、所属長を通じて退職届を人事部に提出しなければなりません。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_corp_1",
+    "query": "育児休業は最大で子供が何歳になるまで取得可能ですか？",
+    "document": "当社の育児休業規程によれば、従業員は育児のために休業を取得することが認められています。取得期間については、保育所の入所状況などの事情に応じて延長申請を行うことが可能です。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "neg_corp_2",
+    "query": "出張時の日当は、国内と海外でそれぞれいくらですか？",
+    "document": "旅費規程第5条に基づき、従業員が業務上の必要により出張する場合、交通費および宿泊費の実費に加えて、規定の計算式に基づく日当が支給されます。金額は別途定める基準によります。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "neg_corp_3",
+    "query": "夏季休暇は毎年何日付与されますか？",
+    "document": "正社員および契約社員は、所定の期間内に夏季休暇を取得することができます。業務の都合を考慮し、事前に所属長の承認を得た上で取得計画を立てるようにしてください。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "neg_corp_4",
+    "query": "退職届は退職希望日の何日前までに提出する必要がありますか？",
+    "document": "就業規則第30条により、自己都合退職を希望する従業員は、業務の引き継ぎ等を考慮し、十分な余裕をもって所属長および人事部に対し退職届を提出し、手続きを行う必要があります。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_corp_1",
+    "query": "交通費の支給上限額は月額いくらですか？",
+    "document": "通勤手当は、公共交通機関を利用して通勤する従業員に対し支給されます。最も経済的かつ合理的な経路に基づいて算出された定期券代が支払われます。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_corp_2",
+    "query": "社員食堂の営業時間は何時から何時までですか？",
+    "document": "本社ビルには従業員向けの福利厚生施設が完備されています。リフレッシュルームや仮眠室は24時間利用可能で、従業員の健康と生産性向上を支援しています。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_corp_3",
+    "query": "インフルエンザ予防接種の費用補助はありますか？",
+    "document": "当社の健康保険組合では、従業員およびその扶養家族の健康増進を目的として、毎年秋季に健康診断を実施しています。受診は全従業員の義務となっています。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_corp_4",
+    "query": "資格取得支援制度の対象となる資格は何ですか？",
+    "document": "人材育成の一環として、外部の研修プログラムへの参加費用を会社が全額負担する制度があります。この制度を利用するには、期初の目標設定面談での合意が必要です。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_tech_1",
+    "query": "Pythonの組み込み関数 len() はどのような役割を持っていますか？",
+    "document": "Pythonの len() は、オブジェクトの長さ（要素の数）を返す組み込み関数です。引数にはシーケンス（文字列、タプル、リストなど）やコレクション（辞書、集合など）を指定でき、その要素数を整数で返します。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "pos_tech_2",
+    "query": "Gitで直前のコミットのメッセージを修正するコマンドは何ですか？",
+    "document": "Gitで直前のコミットメッセージを修正したい場合は、`git commit --amend -m \"新しいコミットメッセージ\"` というコマンドを使用します。これにより、新しいコミットを作らずに既存のコミットを上書きできます。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "pos_tech_3",
+    "query": "Dockerのコンテナをバックグラウンドで実行するためのオプションは何ですか？",
+    "document": "Dockerでコンテナを起動する際に、端末の制御を奪わずにバックグラウンドで実行させるには、`docker run` コマンドに `-d` または `--detach` オプションを付与します。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "pos_tech_4",
+    "query": "KubernetesでDeploymentを新規作成するためのkubectlコマンドは何ですか？",
+    "document": "Kubernetesで新しいDeploymentを作成する場合、`kubectl create deployment <デプロイメント名> --image=<イメージ名>` コマンドを使用します。これにより、指定したコンテナイメージを使用するPodの管理が開始されます。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_tech_1",
+    "query": "Pythonの組み込み関数 len() はどのような役割を持っていますか？",
+    "document": "Pythonには多くの便利な組み込み関数が用意されており、データ構造の操作を容易にします。これらの関数を利用することで、リストや文字列の長さを調べたり、データ型の変換を簡単に行うことができます。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "neg_tech_2",
+    "query": "Gitで直前のコミットのメッセージを修正するコマンドは何ですか？",
+    "document": "Gitではコミットの履歴を後から変更する機能が提供されています。間違えたコミットメッセージを残してしまった場合でも、特定のコマンドやオプションを活用することで、履歴をきれいに保つことが可能です。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "neg_tech_3",
+    "query": "Dockerのコンテナをバックグラウンドで実行するためのオプションは何ですか？",
+    "document": "`docker run` コマンドは、指定されたイメージからコンテナを作成し、開始するための主要なコマンドです。様々なオプションを組み合わせることで、ポートフォワードやボリュームのマウントなど柔軟な実行が可能です。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "neg_tech_4",
+    "query": "KubernetesでDeploymentを新規作成するためのkubectlコマンドは何ですか？",
+    "document": "kubectlはKubernetesクラスタを操作するための強力なコマンドラインツールです。このツールを使用すると、リソースの作成、更新、削除、およびクラスタの状態監視などをコマンドラインから直接実行できます。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_tech_1",
+    "query": "Node.jsの最新LTSバージョンはいくつですか？",
+    "document": "JavaScriptは元々ブラウザ上で動作するスクリプト言語として開発されましたが、現在ではサーバーサイドでの実行環境も広く普及しており、フルスタックの開発が容易になっています。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_tech_2",
+    "query": "AWS Lambdaの無料枠は月に何回のリクエストまでですか？",
+    "document": "クラウドコンピューティングの普及により、サーバーレスアーキテクチャへの関心が高まっています。これにより、開発者はインフラの管理から解放され、ビジネスロジックのコーディングに集中できるようになりました。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_tech_3",
+    "query": "PostgreSQLでテーブルのインデックスを確認するSQL文は何ですか？",
+    "document": "リレーショナルデータベース管理システムにおいて、インデックスの適切な設計と配置は、検索クエリのパフォーマンスを大幅に向上させるために非常に重要な役割を果たします。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_tech_4",
+    "query": "Linuxのcronで「毎日午前3時」に実行する設定の書き方は？",
+    "document": "Linuxシステムでは、定期的なバックアップやログのローテーションなど、定期的に実行する必要があるタスクを自動化するためのスケジューリングデーモンが標準で提供されています。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_gen_1",
+    "query": "第一次世界大戦は何年に終結しましたか？",
+    "document": "第一次世界大戦は、1914年7月28日に勃発した世界的な軍事衝突です。4年以上にわたる総力戦の末、1918年11月11日にドイツが休戦協定に署名したことで事実上終結しました。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "pos_gen_2",
+    "query": "太陽系で最も大きい惑星は何ですか？",
+    "document": "太陽系には8つの惑星が存在します。その中で最も質量および体積が大きいのは木星であり、その直径は地球の約11倍にも及びます。木星は主に水素とヘリウムから構成される巨大ガス惑星です。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "pos_gen_3",
+    "query": "日本国憲法が施行されたのは西暦何年ですか？",
+    "document": "大日本帝国憲法に代わる日本の現在の憲法である日本国憲法は、1946年（昭和21年）11月3日に公布され、翌年の1947年（昭和22年）5月3日に正式に施行されました。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "pos_gen_4",
+    "query": "モナ・リザを描いたルネサンス期の芸術家は誰ですか？",
+    "document": "『モナ・リザ』は、世界で最も知られた美術作品の一つです。この謎めいた微笑を浮かべる女性の肖像画は、イタリアのルネサンス期を代表する巨匠レオナルド・ダ・ヴィンチによって描かれました。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_gen_1",
+    "query": "第一次世界大戦は何年に終結しましたか？",
+    "document": "第一次世界大戦は、オーストリア＝ハンガリー帝国の皇位継承者暗殺事件を契機として勃発しました。この戦争はヨーロッパ全土を巻き込み、甚大な被害と政治体制の大規模な変化をもたらす結果となりました。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "neg_gen_2",
+    "query": "太陽系で最も大きい惑星は何ですか？",
+    "document": "太陽系の惑星は、岩石を主成分とする地球型惑星と、ガスや氷を主成分とする木星型惑星に大きく分類されます。外側に位置する巨大惑星群は、内側の惑星群とは異なる特異な大気組成を持っています。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "neg_gen_3",
+    "query": "日本国憲法が施行されたのは西暦何年ですか？",
+    "document": "日本国憲法は、「国民主権」「基本的人権の尊重」「平和主義」の三大原則を特徴とする国の最高法規です。この憲法の制定により、日本の政治体制は民主主義的なものへと大きく転換しました。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "neg_gen_4",
+    "query": "モナ・リザを描いたルネサンス期の芸術家は誰ですか？",
+    "document": "『モナ・リザ』は、現在フランスのパリにあるルーヴル美術館に展示されており、毎年世界中から数百万人の観光客がこの名画を鑑賞するために訪れます。防弾ガラスのケース内で厳重に保管されています。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_gen_1",
+    "query": "エッフェル塔の高さは何メートルですか？",
+    "document": "フランスの首都パリは、芸術、ファッション、ガストロノミーの世界的中心地として知られています。セーヌ川沿いの歴史的な建築物や美術館は、ユネスコの世界遺産にも登録されています。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_gen_2",
+    "query": "アメリカ合衆国の初代大統領は誰ですか？",
+    "document": "アメリカ合衆国の歴史において、大統領は国家元首および行政府の長として強大な権限を持ちます。ホワイトハウスを公邸とし、連邦政府の政策決定において中心的な役割を果たします。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_gen_3",
+    "query": "円周率の最初の5桁は何ですか？",
+    "document": "数学において、円の周長の直径に対する比率は無理数であることが証明されており、古くから多くの数学者がこの定数の計算に挑戦してきました。この値は記号π（パイ）で表されます。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_gen_4",
+    "query": "ノーベル賞の授賞式は毎年どの都市で行われますか？",
+    "document": "アルフレッド・ノーベルの遺言に基づいて創設されたこの賞は、物理学、化学、生理学・医学、文学、平和の5分野（後に経済学が追加）で、人類のために最大の貢献をした人々に授与されます。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_leg_1",
+    "query": "個人情報保護法において、漏えい等の報告が義務化されたのはいつの法改正からですか？",
+    "document": "令和2年（2020年）の個人情報保護法改正により、個人の権利利益を害するおそれがある個人データの漏えい等が発生した場合、個人情報保護委員会への報告および本人への通知が法的に義務化されました。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "pos_leg_2",
+    "query": "労働基準法が定める法定労働時間は1日何時間、週何時間ですか？",
+    "document": "労働基準法第32条では、使用者が労働者に休憩時間を除き1週間について40時間を超えて、また、1週間の一週間の各日については、労働者に休憩時間を除き1日について8時間を超えて労働させてはならないと定めています。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "pos_leg_3",
+    "query": "下請法が適用される資本金区分の基準の一つを教えてください。",
+    "document": "下請代金支払遅延等防止法（下請法）の適用対象は、親事業者と下請事業者の資本金規模によって決まります。例えば、資本金が3億円を超える親事業者が、資本金3億円以下の事業者に製造委託をする場合などが該当します。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "pos_leg_4",
+    "query": "クーリング・オフ制度を利用する場合、訪問販売での契約解除期間は何日間ですか？",
+    "document": "特定商取引法に基づくクーリング・オフ制度において、訪問販売や電話勧誘販売で契約した場合、法定の契約書面を受け取った日から数えて8日間以内であれば、無条件で契約の解除を行うことができます。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_leg_1",
+    "query": "個人情報保護法において、漏えい等の報告が義務化されたのはいつの法改正からですか？",
+    "document": "個人データの漏えい、滅失、毀損などの事案が発生した場合、企業は速やかに事実関係を調査し、被害拡大を防止するための措置を講じるとともに、適切な機関への報告や本人への連絡などの対応を行う必要があります。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "neg_leg_2",
+    "query": "労働基準法が定める法定労働時間は1日何時間、週何時間ですか？",
+    "document": "労働基準法では、労働者の健康を確保するため、原則としての労働時間の上限を定めています。この法定労働時間を超えて労働させる場合、使用者は労使協定（いわゆる36協定）を締結し、割増賃金を支払う義務が生じます。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "neg_leg_3",
+    "query": "下請法が適用される資本金区分の基準の一つを教えてください。",
+    "document": "下請法は、親事業者による優越的地位の濫用行為を取り締まり、下請事業者の利益を保護することを目的とした法律です。適用対象となるかは、取引の内容および当事者間の規模の格差に基づいて判断されます。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "neg_leg_4",
+    "query": "クーリング・オフ制度を利用する場合、訪問販売での契約解除期間は何日間ですか？",
+    "document": "クーリング・オフは、消費者が特定の取引で契約を結んだ後、冷静に考え直す時間を与え、一定期間内であれば無条件で契約を解除できる制度です。取引の形態によって適用可否や条件が異なります。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_leg_1",
+    "query": "著作権法における映画の著作物の保護期間は公表後何年ですか？",
+    "document": "著作権法は、思想又は感情を創作的に表現したものを保護する法律です。著作者の権利を保護することで、文化の発展に寄与することを目的としており、文章、音楽、絵画など幅広いジャンルが対象となります。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_leg_2",
+    "query": "民法における成人年齢はいつから18歳に引き下げられましたか？",
+    "document": "民法は、私人の生活関係を規律する基本的な法律であり、財産や家族に関するルールを定めています。社会情勢の変化に伴い、これまでに複数回の重要な法改正が実施されてきました。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_leg_3",
+    "query": "景品表示法において、懸賞による景品類の最高額は取引価額の何倍までですか？",
+    "document": "不当景品類及び不当表示防止法（景品表示法）は、商品やサービスの品質、内容、価格等を偽って表示することや、過大な景品類を提供することを厳しく規制し、消費者の適正な商品選択を保護しています。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "unans_leg_4",
+    "query": "会社法で合同会社を設立する際、最低いくらの資本金が必要ですか？",
+    "document": "新たに法人を設立する際、株式会社や持分会社など様々な形態から選択することができます。それぞれにおいて、出資者の責任範囲や意思決定機関のあり方、設立手続きの複雑さが異なります。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_k8s_oom",
+    "query": "KubernetesでPodがOOMKilled（Exit Code 137）で終了した場合の対処法は？",
+    "document": "PodがExit Code 137で終了しOOMKilledと表示された場合、コンテナがメモリ制限（resources.limits.memory）を超過したことを示します。対処法として、マニフェスト内のlimits.memoryの値を引き上げるか、アプリケーションのメモリリークをプロファイリングして解消します。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_k8s_oom",
+    "query": "KubernetesでPodがOOMKilled（Exit Code 137）で終了した場合の対処法は？",
+    "document": "KubernetesのPodはコンテナの最小実行単位です。PodのライフサイクルにはPending、Running、Succeeded、Failed、Unknownがあり、コンテナが異常終了するとRestartPolicyに従って再起動が試行されます。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_k8s_oom",
+    "query": "KubernetesでPodがOOMKilled（Exit Code 137）で終了した場合の対処法は？",
+    "document": "Docker Composeは複数コンテナの定義と実行を行うツールです。docker-compose.ymlファイルを使用してサービス、ネットワーク、ボリュームを一括で設定できます。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_aws_assume",
+    "query": "AWS CLIで一時認証情報を取得するsts:AssumeRoleのコマンド例は？",
+    "document": "AWS CLIで一時認証情報を取得するには、'aws sts assume-role --role-arn arn:aws:iam::123456789012:role/DeployRole --role-session-name DeploySession' を実行します。返却されるAccessKeyId、SecretAccessKey、SessionTokenを環境変数に設定します。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_aws_assume",
+    "query": "AWS CLIで一時認証情報を取得するsts:AssumeRoleのコマンド例は？",
+    "document": "AWS Identity and Access Management (IAM) は、AWSリソースへのアクセスを安全に管理するためのサービスです。IAMロールを使用することで、長期的な認証情報を共有することなく安全な権限委譲が可能です。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_aws_assume",
+    "query": "AWS CLIで一時認証情報を取得するsts:AssumeRoleのコマンド例は？",
+    "document": "Amazon S3は高い耐久性とスケーラビリティを提供するオブジェクトストレージサービスです。バケットポリシーを設定してアクセス権限を制御します。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_nginx_502",
+    "query": "Nginxで502 Bad Gatewayが発生した際の主な原因と確認すべきログは？",
+    "document": "Nginxの502 Bad Gatewayは、リバースプロキシ先の上流サーバー（GunicornやNode.js等）が停止しているか、ソケット通信が拒否された場合に発生します。確認すべきログは /var/log/nginx/error.log およびバックエンドのログ（例: gunicorn.log）です。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_nginx_502",
+    "query": "Nginxで502 Bad Gatewayが発生した際の主な原因と確認すべきログは？",
+    "document": "Nginxは高性能なHTTPサーバーおよびリバースプロキシサーバーです。設定ファイルは主に /etc/nginx/nginx.conf に配置され、バーチャルホストの設定は sites-available ディレクトリで管理されます。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_nginx_502",
+    "query": "Nginxで502 Bad Gatewayが発生した際の主な原因と確認すべきログは？",
+    "document": "Apache HTTP Serverは長年にわたり広く利用されているオープンソースのWebサーバーです。.htaccessファイルを用いてディレクトリ単位での設定オーバーライドが可能です。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_ssh_perm",
+    "query": "SSH接続時にPermission denied (publickey)となる場合のパーミッション確認手順は？",
+    "document": "SSHでPermission denied (publickey)が発生した場合、クライアント側の秘密鍵 (~/.ssh/id_rsa) のパーミッションが600、~/.ssh ディレクトリが700であるか確認します。またサーバー側の ~/.ssh/authorized_keys が600、~/.ssh が700であることを確認してください。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_ssh_perm",
+    "query": "SSH接続時にPermission denied (publickey)となる場合のパーミッション確認手順は？",
+    "document": "Secure Shell (SSH) は暗号化通信を利用してリモートホストに安全にアクセスするためのプロトコルです。デフォルトではTCPポート22番を使用し、公開鍵認証やパスワード認証をサポートしています。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_ssh_perm",
+    "query": "SSH接続時にPermission denied (publickey)となる場合のパーミッション確認手順は？",
+    "document": "FTPプロトコルは平文で認証情報を送信するため、機密性の高い通信には適していません。ファイル転送にはSFTPまたはFTPSの使用が推奨されます。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_pg_conn",
+    "query": "PostgreSQLで'FATAL: remaining connection slots are reserved'が発生した時のmax_connections設定方法は？",
+    "document": "PostgreSQLで接続上限に達した場合、postgresql.conf 内の max_connections（デフォルト100）の値を増やしてサーバーを再起動します。本番環境では接続数の無制限な増加を防ぐため、PgBouncer等のコネクションプーラーの導入を推奨します。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_pg_conn",
+    "query": "PostgreSQLで'FATAL: remaining connection slots are reserved'が発生した時のmax_connections設定方法は？",
+    "document": "PostgreSQLは高度な機能を備えたオープンソースのリレーショナルデータベース管理システムです。ACID特性を完全にサポートし、複雑なクエリや外部キー制約、トリガーを処理できます。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_pg_conn",
+    "query": "PostgreSQLで'FATAL: remaining connection slots are reserved'が発生した時のmax_connections設定方法は？",
+    "document": "Redisはインメモリデータ構造ストアであり、データベース、キャッシュ、メッセージブローカーとして利用されます。キー・バリュー形式で超高速な読み書きを実現します。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_docker_cache",
+    "query": "Dockerfileでキャッシュ効率を最大化するRUN/COPYの順序設計は？",
+    "document": "Dockerfileでは変更頻度の低い命令を前方に配置します。具体的には、ソースコード全体をコピーする前に、パッケージ定義（package.jsonやpyproject.toml）のみをCOPYし、RUN npm install や RUN uv sync を実行した後に、アプリケーションコード（COPY . .）を配置します。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_docker_cache",
+    "query": "Dockerfileでキャッシュ効率を最大化するRUN/COPYの順序設計は？",
+    "document": "Dockerイメージはレイヤー構造になっており、各命令ごとに新しいレイヤーが作成されます。イメージサイズを削減するためにマルチステージビルドが広く活用されています。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_docker_cache",
+    "query": "Dockerfileでキャッシュ効率を最大化するRUN/COPYの順序設計は？",
+    "document": "Gitは分散型バージョン管理システムであり、複数の開発者が同時にコードを変更・マージすることを可能にします。ブランチ戦略としてGit-flowやGitHub Flowがあります。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_h100_spec",
+    "query": "NVIDIA H100 TensorコアGPUのPCIe版とSXM5版のTDP（消費電力）の違いは？",
+    "document": "NVIDIA公式仕様表によれば、H100 PCIe版の最大消費電力（TDP）は350W（空冷・パッシブ）であるのに対し、H100 SXM5版のTDPは最大700W（液冷または高風量空冷）です。SXM5版はNVLink帯域も900GB/sとPCIe版より高速です。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_h100_spec",
+    "query": "NVIDIA H100 TensorコアGPUのPCIe版とSXM5版のTDP（消費電力）の違いは？",
+    "document": "NVIDIA H100はHopperアーキテクチャを採用したエンタープライズ向けGPUです。Transformer Engineを搭載し、FP8精度でのAI学習・推論を大幅に加速します。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_h100_spec",
+    "query": "NVIDIA H100 TensorコアGPUのPCIe版とSXM5版のTDP（消費電力）の違いは？",
+    "document": "NVIDIA GeForce RTX 4090はAda Lovelaceアーキテクチャを採用したフラッグシップゲーミングGPUです。24GBのGDDR6Xメモリを搭載しています。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_dell_r750",
+    "query": "Dell PowerEdge R750サーバーがサポートするPCIeバスの規格は？",
+    "document": "Dell EMC PowerEdge R750の仕様書によると、第3世代インテルXeonスケーラブル・プロセッサーを搭載し、最大8つのPCIe Gen 4スロットをサポートしています。前世代のR740（PCIe Gen 3）から転送帯域が2倍に向上しています。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_dell_r750",
+    "query": "Dell PowerEdge R750サーバーがサポートするPCIeバスの規格は？",
+    "document": "Dell EMC PowerEdge R750は、高いパフォーマンスと拡張性を備えた2Uラックマウント型デュアルソケットサーバーです。仮想化、データベース、ハイパフォーマンスコンピューティングに適しています。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_dell_r750",
+    "query": "Dell PowerEdge R750サーバーがサポートするPCIeバスの規格は？",
+    "document": "Synology NASは直感的なDiskStation Manager（DSM）OSを搭載したネットワーク接続ストレージです。RAIDアレイの構築やファイル共有が容易に行えます。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_cisco_9300",
+    "query": "Cisco Catalyst 9300シリーズで利用可能なネットワークモジュールC9300-NM-8Xのポート仕様は？",
+    "document": "Ciscoデータシートによると、C9300-NM-8Xモジュールは8個の10G SFP+スロットを提供します。すべてのポートで1G SFPまたは10G SFP+トランシーバをサポートし、アップリンク帯域を拡張できます。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_cisco_9300",
+    "query": "Cisco Catalyst 9300シリーズで利用可能なネットワークモジュールC9300-NM-8Xのポート仕様は？",
+    "document": "Cisco Catalyst 9300シリーズスイッチは、セキュリティ、IoT、モビリティ、クラウド向けに構築されたCiscoの代表的なスタッカブルエンタープライズスイッチプラットフォームです。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_cisco_9300",
+    "query": "Cisco Catalyst 9300シリーズで利用可能なネットワークモジュールC9300-NM-8Xのポート仕様は？",
+    "document": "ヤマハルーターRTX1220は中小規模拠点向けのVPNルーターです。全ポートギガビットイーサネットに対応し、ISDN回線収容機能も備えています。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_ddr5_spec",
+    "query": "DDR5-5600メモリの標準動作電圧と理論最大転送速度（単一チャネル）は？",
+    "document": "JEDEC規格によれば、DDR5メモリの標準動作電圧は1.1V（DDR4の1.2Vから低減）です。またDDR5-5600の単一64ビットチャネルあたりの理論最大転送帯域幅は44.8 GB/sです。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_ddr5_spec",
+    "query": "DDR5-5600メモリの標準動作電圧と理論最大転送速度（単一チャネル）は？",
+    "document": "DDR5 SDRAMはパソコンやサーバー用のメインメモリ規格です。DDR4と比較して電力効率が向上し、On-Die ECCによる信頼性向上や2系統の独立32ビットサブチャネル構造が導入されています。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_ddr5_spec",
+    "query": "DDR5-5600メモリの標準動作電圧と理論最大転送速度（単一チャネル）は？",
+    "document": "SSD（Solid State Drive）はフラッシュメモリを記録媒体とするストレージデバイスです。NVMeプロトコルとPCIeインターフェースにより超高速なデータアクセスを実現します。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_wifi6e_freq",
+    "query": "Wi-Fi 6E（IEEE 802.11ax拡張）で新たに開放された周波数帯は？",
+    "document": "Wi-Fi 6Eでは、従来の2.4GHz帯および5GHz帯に加え、新たに6GHz帯（5.925GHz〜7.125GHz、日本では最大24チャンネル）の周波数帯が利用可能となり、電波干渉のない広帯域通信が実現されました。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_wifi6e_freq",
+    "query": "Wi-Fi 6E（IEEE 802.11ax拡張）で新たに開放された周波数帯は？",
+    "document": "Wi-Fi 6（IEEE 802.11ax）はOFDMAや1024-QAM、MU-MIMO技術を採用し、多数の端末が密集する混雑環境でも安定した高速通信を提供できる無線LAN規格です。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_wifi6e_freq",
+    "query": "Wi-Fi 6E（IEEE 802.11ax拡張）で新たに開放された周波数帯は？",
+    "document": "Bluetooth 5.0は近距離無線通信規格であり、BLE（Bluetooth Low Energy）の通信速度が2Mbpsに倍増し、通信範囲も4倍に拡大されました。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_usb4_tb4",
+    "query": "USB4 40GbpsとThunderbolt 4の最低要件におけるPCIeデータ転送速度の違いは？",
+    "document": "Thunderbolt 4仕様では最低32GbpsのPCIeデータ転送（外部GPUや高速SSD用）が必須要件として義務付けられていますが、標準のUSB4仕様ではPCIeトンネリング機能自体がオプションとなっており、転送速度の必須保証はありません。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_usb4_tb4",
+    "query": "USB4 40GbpsとThunderbolt 4の最低要件におけるPCIeデータ転送速度の違いは？",
+    "document": "USB Type-Cコネクタは表裏の区別なく挿抜可能な汎用端子です。USB Power Delivery（USB PD）による最大240Wの給電やDisplayPort Alternate Modeによる映像出力に対応しています。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_usb4_tb4",
+    "query": "USB4 40GbpsとThunderbolt 4の最低要件におけるPCIeデータ転送速度の違いは？",
+    "document": "HDMI 2.1はテレビやモニター向けの映像伝送規格です。最大48Gbpsの帯域幅を持ち、非圧縮8K 60Hzや4K 120Hzの出力、可変リフレッシュレート（VRR）に対応します。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_corp_condolence",
+    "query": "就業規則における本人の結婚に伴う特別有給休暇（慶弔休暇）の日数は？",
+    "document": "就業規則第28条（慶弔休暇）に基づき、社員本人が結婚した場合は、連続した5営業日の特別有給休暇を取得することができます。なお結婚の日から起算して6ヶ月以内に取得する必要があります。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_corp_condolence",
+    "query": "就業規則における本人の結婚に伴う特別有給休暇（慶弔休暇）の日数は？",
+    "document": "当社はワークライフバランスを重視し、有給休暇の取得促進に努めています。年次有給休暇は入社後半年で10日付与され、勤続年数に応じて最大年間20日まで付与されます。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_corp_condolence",
+    "query": "就業規則における本人の結婚に伴う特別有給休暇（慶弔休暇）の日数は？",
+    "document": "当社のオフィスセキュリティ規定では、入退館時にIC社員証のタッチが義務付けられています。来客時には必ず受付表に記入の上、ゲストカードを貸与します。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_corp_sidejob",
+    "query": "副業兼業ガイドラインにおいて提出が必要な申請書と承認基準は？",
+    "document": "副業兼業ガイドライン第3条に基づき、副業を希望する社員は開始日の2週間前までに『副業・兼業許可申請書』を人事部へ提出する必要があります。本業の利益相反にならないこと、過重労働（月40時間を超えないこと）が承認の基準です。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_corp_sidejob",
+    "query": "副業兼業ガイドラインにおいて提出が必要な申請書と承認基準は？",
+    "document": "社員は就業時間中は職務に専念する義務を負います。業務上の秘密情報や顧客情報を社外に漏洩することは固く禁じられており、違反した場合は懲戒処分の対象となります。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_corp_sidejob",
+    "query": "副業兼業ガイドラインにおいて提出が必要な申請書と承認基準は？",
+    "document": "定期健康診断は労働安全衛生法に基づき年1回受診が義務付けられています。35歳以上の社員については生活習慣病予防健診または人間ドックを受診できます。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_corp_remote",
+    "query": "リモートワーク勤務規程における在宅勤務手当の支給額と対象条件は？",
+    "document": "在宅勤務規程第12条により、月の所定労働日数の半分（50%）以上をテレワークで勤務した社員に対し、光熱費・通信環境補助として月額5,000円の在宅勤務手当が支給されます。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_corp_remote",
+    "query": "リモートワーク勤務規程における在宅勤務手当の支給額と対象条件は？",
+    "document": "当社のテレワーク制度は柔軟な働き方を支援する目的で導入されました。セキュリティ確保のため、会社貸与のPCおよびVPN接続を利用して業務を行う必要があります。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_corp_remote",
+    "query": "リモートワーク勤務規程における在宅勤務手当の支給額と対象条件は？",
+    "document": "通勤交通費は最も経済的かつ合理的な経路に基づき月額上限5万円まで全額支給されます。定期券代は給与支給日に合わせて支給されます。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_legal_leak",
+    "query": "個人情報保護法における個人データ漏洩発生時の個人情報保護委員会への報告期限は？",
+    "document": "改正個人情報保護法第26条および施行規則に基づき、漏洩発生を把握した日から速報はおよそ3日以内、確報は30日以内（不正アクセス等の場合は60日以内）に個人情報保護委員会への報告が義務付けられています。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_legal_leak",
+    "query": "個人情報保護法における個人データ漏洩発生時の個人情報保護委員会への報告期限は？",
+    "document": "個人情報保護法は個人の権利利益を保護することを目的とした法律です。事業者は個人情報を取得する際には利用目的を特定・公表し、安全管理措置を講じる必要があります。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_legal_leak",
+    "query": "個人情報保護法における個人データ漏洩発生時の個人情報保護委員会への報告期限は？",
+    "document": "労働基準法第36条に基づく時間外・休日労働に関する協定（36協定）を締結し、所轄の労働基準監督署長に届け出なければ、法定労働時間を超える労働を命じることはできません。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_legal_nda",
+    "query": "標準秘密保持契約（NDA）における契約終了後の秘密保持義務の有効存続期間は？",
+    "document": "秘密保持契約書第8条（存続条項）によれば、本契約が終了した場合であっても、本契約に基づき開示された秘密情報に関する秘密保持義務は、契約終了の日から5年間有効に存続するものとします。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_legal_nda",
+    "query": "標準秘密保持契約（NDA）における契約終了後の秘密保持義務の有効存続期間は？",
+    "document": "秘密保持契約（NDA）は業務提携や共同研究の検討にあたり開示される機密情報を保護するための合意文書です。開示目的以外の使用禁止や第三者への漏洩防止が定められます。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_legal_nda",
+    "query": "標準秘密保持契約（NDA）における契約終了後の秘密保持義務の有効存続期間は？",
+    "document": "著作権法において、著作権は著作物の創作時に自動的に発生し、保護期間は著作者の死後70年（法人著作の場合は公表後70年）存続します。",
+    "label": 0,
+    "type": "unanswerable"
+  },
+  {
+    "id": "pos_sec_mfa",
+    "query": "社内セキュリティ基準における管理特権アカウントのパスワード最小文字数と認証要件は？",
+    "document": "情報セキュリティ基本規程第15条によると、管理者特権（Administrator / root）アカウントのパスワードは英大文字・小文字・数字・記号を混在させた最低16文字以上とし、FIDO2またはTOTPによる多要素認証（MFA）の設定が必須です。",
+    "label": 1,
+    "type": "positive"
+  },
+  {
+    "id": "neg_sec_mfa",
+    "query": "社内セキュリティ基準における管理特権アカウントのパスワード最小文字数と認証要件は？",
+    "document": "情報システムへのログインには各個人に割り当てられた一意のユーザーIDを使用します。アカウントの共用は禁止されており、定期的な利用状況の監査が実施されます。",
+    "label": 0,
+    "type": "near_miss"
+  },
+  {
+    "id": "unans_sec_mfa",
+    "query": "社内セキュリティ基準における管理特権アカウントのパスワード最小文字数と認証要件は？",
+    "document": "防火管理者は消防法に基づき建物の防火管理業務を遂行する責任者です。定期的な消防訓練の実施や消防用設備の点検・報告を行います。",
+    "label": 0,
+    "type": "unanswerable"
+  }
+]

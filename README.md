@@ -119,6 +119,10 @@ response = client.embeddings.create(
 `POST /v1/rerank`
 
 Jina/Cohere等の標準的な再ランキングAPIに準拠したスキーマを提供します。
+指定されたモデル名に応じて、**従来のクロスエンコーダー**と**Logit Gate ＋ ハイブリッド再ランキング**が自動的にディスパッチされます。
+
+* **従来のクロスエンコーダー型**: `cl-nagoya/ruri-v3-reranker-310m`
+* **Logit Gate ハイブリッド型**: `Qwen/Qwen2.5-1.5B-Instruct`（ASCII Matcher ＋ 単一フォワードパス ロジット判定）
 
 #### リクエストボディ (JSON)
 
@@ -126,9 +130,12 @@ Jina/Cohere等の標準的な再ランキングAPIに準拠したスキーマを
 | --- | --- | --- | --- |
 | `query` | string | Yes | 検索クエリ。 |
 | `documents` | array | Yes | ランク付け対象の文書リスト。 |
-| `model` | string | Yes | 使用するモデルID（例: `cl-nagoya/ruri-v3-reranker-310m`）。 |
+| `model` | string | Yes | 使用するモデルID（例: `cl-nagoya/ruri-v3-reranker-310m` または `Qwen/Qwen2.5-1.5B-Instruct`）。 |
 | `top_n` | integer | No | 返却する上位件数（`top_k`も互換性のために受付可能）。 |
 | `return_documents` | boolean | No | レスポンスに文書の本文を含めるかどうか。 |
+| `threshold` | float | No | 回答十分性確率の足切り閾値（未指定時は `.env` の `LOGIT_GATE_THRESHOLD`、デフォルト: `0.55`）。 |
+| `drop_failed` | boolean | No | `true` の場合、閾値未満の文書をレスポンスから除外。`false`（デフォルト）の場合は全件保持し、不合格文書を `passed: false` で末尾ソート（Dify等のクライアントクラッシュを防止）。 |
+| `use_ascii_boost` | boolean | No | 半角英数字 3-gram ブーストの有効/無効（未指定時は `.env` 設定に従う）。 |
 
 #### レスポンスボディ (JSON)
 
@@ -137,24 +144,36 @@ Jina/Cohere等の標準的な再ランキングAPIに準拠したスキーマを
 | フィールド名 | 型 | 説明 |
 | --- | --- | --- |
 | `query` | string | 検索クエリ。 |
-| `data` | array | ランク付けされた文書とそのスコア。 |
+| `data` | array | ランク付けされた文書とそのスコア（拡張メタデータ含む）。 |
 | `model` | string | 使用されたモデルID。 |
 | `usage` | object | トークン使用量（`prompt_tokens`, `total_tokens`）。 |
 
-#### リクエスト例 (curl)
+##### `data` 配列要素のフィールド
+| フィールド名 | 型 | 説明 |
+| --- | --- | --- |
+| `document` | integer | 元ドキュメントのインデックス。 |
+| `score` | float | 0.0〜1.0 に正規化された最終統合スコア（$\sigma(\Delta z_{\text{final}})$）。 |
+| `text` | string | ドキュメント本文（`return_documents: true` 時）。 |
+| `passed` | boolean | 足切り閾値を通過したかどうか（オプショナル）。 |
+| `logit_margin` | float | ロジット差分マージン $\Delta z$（オプショナル）。 |
+| `containment_score` | float | ASCII 3-gram 包含率スコア（0.0〜1.0）（オプショナル）。 |
+| `entropy` | float | 二値判定エントロピー $H_{\text{binary}} \in [0.0, 1.0]$（判定の不確実性・迷いの度合い）（オプショナル）。 |
+
+#### リクエスト例 (curl: Logit Gate ハイブリッド再ランキング)
 
 ```bash
 curl -X POST "http://localhost:8000/v1/rerank" \
 -H "Content-Type: application/json" \
 -d '{
-  "query": "AIの未来について",
+  "query": "VPN接続エラー 0x80070035 の解消手順",
   "documents": [
-    "猫について",
-    "人工知能の進化",
-    "日本の首都"
+    "エラーコード 0x80070035 はSMBv1プロトコル無効化により発生します...",
+    "休暇申請および各種社内手続きの案内...",
+    "Windowsの一般的なネットワークトラブルシューティング..."
   ],
-  "model": "cl-nagoya/ruri-v3-reranker-310m",
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
   "top_n": 2,
+  "drop_failed": false,
   "return_documents": true
 }'
 ```
@@ -363,6 +382,17 @@ APIサーバーの動作は以下の環境変数で調整可能です。これ�
 | `MKL_NUM_THREADS` | `1` | Intel MKLのスレッド数。`1`に設定することでCPUコア競合を防止します。 |
 | `TOKENIZERS_PARALLELISM` | `false` | HuggingFace Tokenizersの並列処理。`false`に設定することでGunicornワーカー内でのデッドロックを防止します。 |
 | `OFFLINE_MODE` | `false` | `true`に設定すると、Hugging Face Hubへのアクセスを行いません。事前にモデルをダウンロードしておく必要があります。 |
+| `MAX_CONCURRENT_INFERENCES` | `4` | 推論処理（Embeddings/Rerank）の最大同時実行セマフォ数。GPU/CPU飽和・CUDA OOMを防御。 |
+| `INFERENCE_SEMAPHORE_TIMEOUT_SECONDS` | `30.0` | セマフォ取得待ちタイムアウト秒数。超過時は 503 Service Unavailable を返却。 |
+| `API_KEYS` | (空) | クライアント個別APIキー設定（カンマ区切りまたは JSON形式 `{キー: 分間レート}`）。 |
+| `RATE_LIMIT_PER_MINUTE` | `120` | APIキー/IP単位のデフォルト分間リクエスト上限。 |
+| `LOGIT_GATE_ENABLED` | `true` | Logit Gate リランカー機能の有効/無効フラグ。 |
+| `LOGIT_GATE_DEFAULT_MODEL` | `Qwen/Qwen2.5-1.5B-Instruct` | Logit Gate 評価用デフォルト因果言語モデル。 |
+| `LOGIT_GATE_THRESHOLD` | `0.55` | 回答十分性判定の確率足切り閾値 $\tau$。 |
+| `LOGIT_GATE_ASCII_BOOST_WEIGHT` | `1.2` | ASCII Matcher 英数字 3-gram 包含率のロジット加算重み係数 $\beta$。 |
+| `LOGIT_GATE_BATCH_SIZE` | `8` | Logit Gate 推論時のドキュメントミニバッチサイズ。 |
+| `LOGIT_GATE_MAX_DOC_CHARS` | `1500` | Logit Gate 推論時のドキュメント最大文字数（DoS防御切り詰め）。 |
+| `LOGIT_GATE_BASELINE_MARGIN` | `0.0` | 判定バイアス補正用ベースラインマージン。 |
 
 ### 5.1. .env ファイルでの設定
 プロジェクト直下に `.env` ファイルを作成して設定を記述できます。
@@ -473,6 +503,16 @@ uv run locust -f scripts/locustfile.py --host http://localhost:8000
 
 # ヘッドレスモードでの実行（30秒間、20同時ユーザー）
 uv run locust -f scripts/locustfile.py --headless -u 20 -r 5 --run-time 30s --host http://localhost:8000
+```
+
+### 8.7. Logit Gate 精度・負荷ベンチマーク (`benchmarks/`)
+$N=108$ 評価データセット（社内規程・IT障害・Cloud/DevOps・型番・人事法務）に対する正解率・遮断率測定、および 5〜50件バッチ時の推論レイテンシ・VRAMリークを検証します。
+```bash
+# 精度ベンチマーク（Yes/No vs 1/0, β感度, 閾値スイープ）
+uv run python benchmarks/benchmark_logit_gate_accuracy.py
+
+# 負荷・VRAMリークベンチマーク（5, 10, 20, 50 件バッチ推論レイテンシ & メモリ解放）
+uv run python benchmarks/benchmark_logit_gate_load.py
 ```
 
 ## 9. ビルドパフォーマンスの最適化

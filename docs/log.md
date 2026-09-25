@@ -1,5 +1,13 @@
 # Knowledge Update Log
 
+## 2026-09-25
+* **Feature & High-Precision Reranking**: `plan/logit.md` に基づく **Logit Gate 機能およびハイブリッド再ランキング（ASCII Matcher ＋ 単一フォワードパス ロジット判定）** を完全実装。
+  * **Dynamic Dispatch**: `POST /v1/rerank` において `model` 指定（`Qwen/Qwen2.5-1.5B-Instruct` 等）に応じた自動ルーティングを実装。
+  * **Logit-Space Score Fusion**: $\Delta z_{\text{final}} = \Delta z + (\beta \cdot \text{Containment})$ および $\sigma(\Delta z_{\text{final}})$ による確率スケール保護とニアミス救出を実現。
+  * **Entropy & Explainability**: 正規化二値シャノンエントロピー $H_{\text{binary}}$ を算出して判定の迷い・不確実性を可視化。
+  * **Fail-Safe Design**: Dify / LangChain 連携時の配列欠損クラッシュを防ぐフェイルセーフソート（`drop_failed=False` デフォルト）を確立。
+  * **Benchmarks**: 実機データセット拡張（$N=108$、社内規程・IT障害・Cloud/DevOps・型番ハードウェア・人事総務・法務セキュリティ）において **ニアミス遮断率 100.0%**、**回答不能遮断率 100.0%**、**正解率 95.4% ($\tau=0.30$)**、**F1 92.5%** を実証。さらに GPU (RTX 3060) 上で 1文書あたり約 30ms (CPU比 22倍高速化)、**アンロード時 VRAM リーク 0.00MB** を実証（`benchmarks/`）。全193テスト通過。
+
 ## 2026-09-14
 * **Security & CI Remediation**: `accelerate` パッケージの脆弱性（CVE-2026-69112）を `uv lock --upgrade-package accelerate` によりパッチ版 `1.15.0` へアップデートし、`uv audit`（検出ゼロ）を達成。また GitHub Actions の Gitleaks アクション向けに `actions/checkout` へ `fetch-depth: 0` を適用し、CI セキュリティパイプラインおよび実データテスト（`scratch/verify_real_data.py`）をすべてグリーン（合格）に同期しました（PR #92 マージ完了）。
 * **Code Health**: `scratch/` および `scripts/` の全コードに `ruff format` を適用し、リポジトリ全体のフォーマット整合性を完全担保しました。

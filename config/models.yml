@@ -6,3 +6,6 @@ embedding_models:
 
 rerank_models:
   - "cl-nagoya/ruri-v3-reranker-310m"
+
+logit_gate_models:
+  - "Qwen/Qwen2.5-1.5B-Instruct"

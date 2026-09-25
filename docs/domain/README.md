@@ -12,5 +12,5 @@ description: サポートモデル仕様、プレフィックス定義、API ス
 
 ## ドキュメント一覧
 
-* [サポートモデル仕様・プレフィックス一覧](./models.md) - Ruri-v3, BGE-M3, Visualized-BGE の仕様とタスク別プレフィックス
+* [サポートモデル仕様・プレフィックス一覧](./models.md) - Ruri-v3, BGE-M3, Visualized-BGE, Qwen2.5 (Logit Gate) の仕様とタスク別プレフィックス
 * [API スキーマ・バリデーション仕様](./schemas.md) - Pydantic スキーマ定義、セキュリティ制約、OpenAI 互換仕様

@@ -66,16 +66,24 @@ sources:
 ### リクエスト (`RerankRequest`)
 ```json
 {
-  "model": "cl-nagoya/ruri-v3-reranker-310m",
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
   "query": "日本語の検索クエリ",
   "documents": [
     "ドキュメント1のテキスト",
     "ドキュメント2のテキスト"
   ],
   "top_n": 3,
-  "return_documents": true
+  "return_documents": true,
+  "threshold": 0.55,
+  "drop_failed": false,
+  "use_ascii_boost": true
 }
 ```
+
+#### パラメータ詳細
+- `threshold` (float, optional): 回答十分性判定の確率閾値（未指定時は `.env` の `LOGIT_GATE_THRESHOLD`、デフォルト: `0.55`）。
+- `drop_failed` (bool, default: `false`): `true` の場合、閾値未満のドキュメントを結果から除外。`false`（デフォルト）の場合、全件保持して不合格ドキュメントを `passed: false` で末尾にソート（Dify等のクライアントクラッシュを防止）。
+- `use_ascii_boost` (bool, optional): 半角英数字 3-gram ブーストの有効/無効（未指定時はサーバー設定に従う）。
 
 ### レスポンス (`RerankResponse`)
 ```json
@@ -85,21 +93,35 @@ sources:
     {
       "document": 1,
       "score": 0.9421,
-      "text": "ドキュメント2のテキスト"
+      "text": "ドキュメント2のテキスト",
+      "passed": true,
+      "logit_margin": 1.45,
+      "containment_score": 0.85,
+      "entropy": 0.325
     },
     {
       "document": 0,
-      "score": 0.1205,
-      "text": "ドキュメント1のテキスト"
+      "score": 0.0821,
+      "text": "ドキュメント1のテキスト",
+      "passed": false,
+      "logit_margin": -3.21,
+      "containment_score": 0.0,
+      "entropy": 0.182
     }
   ],
-  "model": "cl-nagoya/ruri-v3-reranker-310m",
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
   "usage": {
-    "prompt_tokens": 48,
-    "total_tokens": 48
+    "prompt_tokens": 128,
+    "total_tokens": 128
   }
 }
 ```
+
+#### Logit Gate 拡張メタデータ
+- `passed` (bool): 閾値 $\tau$ を通過したかどうかの判定フラグ。
+- `logit_margin` (float): ポジティブ/ネガティブ トークン間の未補正ロジット差分 $\Delta z$。
+- `containment_score` (float): クエリ内英数字の 3-gram 包含率スコア（0.0〜1.0）。
+- `entropy` (float): 二値正規化シャノンエントロピー $H_{\text{binary}} \in [0.0, 1.0]$（判定の不確実性の度合い）。
 
 ---
 
