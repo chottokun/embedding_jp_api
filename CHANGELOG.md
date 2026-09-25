@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Upgraded `accelerate` package to `1.15.0` to resolve path traversal and denial of service vulnerabilities in checkpoint weight maps, achieving clean `uv audit` scans.
 
 ### Fixed
+- **Logit Gate Model Pre-Download Support (`src/app/download_models.py`)**:
+  - Integrated `logit_gate_models` (`Qwen/Qwen2.5-1.5B-Instruct`) into `load_model_ids()` so that `./run.sh download` and air-gapped `--verify-offline` Dry-Run verification download and test all models properly.
 - **CI Gitleaks History Depth**:
   - Configured `fetch-depth: 0` in GitHub Actions checkout step to allow `gitleaks` secret detection to inspect the full commit history correctly.
 

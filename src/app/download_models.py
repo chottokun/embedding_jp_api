@@ -28,6 +28,8 @@ def load_model_ids() -> list[str]:
         model_ids.extend(data["embedding_models"])
     if "rerank_models" in data:
         model_ids.extend(data["rerank_models"])
+    if "logit_gate_models" in data:
+        model_ids.extend(data["logit_gate_models"])
     return model_ids
 
 

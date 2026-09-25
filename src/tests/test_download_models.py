@@ -75,18 +75,21 @@ def test_download_models_success(
     mock_yaml.return_value = {
         "embedding_models": ["model1"],
         "rerank_models": ["model2"],
+        "logit_gate_models": ["model3"],
     }
 
     download_models()
 
-    assert mock_snapshot.call_count == 2
+    assert mock_snapshot.call_count == 3
     mock_snapshot.assert_any_call(repo_id="model1")
     mock_snapshot.assert_any_call(repo_id="model2")
+    mock_snapshot.assert_any_call(repo_id="model3")
     printed_messages = [
         str(call.args[0]) for call in mock_print.call_args_list if call.args
     ]
     assert any("完了: model1" in msg for msg in printed_messages)
     assert any("完了: model2" in msg for msg in printed_messages)
+    assert any("完了: model3" in msg for msg in printed_messages)
 
 
 @patch("builtins.print")
