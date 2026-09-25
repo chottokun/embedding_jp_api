@@ -21,11 +21,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-import torch
-import psutil
-from src.app.models import get_model, unload_model
-from src.app.services.logit_gate import LogitGateService, _sigmoid
-from src.app.services.ascii_matcher import AsciiMatcher
+import torch  # noqa: E402
+import psutil  # noqa: E402
+from src.app.models import get_model, unload_model  # noqa: E402
+from src.app.services.logit_gate import LogitGateService, _sigmoid  # noqa: E402
+from src.app.services.ascii_matcher import AsciiMatcher  # noqa: E402
 
 
 def get_vram_usage_mb() -> float:
@@ -105,7 +105,7 @@ def run_load_benchmark(
             containment = ascii_matcher.score_documents(sample_query, docs)
             gate_out = gate_service.predict_margins(sample_query, docs)
             # score fusion
-            scores = [_sigmoid(g["logit_margin"] + 1.2 * c) for g, c in zip(gate_out, containment)]
+            _ = [_sigmoid(g["logit_margin"] + 1.2 * c) for g, c in zip(gate_out, containment)]
             t_end = time.perf_counter()
             times.append((t_end - t_start) * 1000.0)  # ms
 

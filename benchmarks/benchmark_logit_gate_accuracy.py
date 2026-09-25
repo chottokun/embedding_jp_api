@@ -11,7 +11,6 @@ Evaluates:
 - Entropy distribution across positive, near-miss, and unanswerable samples
 """
 
-import os
 import sys
 import json
 import time
@@ -23,10 +22,14 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-import torch
-from src.app.models import get_model, unload_model
-from src.app.services.logit_gate import LogitGateService, _sigmoid, _binary_entropy
-from src.app.services.ascii_matcher import AsciiMatcher
+import torch  # noqa: E402
+from src.app.models import get_model  # noqa: E402
+from src.app.services.logit_gate import (  # noqa: E402
+    LogitGateService,
+    _sigmoid,
+    _binary_entropy,
+)
+from src.app.services.ascii_matcher import AsciiMatcher  # noqa: E402
 
 
 DATASET_PATH = PROJECT_ROOT / "benchmarks" / "datasets" / "sufficiency_eval.json"
