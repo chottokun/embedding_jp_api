@@ -9,3 +9,4 @@ rerank_models:
 
 logit_gate_models:
   - "Qwen/Qwen2.5-1.5B-Instruct"
+  - "Takenoko12345678/Qwen3.5-0.8B-Japanese-SFT-v2"

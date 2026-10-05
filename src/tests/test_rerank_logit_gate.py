@@ -132,3 +132,45 @@ def test_create_rerank_logit_gate_drop_failed(
     assert len(results) == 2
     assert results[0]["document"] == 1
     assert results[1]["document"] == 2
+
+
+@patch("app.services.rerank.get_validated_model")
+@patch("app.services.rerank.LogitGateService")
+@patch("app.services.rerank.AsciiMatcher")
+def test_create_rerank_logit_gate_qwen35_08b(
+    mock_matcher_cls,
+    mock_gate_cls,
+    mock_get_model,
+    mock_logit_gate_model,
+    mock_gate_results,
+    mock_containment_scores,
+):
+    target_model = "Takenoko12345678/Qwen3.5-0.8B-Japanese-SFT-v2"
+    mock_get_model.return_value = mock_logit_gate_model
+
+    mock_gate_instance = MagicMock()
+    mock_gate_instance.predict_margins.return_value = mock_gate_results
+    mock_gate_cls.return_value = mock_gate_instance
+
+    mock_matcher_instance = MagicMock()
+    mock_matcher_instance.score_documents.return_value = mock_containment_scores
+    mock_matcher_cls.return_value = mock_matcher_instance
+
+    request_payload = {
+        "query": "日本の首都はどこですか？",
+        "documents": [
+            "日本列島およびその周辺の島々から構成される。",
+            "首都は東京都。政治の中心地である。",
+            "四季折々の美しい自然がある。",
+        ],
+        "model": target_model,
+        "return_documents": True,
+    }
+
+    response = client.post("/v1/rerank", json=request_payload)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["model"] == target_model
+    assert len(response_json["data"]) == 3
+    assert response_json["data"][0]["text"] == "首都は東京都。政治の中心地である。"

@@ -122,7 +122,9 @@ Jina/Cohere等の標準的な再ランキングAPIに準拠したスキーマを
 指定されたモデル名に応じて、**従来のクロスエンコーダー**と**Logit Gate ＋ ハイブリッド再ランキング**が自動的にディスパッチされます。
 
 * **従来のクロスエンコーダー型**: `cl-nagoya/ruri-v3-reranker-310m`
-* **Logit Gate ハイブリッド型**: `Qwen/Qwen2.5-1.5B-Instruct`（ASCII Matcher ＋ 単一フォワードパス ロジット判定）
+* **Logit Gate ハイブリッド型**:
+  * `Qwen/Qwen2.5-1.5B-Instruct`（ASCII Matcher ＋ 単一フォワードパス ロジット判定）
+  * `Takenoko12345678/Qwen3.5-0.8B-Japanese-SFT-v2`（0.8B 超軽量・日本語特化 SFT モデル、高速リランキング・低メモリ消費）
 
 #### リクエストボディ (JSON)
 

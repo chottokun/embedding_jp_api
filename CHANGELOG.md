@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Formatted all scripts in `scratch/` and `scripts/` using `ruff format` to meet repo coding standards.
 
 ### Added
+- **Qwen3.5-0.8B-Japanese-SFT-v2 Logit Gate Rerank Support (`Takenoko12345678/Qwen3.5-0.8B-Japanese-SFT-v2`)**:
+  - Integrated the lightweight (0.8B parameters) Japanese fine-tuned causal model into the Logit Gate Rerank framework.
+  - Successfully evaluated on the full $N=108$ dataset (`benchmarks/datasets/sufficiency_eval.json`): achieved **94.4% Accuracy, 94.1% Precision, 88.9% Recall, 0.914 F1**, with a **+0.5157 separation gap** between positive answers and topical near-misses, and 100.0% unanswerable rejection.
+  - Conducted live API visual verification via FastAPI `/v1/rerank`, confirming accurate logit margins, low uncertainty entropy, and proper document ranking/filtering (`drop_failed`).
 - **Logit Gate & Hybrid Rerank Engine (`Qwen/Qwen2.5-1.5B-Instruct`)**:
   - Implemented dynamic dispatch on `POST /v1/rerank` using CausalLM single-forward-pass next-token logit evaluation for decisive near-miss rejection and answerability gating.
   - Added ChatML prompt template evaluating positive target tokens (`Yes,yes,はい`) and negative target tokens (`No,no,いいえ`) via LogSumExp margin $\Delta z = z_{\text{pos}} - z_{\text{neg}}$.
