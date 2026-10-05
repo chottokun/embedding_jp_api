@@ -1,0 +1,4322 @@
+[
+  {
+    "id": "it_pos_k8s_oom",
+    "query": "KubernetesでPodがExit Code 137で終了する主な原因と対処法は何ですか？",
+    "document": "Exit Code 137は、コンテナがメモリ制限（limits.memory）を超過してLinuxカーネルのOOM KillerによってSIGKILLされたことを意味します。対処法としては、Podのリソース制限値を引き上げるか、アプリケーションのメモリリークをプロファイリングして解消します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_k8s_oom",
+    "query": "KubernetesでPodがExit Code 137で終了する主な原因と対処法は何ですか？",
+    "document": "Podが予期せず終了する場合、kubectl describe podコマンドでLast Stateを確認します。終了コードが137を示す場合、シグナルによりプロセスが強制停止されています。リソース監視ダッシュボードでノード全体の負荷やCPU使用率を確認することが推奨されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_k8s_oom",
+    "query": "KubernetesでPodがExit Code 137で終了する主な原因と対処法は何ですか？",
+    "document": "KubernetesのServiceリソースは、Podの集合に対するトラフィックのルーティングと負荷分散を提供します。ClusterIP、NodePort、LoadBalancerなどのタイプがあり、用途に応じて選択します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_pg_vacuum",
+    "query": "PostgreSQLでautovacuum_vacuum_scale_factorのデフォルト値は何ですか？",
+    "document": "PostgreSQLにおけるautovacuum_vacuum_scale_factorのデフォルト値は 0.2（テーブルの推計行数の20%）です。テーブルのデッドタプルの割合がこの閾値を超えると自動バキュームがトリガーされます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_pg_vacuum",
+    "query": "PostgreSQLでautovacuum_vacuum_scale_factorのデフォルト値は何ですか？",
+    "document": "PostgreSQLのautovacuumは不要領域を回収してテーブルの肥大化を防ぎます。autovacuum_vacuum_scale_factorとautovacuum_vacuum_thresholdの組み合わせによって実行タイミングが決定され、大量更新のあるテーブルではチューニングが重要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_pg_vacuum",
+    "query": "PostgreSQLでautovacuum_vacuum_scale_factorのデフォルト値は何ですか？",
+    "document": "PostgreSQLのWAL（Write-Ahead Logging）は、データベースの耐障害性を保証するための仕組みです。データファイルの変更前にログをディスクに永続化することでクラッシュリカバリを可能にします。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_tcp_syn_flood",
+    "query": "LinuxでTCP SYN Flood攻撃から保護するためのカーネルパラメータ名は何ですか？",
+    "document": "LinuxカーネルでTCP SYN Flood攻撃を緩和するためのパラメータは net.ipv4.tcp_syncookies です。これを 1 に設定することで、SYNバックログが満杯になった際にSYN Cookieが有効化されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_tcp_syn_flood",
+    "query": "LinuxでTCP SYN Flood攻撃から保護するためのカーネルパラメータ名は何ですか？",
+    "document": "TCP SYN Flood攻撃は、3-Wayハンドシェイクの完了を意図的に遅らせて接続キューを枯渇させるDoS攻撃の一種です。sysctlによるカーネルパラメータの適切な調整やファイアウォールによる接続制限が有効な対策となります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_tcp_syn_flood",
+    "query": "LinuxでTCP SYN Flood攻撃から保護するためのカーネルパラメータ名は何ですか？",
+    "document": "DNS（Domain Name System）はホスト名とIPアドレスを相互に変換するプロトコルです。UDPポート53を使用し、階層構造のネームサーバー群によって分散管理されています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_nginx_502_504",
+    "query": "Nginxにおいて502 Bad Gatewayと504 Gateway Timeoutの違いは何ですか？",
+    "document": "502 Bad Gatewayはアップストリームサーバーから無効な応答を受信した（または接続が即座に拒否された）場合に発生します。一方、504 Gateway Timeoutはアップストリームからの応答がproxy_read_timeoutで指定された制限時間内に返ってこなかった場合に発生します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_nginx_502_504",
+    "query": "Nginxにおいて502 Bad Gatewayと504 Gateway Timeoutの違いは何ですか？",
+    "document": "WebシステムでNginxをリバースプロキシとして利用する場合、アップストリーム（APサーバー）との通信エラーで502や504が発生することがあります。error.logを確認してどちらのエラーが発生しているかを特定し、サーバープロセスやネットワークを確認してください。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_nginx_502_504",
+    "query": "Nginxにおいて502 Bad Gatewayと504 Gateway Timeoutの違いは何ですか？",
+    "document": "Nginxのgzipモジュールを有効化すると、クライアントに送信するレスポンスボディを圧縮してネットワーク転送量を削減できます。CPU負荷と転送速度のトレードオフを考慮して設定します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_redis_aof_rdb",
+    "query": "RedisでRDB永続化と比較したAOF（Append Only File）の利点は何ですか？",
+    "document": "AOFの最大の利点はデータ損失の最小化です。fsyncポリシーをeverysecやalwaysに設定することで、サーバークラッシュ時でも最大1秒分またはコミット済みのすべての書き込み操作を保持でき、定期スナップショットであるRDBよりも耐久性が大幅に高くなります。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_redis_aof_rdb",
+    "query": "RedisでRDB永続化と比較したAOF（Append Only File）の利点は何ですか？",
+    "document": "Redisにはメモリ上のデータを永続化する仕組みとして、定期的にメモリのスナップショットを保存するRDB方式と、書き込みコマンドを順次追記するAOF方式の2種類が存在します。それぞれの特性を理解して運用要件に合わせた選択が必要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_redis_aof_rdb",
+    "query": "RedisでRDB永続化と比較したAOF（Append Only File）の利点は何ですか？",
+    "document": "RedisのPub/Sub機能を使用すると、メッセージブローカーとして複数のサブスクライバーに対してリアルタイムにイベントを配信することができます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_docker_layer_cache",
+    "query": "DockerfileでCOPY package.jsonをソースコード全体より先に記述する理由は何ですか？",
+    "document": "依存関係ファイル（package.json等）を先にCOPYしてインストールを実行することで、ソースコードのみが変更された場合に依存関係インストールのレイヤーキャッシュを再利用でき、ビルド時間を大幅に短縮できるためです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_docker_layer_cache",
+    "query": "DockerfileでCOPY package.jsonをソースコード全体より先に記述する理由は何ですか？",
+    "document": "Dockerイメージのビルドでは、Dockerfileの各インストラクションごとにレイヤーが作成されキャッシュされます。キャッシュを効果的に活用するためには、変更頻度の低い処理を上部に、変更頻度の高い処理を下部に配置することがベストプラクティスです。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_docker_layer_cache",
+    "query": "DockerfileでCOPY package.jsonをソースコード全体より先に記述する理由は何ですか？",
+    "document": "Docker Composeは、複数のコンテナから構成されるマルチコンテナアプリケーションを単一のYAMLファイルで定義し、一括で起動・管理するためのツールです。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_git_rebase_merge",
+    "query": "git rebaseとgit mergeの違いにおいて、コミット履歴の観点での違いは何ですか？",
+    "document": "git mergeは分岐した両ブランチの履歴を保持し新たなマージコミットを作成しますが、git rebaseは変更をベースブランチの先端に順次再適用（コミットを再作成）するため、マージコミットを作らず直線的でクリーンな履歴を作成します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_git_rebase_merge",
+    "query": "git rebaseとgit mergeの違いにおいて、コミット履歴の観点での違いは何ですか？",
+    "document": "Gitでフィーチャーブランチの変更をメインブランチに統合する際、mergeコマンドまたはrebaseコマンドを使用します。チームの開発運用ルールに応じて、コンフリクト解決の容易さや履歴の追跡性を考慮して使い分ける必要があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_git_rebase_merge",
+    "query": "git rebaseとgit mergeの違いにおいて、コミット履歴の観点での違いは何ですか？",
+    "document": "Gitのタグ機能を使用すると、特定のコミットに目印を付けることができます。一般的にソフトウェアのリリースバージョン（v1.0.0など）を記録するために使用されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_tls_handshake_13",
+    "query": "TLS 1.3のハンドシェイクにおいて、TLS 1.2と比べてRTT（往復時間）はどう改善されましたか？",
+    "document": "TLS 1.2ではフルハンドシェイクに 2-RTT（2往復）必要でしたが、TLS 1.3では暗号スイートの事前限定と鍵交換パラメータの初回送信により 1-RTT（1往復）に半減し、0-RTTのセッション再開もサポートされています。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_tls_handshake_13",
+    "query": "TLS 1.3のハンドシェイクにおいて、TLS 1.2と比べてRTT（往復時間）はどう改善されましたか？",
+    "document": "TLS 1.3は従来のTLS 1.2から大幅な仕様改定が行われ、安全性の向上と接続遅延の削減が実現されました。脆弱な古い暗号方式が廃止され、ハンドシェイク手順の効率化が行われています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_tls_handshake_13",
+    "query": "TLS 1.3のハンドシェイクにおいて、TLS 1.2と比べてRTT（往復時間）はどう改善されましたか？",
+    "document": "HTTP/2は単一のTCP接続上で複数のリクエストとレスポンスを多重化するバイナリプロトコルであり、Webページの読み込み速度向上に寄与します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_ssh_key_ed25519",
+    "query": "SSH鍵認証でRSAと比較したEd25519鍵の主な優位性は何ですか？",
+    "document": "Ed25519はエドワーズ曲線を用いた楕円曲線暗号で、256ビットの短い鍵長でありながらRSA 3072ビット相当以上の高い安全性を誇り、鍵生成・署名・検証の計算速度が極めて高速でサイドチャネル攻撃への耐性も備えている点です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_ssh_key_ed25519",
+    "query": "SSH鍵認証でRSAと比較したEd25519鍵の主な優位性は何ですか？",
+    "document": "SSHで安全にリモートサーバーにログインするために公開鍵暗号方式が用いられます。歴史的に広く使われてきたRSA暗号のほか、近年ではモダンな楕円曲線暗号を用いた鍵タイプが推奨されるようになっています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_ssh_key_ed25519",
+    "query": "SSH鍵認証でRSAと比較したEd25519鍵の主な優位性は何ですか？",
+    "document": "SCP（Secure Copy Protocol）はSSHプロトコルを利用してネットワーク上のホスト間でファイルを安全に転送するためのコマンドラインツールです。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_k8s_hpa_metrics",
+    "query": "KubernetesのHPA（Horizontal Pod Autoscaler）で利用できるデフォルトの標準メトリクスは何ですか？",
+    "document": "標準で利用できるメトリクスは CPU使用率（Utilization / AverageValue）と メモリ使用率（Memory）です。カスタムメトリクスや外部メトリクスを利用する場合はPrometheusなどのMetrics Adapterを導入する必要があります。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_k8s_hpa_metrics",
+    "query": "KubernetesのHPA（Horizontal Pod Autoscaler）で利用できるデフォルトの標準メトリクスは何ですか？",
+    "document": "KubernetesのHPAは、負荷に応じてDeploymentやStatefulSetのPodレプリカ数を自動的にスケーリングするコントローラーです。メトリクスサーバーから収集したリソース使用量に基づいてスケーリング判断を行います。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_k8s_hpa_metrics",
+    "query": "KubernetesのHPA（Horizontal Pod Autoscaler）で利用できるデフォルトの標準メトリクスは何ですか？",
+    "document": "KubernetesのConfigMapを使用すると、機密性のない環境変数や設定ファイルの内容をコンテナイメージから分離して管理できます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_mysql_deadlock",
+    "query": "MySQLのInnoDBストレージエンジンでデッドロックが発生した際、どちらのトランザクションがロールバックされますか？",
+    "document": "InnoDBはデッドロックを検知すると、変更（INSERT/UPDATE/DELETE）した行数がより少なく、ロールバックに伴うコストが小さい「重みの小さい方のトランザクション」を自動的に選択してロールバックし、エラー1213を返します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_mysql_deadlock",
+    "query": "MySQLのInnoDBストレージエンジンでデッドロックが発生した際、どちらのトランザクションがロールバックされますか？",
+    "document": "リレーショナルデータベースで複数のトランザクションが互いに相手の保持するロックを待機し合うとデッドロックが発生します。MySQLのInnoDBではデッドロック検出機構が組み込まれており、自動的に一方をロールバックして解消を図ります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_mysql_deadlock",
+    "query": "MySQLのInnoDBストレージエンジンでデッドロックが発生した際、どちらのトランザクションがロールバックされますか？",
+    "document": "MySQLのレプリケーションは、プライマリサーバーで実行されたデータ変更をバイナリログ経由でレプリカサーバーに転送し、同一のデータを非同期または準同期で複製する機能です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_linux_load_average",
+    "query": "Linuxのuptimeコマンドで表示されるロードアベレージの数値は何を表していますか？",
+    "document": "ロードアベレージは、直近1分・5分・15分間において「CPUを実行中または実行待ち（TASK_RUNNING）のプロセス数」に加え、Linux特有の仕様として「ディスクI/O等の完了を待つ無停電スリープ状態（TASK_UNINTERRUPTIBLE）のプロセス数」の平均値を表します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_linux_load_average",
+    "query": "Linuxのuptimeコマンドで表示されるロードアベレージの数値は何を表していますか？",
+    "document": "Linuxシステムの負荷状況を確認する際、uptimeやtopコマンドでロードアベレージを確認します。表示される3つの数値は過去1分、5分、15分の推移を示しており、CPUコア数と比較してシステムの逼迫度を診断します。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_linux_load_average",
+    "query": "Linuxのuptimeコマンドで表示されるロードアベレージの数値は何を表していますか？",
+    "document": "Linuxのcronデーモンは、指定した日時に定期的にスクリプトやコマンドをバックグラウンドで自動実行するためのスケジューラです。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_s3_storage_classes",
+    "query": "AWS S3 Glacier Flexible Retrievalの標準的な取り出し時間はどのくらいですか？",
+    "document": "S3 Glacier Flexible Retrieval（旧Glacier）の標準（Standard）取り出し時間は 通常3〜5時間 です。緊急用の迅速（Expedited）取り出しでは1〜5分、コスト重視の大容量（Bulk）取り出しでは5〜12時間かかります。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_s3_storage_classes",
+    "query": "AWS S3 Glacier Flexible Retrievalの標準的な取り出し時間はどのくらいですか？",
+    "document": "Amazon S3にはアクセス頻度や耐久性要件に応じて様々なストレージクラスが用意されています。長期保存用アーカイブとしてGlacierクラスが提供されており、取り出し速度とコストの要件に応じた取り出しオプションが選択可能です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_s3_storage_classes",
+    "query": "AWS S3 Glacier Flexible Retrievalの標準的な取り出し時間はどのくらいですか？",
+    "document": "Amazon Route 53は、可用性と拡張性に優れたクラウドドメインネームシステム（DNS）ウェブサービスです。レイテンシーベースやフェイルオーバーのルーティングをサポートします。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_kafka_partition_key",
+    "query": "Apache Kafkaでメッセージ送信時にパーティションキーを指定する目的は何ですか？",
+    "document": "同一のパーティションキーを持つメッセージが必ず同じパーティションにルーティングされるようにすることで、そのキーに関連するメッセージ群の送信順序（厳格な順序保証）を同一パーティション内で維持するためです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_kafka_partition_key",
+    "query": "Apache Kafkaでメッセージ送信時にパーティションキーを指定する目的は何ですか？",
+    "document": "Apache Kafkaは大規模なリアルタイムイベントストリーミングプラットフォームです。トピックは複数のパーティションに分割されてスケーラビリティを担保しており、プロデューサーはレコードを適切なパーティションに送信します。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_kafka_partition_key",
+    "query": "Apache Kafkaでメッセージ送信時にパーティションキーを指定する目的は何ですか？",
+    "document": "Apache Sparkは大規模データ処理のための統合分析エンジンであり、メモリ内コンピューティングにより高速なバッチ処理やストリーム処理を実現します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_linux_swap_swappiness",
+    "query": "Linuxのvm.swappinessパラメータで0と100はそれぞれ何を意味しますか？",
+    "document": "vm.swappinessはページキャッシュの破棄とスワップ空間の使用の積極度を制御する値（0〜100）です。0はOOM（メモリ不足）直前までスワップを極力回避する設定、100は積極的に無効ページをスワップアウトしてページキャッシュを優先する設定を意味します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_linux_swap_swappiness",
+    "query": "Linuxのvm.swappinessパラメータで0と100はそれぞれ何を意味しますか？",
+    "document": "Linuxの仮想メモリ管理において、物理メモリが逼迫した際にディスク上のスワップ領域が活用されます。sysctlのvm.swappinessパラメータを調整することで、システムのメモリ使用挙動やパフォーマンス特性をチューニングできます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_linux_swap_swappiness",
+    "query": "Linuxのvm.swappinessパラメータで0と100はそれぞれ何を意味しますか？",
+    "document": "RAID 0はストライピングにより複数のディスクにデータを分散して読み書き速度を向上させますが、冗長性がなく1台の故障で全データが失われます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_es_sharding",
+    "query": "Elasticsearchでインデックス作成後にプライマリシャード数を変更することは可能ですか？",
+    "document": "いいえ、インデックス作成後に既存インデックスのプライマリシャード数を直接変更することはできません。シャード数を変更するには、新しいシャード数でインデックスを新規作成し、_reindex APIを使ってデータを再インデックスする必要があります。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_es_sharding",
+    "query": "Elasticsearchでインデックス作成後にプライマリシャード数を変更することは可能ですか？",
+    "document": "Elasticsearchのインデックスは複数のシャードに分割されてクラスタ全体に分散配置されます。シャード設計は検索性能やクラスタの負荷分散に重大な影響を与えるため、データ量を見越した慎重な計画が必要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_es_sharding",
+    "query": "Elasticsearchでインデックス作成後にプライマリシャード数を変更することは可能ですか？",
+    "document": "GraphQLはAPIのためのクエリ言語であり、クライアントが必要なデータ構造を正確に指定して単一のエンドポイントから取得できるように設計されています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_grpc_http2",
+    "query": "gRPCが通信基盤としてHTTP/2を採用している最大の技術的メリットは何ですか？",
+    "document": "単一のTCP接続上で複数のRPCコールを並行処理できるストリームの多重化（Multiplexing）、双方向ストリーミングの標準サポート、およびヘッダー圧縮（HPACK）による低オーバーヘッド通信が可能な点です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_grpc_http2",
+    "query": "gRPCが通信基盤としてHTTP/2を採用している最大の技術的メリットは何ですか？",
+    "document": "gRPCはGoogleが開発したオープンソースの高性能RPCフレームワークです。Protocol Buffersをインターフェース定義言語として使用し、マイクロサービス間の高速な通信プロトコルとして広く採用されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_grpc_http2",
+    "query": "gRPCが通信基盤としてHTTP/2を採用している最大の技術的メリットは何ですか？",
+    "document": "WebSocketsはWebブラウザとサーバー間で双方向の全二重通信チャネルを確立するプロトコルであり、チャットやリアルタイム通知に適しています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_aws_lambda_concurrency",
+    "query": "AWS LambdaのReserved Concurrency（予約済同時実行数）を設定する目的は何ですか？",
+    "document": "該当関数が常に実行できるように指定数の実行枠を確実に確保することと、同時にその関数の最大同時実行数を制限してバックエンドデータベース等の過負荷ダウンを防ぐことの2点です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_aws_lambda_concurrency",
+    "query": "AWS LambdaのReserved Concurrency（予約済同時実行数）を設定する目的は何ですか？",
+    "document": "AWS Lambdaはサーバレスコンピューティングサービスであり、受信イベントに応じて自動的にスケールします。アカウント全体の同時実行数クォータが存在するため、重要度に応じた同時実行数の制御管理が重要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_aws_lambda_concurrency",
+    "query": "AWS LambdaのReserved Concurrency（予約済同時実行数）を設定する目的は何ですか？",
+    "document": "AWS CloudWatchはAWSリソースとアプリケーションの監視サービスであり、メトリクス収集、アラーム設定、ログ分析機能を提供します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_linux_chown_chmod",
+    "query": "Linuxコマンドにおいてchmod 755の意味と付与される権限は何ですか？",
+    "document": "755は所有者に読み書き実行（rwx: 7）、グループとその他のユーザーに読み取りと実行（r-x: 5）の権限を付与することを意味します。一般に公開用スクリプトや実行可能ディレクトリに設定されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_linux_chown_chmod",
+    "query": "Linuxコマンドにおいてchmod 755の意味と付与される権限は何ですか？",
+    "document": "Linuxファイルシステムではファイルやディレクトリごとにパーミッション（権限）が設定されています。chmodコマンドを使って8進数または記号形式で所有者・グループ・その他のユーザーに対する権限を変更します。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_linux_chown_chmod",
+    "query": "Linuxコマンドにおいてchmod 755の意味と付与される権限は何ですか？",
+    "document": "Linuxのtarコマンドは、複数のファイルやディレクトリを1つのアーカイブファイルにまとめたり、展開したりするための標準ツールです。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_git_cherry_pick",
+    "query": "git cherry-pickコマンドの機能は何ですか？",
+    "document": "他のブランチにある特定のコミット（単一または複数）の変更内容だけを選択し、現在のブランチの先端に新しいコミットとして適用する機能です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_git_cherry_pick",
+    "query": "git cherry-pickコマンドの機能は何ですか？",
+    "document": "Gitにはブランチ間で変更をやり取りするための様々なコマンドが用意されています。ブランチ全体を統合するのではなく、特定の修正コミットのみを別ブランチに取り込みたいユースケースにおいて活用されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_git_cherry_pick",
+    "query": "git cherry-pickコマンドの機能は何ですか？",
+    "document": "Git LFS（Large File Storage）は、大容量のバイナリファイルをGitリポジトリ外部で管理し、リポジトリ内にはポインタのみを保持する拡張機能です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_k8s_liveness_readiness",
+    "query": "KubernetesでLiveness Probeが失敗した場合とReadiness Probeが失敗した場合の動作の違いは何ですか？",
+    "document": "Liveness Probeが失敗するとkubeletがそのコンテナを強制再起動（kill & restart）します。一方、Readiness Probeが失敗した場合はコンテナは再起動されず、Serviceのルーティング対象エンドポイントから一時的に除外されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_k8s_liveness_readiness",
+    "query": "KubernetesでLiveness Probeが失敗した場合とReadiness Probeが失敗した場合の動作の違いは何ですか？",
+    "document": "Kubernetesではコンテナの健全性を監視するためにヘルスチェックプローブを設定します。アプリケーションの状態を正しく監視するために、用途に応じたプローブの適切な設定が求められます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_k8s_liveness_readiness",
+    "query": "KubernetesでLiveness Probeが失敗した場合とReadiness Probeが失敗した場合の動作の違いは何ですか？",
+    "document": "KubernetesのDaemonSetは、クラスタ内の全ノード（または指定した条件のノード）に必ず1つのPodを配置・実行するためのコントローラーです。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_mysql_b_tree_hash",
+    "query": "MySQLのB+TreeインデックスがHashインデックスと比較して優れている検索パターンは何ですか？",
+    "document": "BETWEEN、<、>などの範囲検索や、ORDER BYによるソート処理、および前方一致検索（LIKE 'abc%'）です。Hashインデックスは完全一致検索（=）しか対応できません。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_mysql_b_tree_hash",
+    "query": "MySQLのB+TreeインデックスがHashインデックスと比較して優れている検索パターンは何ですか？",
+    "document": "データベースのインデックスにはB+TreeインデックスやHashインデックスなどの構造があります。インデックスを適切に設計することでクエリの実行速度を劇的に向上させることができます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_mysql_b_tree_hash",
+    "query": "MySQLのB+TreeインデックスがHashインデックスと比較して優れている検索パターンは何ですか？",
+    "document": "SQLのGROUP BY句は、指定したカラムの値ごとにレコードをグループ化し、COUNTやSUMなどの集計関数を適用するために使用されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_linux_ulimit_nofile",
+    "query": "Linuxのulimit -n（nofile）は何の上限値を設定するものですか？",
+    "document": "1つのプロセスが同時に開くことができる「オープンファイルディスクリプタ（ファイル記述子）の最大数」を設定するものです。WebサーバーやDBの高並行接続時にToo many open filesエラーを防ぐために引き上げます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_linux_ulimit_nofile",
+    "query": "Linuxのulimit -n（nofile）は何の上限値を設定するものですか？",
+    "document": "Linuxシステムではリソース枯渇を防ぐためにプロセスごとの各種リソース上限値が制限されています。ulimitコマンドを使用してソフトリミットおよびハードリミットの確認や変更を行うことができます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_linux_ulimit_nofile",
+    "query": "Linuxのulimit -n（nofile）は何の上限値を設定するものですか？",
+    "document": "Linuxのgrepコマンドは、テキストファイル内から指定した正規表現パターンに一致する行を検索して出力するツールです。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_docker_multistage",
+    "query": "Dockerのマルチステージビルドを採用する主な目的は何ですか？",
+    "document": "ビルド環境（コンパイラや開発用ツール）と本番実行環境を分離し、最終成果物（バイナリや最小限の依存関係）のみを軽量なベースイメージにコピーすることで、最終イメージのサイズ削減とセキュリティ向上を図るためです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_docker_multistage",
+    "query": "Dockerのマルチステージビルドを採用する主な目的は何ですか？",
+    "document": "Dockerイメージの最適化手法としてマルチステージビルドが広く利用されています。Dockerfile内で複数のFROM句を使用することで、中間成果物を効率的に受け渡すパイプラインを構築できます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_docker_multistage",
+    "query": "Dockerのマルチステージビルドを採用する主な目的は何ですか？",
+    "document": "Docker HubはDockerコンテナイメージを共有・保存・配布するための公式クラウドレジストリサービスです。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_dns_cname_a",
+    "query": "DNSレコードにおけるAレコードとCNAMEレコードの決定的な違いは何ですか？",
+    "document": "Aレコードはドメイン名を直接IPv4アドレス（例: 192.0.2.1）にマッピングしますが、CNAMEレコードはドメイン名を別の正規ドメイン名（エイリアス）にマッピングする点です。なおCNAMEはZone Apex（ルートドメイン）には設定できません。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_dns_cname_a",
+    "query": "DNSレコードにおけるAレコードとCNAMEレコードの決定的な違いは何ですか？",
+    "document": "ドメイン名をIPアドレスに解決するためにDNSサーバーに各種リソースレコードを登録します。AレコードやCNAMEレコードはWebサイトのホスティングにおいて頻繁に設定される代表的なレコードです。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_dns_cname_a",
+    "query": "DNSレコードにおけるAレコードとCNAMEレコードの決定的な違いは何ですか？",
+    "document": "BGP（Border Gateway Protocol）はインターネット上の自律システム（AS）間でルーティング情報を交換するための標準プロトコルです。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_nginx_worker_connections",
+    "query": "Nginxのworker_connectionsディレクティブは何の上限値を指定するものですか？",
+    "document": "1つのワーカープロセスが同時にオープンできる最大同時接続数（クライアント接続およびアップストリーム接続の合計）を指定するものです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_nginx_worker_connections",
+    "query": "Nginxのworker_connectionsディレクティブは何の上限値を指定するものですか？",
+    "document": "Nginxのパフォーマンスチューニングにおいて、worker_processesとworker_connectionsの設定は極めて重要です。サーバーのCPUコア数やメモリ量、予想トラフィックに応じて適切に設定する必要があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_nginx_worker_connections",
+    "query": "Nginxのworker_connectionsディレクティブは何の上限値を指定するものですか？",
+    "document": "Apache HTTP Serverは長い歴史を持つモジュール型のオープンソースWebサーバーであり、.htaccessによる柔軟なディレクトリ単位の設定が特徴です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_pg_index_types",
+    "query": "PostgreSQLで全文検索や配列データの包含検索に適したインデックスタイプは何ですか？",
+    "document": "GIN（Generalized Inverted Index：汎用転置インデックス）です。要素（単語や配列要素）ごとに転置リストを保持するため、配列の要素検索やtsvectorに対する全文検索で高い検索性能を発揮します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_pg_index_types",
+    "query": "PostgreSQLで全文検索や配列データの包含検索に適したインデックスタイプは何ですか？",
+    "document": "PostgreSQLには標準のB-Treeのほか、GiST、GIN、BRIN、SP-GiST、Hashなど多様なインデックスアルゴリズムが用意されており、データ型や検索パターンに応じた使い分けが可能です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_pg_index_types",
+    "query": "PostgreSQLで全文検索や配列データの包含検索に適したインデックスタイプは何ですか？",
+    "document": "PostgreSQLの外部キー制約（FOREIGN KEY）は、参照整合性を強制し、親テーブルに存在しない値の登録や関連データの不整合を防ぐための制約です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_terraform_state_lock",
+    "query": "TerraformでS3とDynamoDBを組み合わせたリモートバックエンドを使用する目的は何ですか？",
+    "document": "S3バケットでtfstateファイル（インフラの最新状態）を一元的に共有・暗号化保存し、DynamoDBテーブルのLockID機能によって複数人による同時apply実行時のステート競合・破損をロックして防ぐためです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_terraform_state_lock",
+    "query": "TerraformでS3とDynamoDBを組み合わせたリモートバックエンドを使用する目的は何ですか？",
+    "document": "TerraformはInfrastructure as Codeを実現するツールであり、インフラの状態をステートファイルで管理します。チーム開発ではステートファイルを安全にリモートで共有・ロックする機構が不可欠です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_terraform_state_lock",
+    "query": "TerraformでS3とDynamoDBを組み合わせたリモートバックエンドを使用する目的は何ですか？",
+    "document": "AnsibleはエージェントレスでSSH経由でサーバー構成管理を自動化できるオープンソースツールであり、YAML形式のPlaybookで記述します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_redis_eviction_policies",
+    "query": "Redisでメモリ上限に達した際に有効期限付きキーのみを対象にLRUアルゴリズムで削除するポリシー名は何ですか？",
+    "document": "volatile-lru です（全キーを対象にLRUで削除するポリシーは allkeys-lru、有効期限付きキーからランダム削除は volatile-random）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_redis_eviction_policies",
+    "query": "Redisでメモリ上限に達した際に有効期限付きキーのみを対象にLRUアルゴリズムで削除するポリシー名は何ですか？",
+    "document": "Redisのmaxmemoryに達した際の挙動はmaxmemory-policyディレクティブで設定します。キャッシュ用途やセッション管理など、保存するデータの性質に応じて適切な退避ポリシーを選択します。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_redis_eviction_policies",
+    "query": "Redisでメモリ上限に達した際に有効期限付きキーのみを対象にLRUアルゴリズムで削除するポリシー名は何ですか？",
+    "document": "MemcachedはシンプルなインメモリKey-Valueキャッシュシステムであり、マルチスレッドアーキテクチャによる高いスループットを特徴とします。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_pos_k8s_pv_pvc",
+    "query": "KubernetesでPersistentVolume（PV）とPersistentVolumeClaim（PVC）の役割分担は何ですか？",
+    "document": "PVはインフラ管理者がプロビジョニングした実際のストレージ実体（リソース）であり、PVCは開発者/ユーザーが容量やアクセスモードを指定してストレージを要求するリクエスト（要求仕様書）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_near_k8s_pv_pvc",
+    "query": "KubernetesでPersistentVolume（PV）とPersistentVolumeClaim（PVC）の役割分担は何ですか？",
+    "document": "ステートフルなアプリケーションをKubernetes上で実行する場合、コンテナの再起動後もデータを永続化するために永続ストレージボリュームの仕組みが提供されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "it_infra"
+  },
+  {
+    "id": "it_unans_k8s_pv_pvc",
+    "query": "KubernetesでPersistentVolume（PV）とPersistentVolumeClaim（PVC）の役割分担は何ですか？",
+    "document": "HelmはKubernetes向けのパッケージマネージャーであり、Chartと呼ばれるテンプレート群を用いて複雑なアプリケーションを簡単にデプロイ・管理できます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "it_infra"
+  },
+  {
+    "id": "hw_pos_rtx3060_tdp",
+    "query": "NVIDIA GeForce RTX 3060 12GBのTDP（消費電力）は何Wですか？",
+    "document": "GeForce RTX 3060（12GB版）の定格TDP（Graphics Card Power）は 170W です。推奨電源容量は550Wとなっています。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_rtx3060_tdp",
+    "query": "NVIDIA GeForce RTX 3060 12GBのTDP（消費電力）は何Wですか？",
+    "document": "NVIDIA GeForce RTX 3060はAmpereアーキテクチャを採用し、大容量12GB GDDR6メモリを搭載した人気GPUです。なお上位版のGeForce RTX 3060 TiはTDP 200W、下位のRTX 3050はTDP 130Wで動作します。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_rtx3060_tdp",
+    "query": "NVIDIA GeForce RTX 3060 12GBのTDP（消費電力）は何Wですか？",
+    "document": "DisplayPort 1.4は最大32.4Gbpsの帯域幅を持ち、DSC（Display Stream Compression）技術と組み合わせることで8K/60Hzや4K/120Hzの高解像度出力に対応します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_ddr5_pin",
+    "query": "デスクトップPC向けDDR5 UDIMMのピン数は何ピンですか？",
+    "document": "デスクトップPC向けのDDR5 DIMM/UDIMMのピン数は 288ピン です（DDR4と同じピン数ですが、切り欠きノッチの位置が異なり物理的互換性はありません）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_ddr5_pin",
+    "query": "デスクトップPC向けDDR5 UDIMMのピン数は何ピンですか？",
+    "document": "DDR5メモリはDDR4と比較して動作クロックの大幅な向上と動作電圧の低下（1.1V）を実現した次世代メインメモリです。なおノートPC向けのDDR5 SO-DIMMは262ピンの形状を採用しています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_ddr5_pin",
+    "query": "デスクトップPC向けDDR5 UDIMMのピン数は何ピンですか？",
+    "document": "PCIe 4.0 x16スロットの理論上の最大双方向帯域幅は約64GB/s（片方向約31.5GB/s）に達し、高速なグラフィックスカードやNVMe SSDの接続に使用されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_usb_c_pd_max",
+    "query": "USB Power Delivery (USB PD 3.1) のEPR規格における最大電力は何Wですか？",
+    "document": "USB PD 3.1 Extended Power Range (EPR) における最大供給電力は 240W（48V / 5A）です。従来のSPRの最大100Wから大幅に拡張されました。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_usb_c_pd_max",
+    "query": "USB Power Delivery (USB PD 3.1) のEPR規格における最大電力は何Wですか？",
+    "document": "USB Type-Cコネクタを用いた給電規格であるUSB Power Deliveryは世代とともに電力上限が拡張されてきました。初期のPD 3.0 Standard Power Range (SPR) では最大100W（20V / 5A）までの対応でした。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_usb_c_pd_max",
+    "query": "USB Power Delivery (USB PD 3.1) のEPR規格における最大電力は何Wですか？",
+    "document": "Bluetooth 5.0はBluetooth 4.2と比較して通信速度が最大2倍（2Mbps）、通信範囲が最大4倍に拡大され、IoTデバイス向けのメッシュネットワークにも対応しています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_amd_am5_socket",
+    "query": "AMD Ryzen 7000シリーズ以降で採用されているソケットAM5のピン数は何ピンですか？",
+    "document": "AMDのSocket AM5は 1,718本のピン を持つLGA1718ソケットです（従来のAM4のPGA方式からLGA方式に変更されました）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_amd_am5_socket",
+    "query": "AMD Ryzen 7000シリーズ以降で採用されているソケットAM5のピン数は何ピンですか？",
+    "document": "AMDはZen 4アーキテクチャのRyzen 7000シリーズより、従来のSocket AM4から長年ぶりの新ソケットAM5へと移行しました。DDR5メモリおよびPCIe 5.0への完全移行が果たされています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_amd_am5_socket",
+    "query": "AMD Ryzen 7000シリーズ以降で採用されているソケットAM5のピン数は何ピンですか？",
+    "document": "ATX電源ユニットの80 PLUS認証にはStandard、Bronze、Silver、Gold、Platinum、Titaniumの6つのグレードがあり、電源変換効率の高さを証明します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_m2_nvme_2280",
+    "query": "一般的なM.2 2280サイズSSDの外形寸法（幅と長さ）は何ミリですか？",
+    "document": "M.2 2280の外形寸法は 幅22mm × 長さ80mm です。2280という型番の上2桁が幅（22mm）、下2桁が長さ（80mm）を表しています。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_m2_nvme_2280",
+    "query": "一般的なM.2 2280サイズSSDの外形寸法（幅と長さ）は何ミリですか？",
+    "document": "マザーボードにNVMe SSDを取り付ける際、M.2フォームファクターが標準的に利用されます。M.2 SSDには2230、2242、2280、22110などの様々な長さの規格が存在し、基盤上のネジ止め位置を確認する必要があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_m2_nvme_2280",
+    "query": "一般的なM.2 2280サイズSSDの外形寸法（幅と長さ）は何ミリですか？",
+    "document": "SATA 3.0（SATA 6Gbps）規格の実効転送速度の上限は約550〜600MB/sであり、近年のNVMe接続SSDと比較すると大幅に低速です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_intel_lga1700",
+    "query": "Intel第12世代〜第14世代Coreプロセッサで使用されるソケットLGA1700のピン数は何本ですか？",
+    "document": "Socket LGA1700のピン数は 1,700本 です。従来のLGA1200から大幅にピン数が増加し長方形の形状に変更されました。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_intel_lga1700",
+    "query": "Intel第12世代〜第14世代Coreプロセッサで使用されるソケットLGA1700のピン数は何本ですか？",
+    "document": "Intel Alder Lake以降のデスクトップCPUでは新しいLGA1700ソケットが採用され、高性能コア（P-core）と高効率コア（E-core）を組み合わせたハイブリッドアーキテクチャが導入されました。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_intel_lga1700",
+    "query": "Intel第12世代〜第14世代Coreプロセッサで使用されるソケットLGA1700のピン数は何本ですか？",
+    "document": "CPUクーラーに塗布する熱伝導グリスは、CPUのヒートスプレッダとクーラー底面の微細な隙間を埋めて熱伝導率を高めるために不可欠な素材です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_hdmi_21_bw",
+    "query": "HDMI 2.1規格の最大伝送帯域幅は何Gbpsですか？",
+    "document": "HDMI 2.1の最大伝送帯域幅は 48Gbps です（HDMI 2.0の18Gbpsから2.6倍以上に大幅拡張され、非圧縮8K/60Hzや4K/120Hzの伝送に対応）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_hdmi_21_bw",
+    "query": "HDMI 2.1規格の最大伝送帯域幅は何Gbpsですか？",
+    "document": "次世代ゲーム機や最新テレビの接続においてHDMI 2.1規格が広く普及しています。VRR（可変リフレッシュレート）やALLM（自動低遅延モード）、eARCなどのゲーミング・音響向け新機能が盛り込まれています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_hdmi_21_bw",
+    "query": "HDMI 2.1規格の最大伝送帯域幅は何Gbpsですか？",
+    "document": "Wi-Fi 6（IEEE 802.11ax）はOFDMAや1024-QAM技術を採用し、混雑したネットワーク環境における通信効率と最大スループットを向上させています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_pcie5_lane_bw",
+    "query": "PCI Express 5.0における1レーン（x1）あたりの片方向理論転送速度は何GB/sですか？",
+    "document": "PCIe 5.0のx1レーンあたりの片方向理論転送速度は約 3.938 GB/s（約3.94 GB/s、約32 GT/s）です（x16スロット全体では片方向約63 GB/s、双方向約126 GB/s）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_pcie5_lane_bw",
+    "query": "PCI Express 5.0における1レーン（x1）あたりの片方向理論転送速度は何GB/sですか？",
+    "document": "PCI Express規格は世代ごとにデータ転送速度が倍増してきました。PCIe 4.0の1レーンあたり約1.97 GB/sに対し、最新のPCIe 5.0では更なる高クロック化とシグナルインテグリティの向上が図られています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_pcie5_lane_bw",
+    "query": "PCI Express 5.0における1レーン（x1）あたりの片方向理論転送速度は何GB/sですか？",
+    "document": "ECC（Error-Correcting Code）メモリは、メモリ内部で発生した1ビットエラーを自動的に検出し訂正する機能を持ち、サーバーやワークステーションで利用されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_thunderbolt4_bw",
+    "query": "Thunderbolt 4の最大双方向データ帯域幅は何Gbpsですか？",
+    "document": "Thunderbolt 4の最大帯域幅は 40Gbps です。またPCIeデータ転送の最小要件が32Gbpsに引き上げられており、外付けGPUや高速SSDで安定した性能を発揮します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_thunderbolt4_bw",
+    "query": "Thunderbolt 4の最大双方向データ帯域幅は何Gbpsですか？",
+    "document": "Thunderbolt 4はIntelが策定した高速インターフェース規格で、USB4規格と密接な互換性を持ちます。Type-Cコネクタを使用し、映像出力・データ通信・急速給電を1本のケーブルに統合できます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_thunderbolt4_bw",
+    "query": "Thunderbolt 4の最大双方向データ帯域幅は何Gbpsですか？",
+    "document": "有線LAN規格の10GBASE-Tは、カテゴリー6A以上のツイストペアケーブルを使用して最大10Gbpsのイーサネット通信を実現します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_raspberry_pi_5_ram",
+    "query": "Raspberry Pi 5が採用しているメインプロセッサ（SoC）の型番は何ですか？",
+    "document": "Raspberry Pi 5に搭載されているプロセッサは Broadcom BCM2712（Quad-core Arm Cortex-A76 @ 2.4GHz）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_raspberry_pi_5_ram",
+    "query": "Raspberry Pi 5が採用しているメインプロセッサ（SoC）の型番は何ですか？",
+    "document": "Raspberry Pi 5は前世代のPi 4からCPU性能が2〜3倍に向上したシングルボードコンピュータです。自社設計のI/OコントローラーRP1を搭載し、PCIe 2.0インターフェースも新たに備えています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_raspberry_pi_5_ram",
+    "query": "Raspberry Pi 5が採用しているメインプロセッサ（SoC）の型番は何ですか？",
+    "document": "Arduino Uno R3はMicrochip社のATmega328Pマイクロコントローラーを搭載したオープンソースのマイコンボードであり、電子工作やプロトタイピングの入門に最適です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_rtx4090_vram",
+    "query": "GeForce RTX 4090に搭載されているビデオメモリ（VRAM）の容量と規格は何ですか？",
+    "document": "RTX 4090のVRAMは 24GB の GDDR6X メモリ（384-bit バス幅、帯域幅 1,008 GB/s）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_rtx4090_vram",
+    "query": "GeForce RTX 4090に搭載されているビデオメモリ（VRAM）の容量と規格は何ですか？",
+    "document": "NVIDIAのAda LovelaceフラグシップであるGeForce RTX 4090は、膨大なCUDAコアと第4世代Tensorコアを備えています。生成AIモデルのローカル推論や4K最高画質ゲーミングにおいて圧倒的なパフォーマンスを発揮します。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_rtx4090_vram",
+    "query": "GeForce RTX 4090に搭載されているビデオメモリ（VRAM）の容量と規格は何ですか？",
+    "document": "OLED（有機EL）ディスプレイは各画素が自発光するため、完全な黒の表現（高コントラスト比）と高速な応答速度を実現できます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_cat8_freq",
+    "query": "カテゴリー8（CAT8）LANケーブルの最大伝送帯域（周波数）は何MHzですか？",
+    "document": "CAT8 LANケーブルの最大伝送帯域は 2000MHz（2GHz） です（伝送速度は最大40Gbps、最大伝送距離は30m）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_cat8_freq",
+    "query": "カテゴリー8（CAT8）LANケーブルの最大伝送帯域（周波数）は何MHzですか？",
+    "document": "イーサネットLANケーブルにはCAT5e、CAT6、CAT6A、CAT7、CAT8などの規格があり、カテゴリーの数字が大きいほど高い伝送周波数と高速な通信速度に対応しています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_cat8_freq",
+    "query": "カテゴリー8（CAT8）LANケーブルの最大伝送帯域（周波数）は何MHzですか？",
+    "document": "PoE（Power over Ethernet）はLANケーブルを通じてネットワークカメラやアクセスポイントにデータと同時に電力を供給する技術規格です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_sata3_speed",
+    "query": "SATA 3.0（Revision 3.0）の物理インターフェースにおける最大転送速度は何Gbpsですか？",
+    "document": "SATA 3.0の最大物理インターフェース転送速度は 6 Gbps（実効実データ転送速度は約600 MB/s）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_sata3_speed",
+    "query": "SATA 3.0（Revision 3.0）の物理インターフェースにおける最大転送速度は何Gbpsですか？",
+    "document": "PCの内蔵HDDや従来の2.5インチSSDの接続にはSATAインターフェースが広く使われてきました。Revision 1.0の1.5Gbps、Revision 2.0の3Gbpsを経てRevision 3.0で更なる高速化が達成されました。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_sata3_speed",
+    "query": "SATA 3.0（Revision 3.0）の物理インターフェースにおける最大転送速度は何Gbpsですか？",
+    "document": "RAID 1（ミラーリング）は2台以上の同一容量のディスクに全く同じデータを多重書き込みすることで耐障害性を担保する冗長構成です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_displayport_21_uhbr",
+    "query": "DisplayPort 2.1における最大伝送帯域（UHBR20構成時）は何Gbpsですか？",
+    "document": "DisplayPort 2.1のUHBR20（Ultra-High Bit Rate 20）における最大帯域幅は 80 Gbps（実効帯域幅 77.37 Gbps）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_displayport_21_uhbr",
+    "query": "DisplayPort 2.1における最大伝送帯域（UHBR20構成時）は何Gbpsですか？",
+    "document": "VESAが策定したDisplayPort 2.1規格は、次世代の超高解像度モニター向けに帯域幅を劇的に引き上げました。UHBR10、UHBR13.5、UHBR20などの伝送モードが定義されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_displayport_21_uhbr",
+    "query": "DisplayPort 2.1における最大伝送帯域（UHBR20構成時）は何Gbpsですか？",
+    "document": "G-SyncはNVIDIAが開発したディスプレイ同期技術であり、GPUのレンダリングフレームレートとモニターのリフレッシュレートを同期させて画面のティアリングを解消します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_atx30_12vhpwr",
+    "query": "ATX 3.0電源規格で導入された12VHPWRコネクタ（16ピン）の最大供給電力は何Wですか？",
+    "document": "12VHPWR（PCIe 5.0 16ピン）コネクタは、単一のケーブルで 最大600W（12V × 50A（450W/300W/150W構成も可））の電力をグラフィックスカードに供給可能です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_atx30_12vhpwr",
+    "query": "ATX 3.0電源規格で導入された12VHPWRコネクタ（16ピン）の最大供給電力は何Wですか？",
+    "document": "最新のハイエンドGPUの急激な消費電力増加に対応するため、電源規格ATX 3.0では新しい専用コネクタが制定されました。4本のサイドバンド信号ピンにより電源とGPU間で供給電力の調停を行います。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_atx30_12vhpwr",
+    "query": "ATX 3.0電源規格で導入された12VHPWRコネクタ（16ピン）の最大供給電力は何Wですか？",
+    "document": "UPS（無停電電源装置）は、停電や瞬時電圧低下が発生した際にバッテリーから電力を一定時間供給し、接続機器の安全なシャットダウンを支援します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_ddr4_voltage",
+    "query": "標準規格におけるDDR4メモリの定格動作電圧は何Vですか？",
+    "document": "JEDEC標準におけるDDR4 SDRAMの定格動作電圧は 1.2V です（従来のDDR3の1.5Vから約20%省電力化）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_ddr4_voltage",
+    "query": "標準規格におけるDDR4メモリの定格動作電圧は何Vですか？",
+    "document": "DDR4メモリは長年にわたりデスクトップPCやサーバーで主流として使用されてきた規格です。DDR3と比較して高密度化と高速化が進められ、オーバークロックメモリ（XMP）では1.35V以上で動作するものもあります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_ddr4_voltage",
+    "query": "標準規格におけるDDR4メモリの定格動作電圧は何Vですか？",
+    "document": "SODIMMは小型ノートPCやNUCなどの省スペースPC向けに設計されたメモリモジュール規格です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_apple_m3_nodes",
+    "query": "AppleのM3プロセッサはTSMCの何ナノメートル（nm）プロセスルールで製造されていますか？",
+    "document": "Apple M3チップは TSMCの3nm（3ナノメートル）プロセス（N3B） で量産された最初の商用PC向けプロセッサです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_apple_m3_nodes",
+    "query": "AppleのM3プロセッサはTSMCの何ナノメートル（nm）プロセスルールで製造されていますか？",
+    "document": "Apple SiliconのM3シリーズ（M3、M3 Pro、M3 Max）は、次世代GPUアーキテクチャ「Dynamic Caching」やハードウェアアクセラレーテッド・レイトレーシングを搭載し、電力効率を極限まで高めています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_apple_m3_nodes",
+    "query": "AppleのM3プロセッサはTSMCの何ナノメートル（nm）プロセスルールで製造されていますか？",
+    "document": "ARMアーキテクチャは命令セットをシンプルにしたRISC設計を採用しており、スマートフォンや組み込み機器、近年の省電力ラップトップで支配的なシェアを持ちます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_bluetooth_le_audio",
+    "query": "Bluetooth LE Audioで新しく採用された標準オーディオコーデックの名称は何ですか？",
+    "document": "Bluetooth LE Audioで標準採用された低遅延・高音質コーデックは LC3（Low Complexity Communication Codec） です（従来のClassic AudioにおけるSBCを大幅に刷新）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_bluetooth_le_audio",
+    "query": "Bluetooth LE Audioで新しく採用された標準オーディオコーデックの名称は何ですか？",
+    "document": "Bluetooth SIGが発表したLE Audio規格は、従来のBluetooth Classic Audioに代わる次世代ワイヤレスオーディオ基盤です。複数デバイスへのブロードキャスト共有機能（Auracast）なども盛り込まれています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_bluetooth_le_audio",
+    "query": "Bluetooth LE Audioで新しく採用された標準オーディオコーデックの名称は何ですか？",
+    "document": "ノイズキャンセリングヘッドホンは逆位相の音波を生成することで周囲の定常的な環境騒音を相殺して静寂なリスニング環境を作ります。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_wifi7_bandwidth",
+    "query": "Wi-Fi 7（IEEE 802.11be）でサポートされる最大のチャネル帯域幅は何MHzですか？",
+    "document": "Wi-Fi 7における最大チャネル帯域幅は 320 MHz です（Wi-Fi 6/6Eの最大160MHzの2倍に拡大）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_wifi7_bandwidth",
+    "query": "Wi-Fi 7（IEEE 802.11be）でサポートされる最大のチャネル帯域幅は何MHzですか？",
+    "document": "次世代無線LAN規格Wi-Fi 7は「極めて高いスループット（EHT）」を目標に掲げています。6GHz帯を含むマルチバンドを同時利用するMLO（Multi-Link Operation）や4096-QAMなどの高度な変調方式が導入されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_wifi7_bandwidth",
+    "query": "Wi-Fi 7（IEEE 802.11be）でサポートされる最大のチャネル帯域幅は何MHzですか？",
+    "document": "MACアドレスはネットワーク機器のネットワークインターフェースに製造段階でハードウェア的に割り当てられる一意の識別番号です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_sd_card_v90",
+    "query": "SDカードのスピードクラス規格「V90（ビデオスピードクラス90）」の最低保証書き込み速度は何MB/sですか？",
+    "document": "V90規格の最低保証持続書き込み速度は 90 MB/s です（8K映像などの高ビットレート動画撮影を安定して記録するための規格）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_sd_card_v90",
+    "query": "SDカードのスピードクラス規格「V90（ビデオスピードクラス90）」の最低保証書き込み速度は何MB/sですか？",
+    "document": "SDアソシエーションが策定したビデオスピードクラスにはV6、V10、V30、V60、V90が存在し、4Kや8Kなどの高解像度動画のドロップフレームを防ぐための連続書き込み性能を保証しています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_sd_card_v90",
+    "query": "SDカードのスピードクラス規格「V90（ビデオスピードクラス90）」の最低保証書き込み速度は何MB/sですか？",
+    "document": "CFexpress Type BカードはPCIe 3.0 x2インターフェースを採用し、プロ用一眼レフカメラ向けに最大1700MB/s超の高速読み書きを実現しています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_core_i9_14900k_cores",
+    "query": "Intel Core i9-14900Kの総コア数とスレッド数はいくつですか？",
+    "document": "Core i9-14900Kは 合計24コア（Pコア8 + Eコア16）、32スレッド の構成です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_core_i9_14900k_cores",
+    "query": "Intel Core i9-14900Kの総コア数とスレッド数はいくつですか？",
+    "document": "Intelの第14世代デスクトップ向け最上位CPUであるCore i9-14900Kは、最大クロック6.0GHzを達成したハイエンドモデルです。高いゲーミング性能とマルチスレッドレンダリング性能を両立しています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_core_i9_14900k_cores",
+    "query": "Intel Core i9-14900Kの総コア数とスレッド数はいくつですか？",
+    "document": "ハイパースレッディング（SMT）技術は、1つの物理コア上で2つの仮想スレッドを並行処理することでプロセッサパイプラインのアイドル時間を削減します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_ryzen7_7800x3d_l3",
+    "query": "AMD Ryzen 7 7800X3Dに搭載されているL3キャッシュ（3D V-Cache含む）の合計容量は何MBですか？",
+    "document": "Ryzen 7 7800X3DのL3キャッシュ容量は 合計96 MB（32MBオンダイ + 64MB 3D V-Cacheスタック）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_ryzen7_7800x3d_l3",
+    "query": "AMD Ryzen 7 7800X3Dに搭載されているL3キャッシュ（3D V-Cache含む）の合計容量は何MBですか？",
+    "document": "AMDのRyzen 7 7800X3Dは、革新的な3D V-Cache技術を搭載したゲーミング向けCPUです。プロセッサダイの上に巨大なSRAMキャッシュを積層することで、ゲーム実行時のメモリレイテンシを劇的に低減します。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_ryzen7_7800x3d_l3",
+    "query": "AMD Ryzen 7 7800X3Dに搭載されているL3キャッシュ（3D V-Cache含む）の合計容量は何MBですか？",
+    "document": "CPUのサーマルスロットリングは、CPU温度が安全限界値（TjMax）を超えた際に動作周波数や電圧を強制的に下げて熱暴走や故障を防ぐ保護機能です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_usb4_pcie_tunneling",
+    "query": "USB4 Version 1.0の仕様でサポートされる必須のプロトコルトンネリングは何ですか？",
+    "document": "USB4において必須（Mandatory）とされているのは USB 3.2トンネリング と DisplayPortトンネリング です（PCIeトンネリングはUSB4ホストでは必須ですがハブや一部周辺機器ではオプション）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_usb4_pcie_tunneling",
+    "query": "USB4 Version 1.0の仕様でサポートされる必須のプロトコルトンネリングは何ですか？",
+    "document": "USB4はIntelのThunderbolt 3プロトコル仕様をベースに策定された標準規格です。従来のUSBデータ通信だけでなく、複数の異種プロトコルを単一の高速リンク上でトンネリングして混在伝送できます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_usb4_pcie_tunneling",
+    "query": "USB4 Version 1.0の仕様でサポートされる必須のプロトコルトンネリングは何ですか？",
+    "document": "USBハブは1つのUSBポートを分岐させて複数の周辺機器を同時接続できるようにする分岐装置です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_nvme_20_zns",
+    "query": "NVMe 2.0仕様で導入されたZNS（Zoned Namespaces）の主なメリットは何ですか？",
+    "document": "データを論理ゾーン単位でシーケンシャルに書き込むことで、SSDコントローラー内部のガベージコレクションを削減し、ライトアンプリフィケーション（WAF）を劇的に低減してSSDの寿命とスループットを高めることです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_nvme_20_zns",
+    "query": "NVMe 2.0仕様で導入されたZNS（Zoned Namespaces）の主なメリットは何ですか？",
+    "document": "NVM Expressコンソーシアムが策定したNVMe 2.0仕様は、ストレージアーキテクチャのモジュール化を推進しました。従来のブロックスタイルに加え、Key-Valueストレージやゾーン化ストレージの標準規格が組み込まれています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_nvme_20_zns",
+    "query": "NVMe 2.0仕様で導入されたZNS（Zoned Namespaces）の主なメリットは何ですか？",
+    "document": "Trimコマンドは、OSが削除して不要になったデータブロックをSSDコントローラーに通知し、事前に消去を行えるようにして書き込み性能を維持する機能です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_pc_power_eps12v",
+    "query": "マザーボードのCPU補助電源コネクタ（EPS12V）の標準的なピン数は何ピンですか？",
+    "document": "EPS12VのCPU補助電源コネクタは 8ピン（または4ピン+4ピンに分離可能なタイプ） です（ハイエンドマザーボードでは8ピン×2構成も存在）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_pc_power_eps12v",
+    "query": "マザーボードのCPU補助電源コネクタ（EPS12V）の標準的なピン数は何ピンですか？",
+    "document": "PCの自作において電源ユニットからマザーボードへ電力を供給する際、メインのATX 24ピンコネクタに加えて、CPU周辺のVRM（電源回路）に直接12Vを供給する補助電源コネクタの接続が必須です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_pc_power_eps12v",
+    "query": "マザーボードのCPU補助電源コネクタ（EPS12V）の標準的なピン数は何ピンですか？",
+    "document": "電解コンデンサは電子回路で電荷を蓄えたり電源ラインのノイズを平滑化するために使用される部品です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_thunderbolt5_bw",
+    "query": "Thunderbolt 5でBandwidth Boostモードを使用した際の最大非対称帯域幅（送信側）は何Gbpsですか？",
+    "document": "Bandwidth Boostモード時の送信側最大帯域幅は 120 Gbps（受信側は40Gbps）です（通常時は双方向80Gbps）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_thunderbolt5_bw",
+    "query": "Thunderbolt 5でBandwidth Boostモードを使用した際の最大非対称帯域幅（送信側）は何Gbpsですか？",
+    "document": "次世代規格Thunderbolt 5はPCIe Gen 4接続のデータ転送要件を倍増させ、複数の8Kディスプレイ出力やプロ向け外付け超高速ストレージの接続を念頭に設計されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_thunderbolt5_bw",
+    "query": "Thunderbolt 5でBandwidth Boostモードを使用した際の最大非対称帯域幅（送信側）は何Gbpsですか？",
+    "document": "光ファイバーケーブルはガラスやプラスチックの繊維を通して光信号でデータを伝送するため、電磁ノイズの影響を受けず長距離の超高速通信が可能です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_oled_burn_in",
+    "query": "有機ELディスプレイ（OLED）における焼き付き（Burn-in）の直接的な物理的原因は何ですか？",
+    "document": "同一の静止画やUIが長時間表示されることで、特定の画素の有機発光材料（特に青色サブピクセル）が他の領域よりも早く局所的に経年劣化・減衰し、輝度ムラが生じるためです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_oled_burn_in",
+    "query": "有機ELディスプレイ（OLED）における焼き付き（Burn-in）の直接的な物理的原因は何ですか？",
+    "document": "OLEDディスプレイは息をのむようなコントラスト比と視野角を誇りますが、長時間の使用においては焼き付きを防ぐためのピクセルシフト機能や自動輝度制限（ABL）機能が重要視されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_oled_burn_in",
+    "query": "有機ELディスプレイ（OLED）における焼き付き（Burn-in）の直接的な物理的原因は何ですか？",
+    "document": "IPS液晶は液晶分子を基板と平行な面内で回転させる方式であり、視野角による色変化が極めて少ないことが特徴です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_fan_pwm_4pin",
+    "query": "PCケースファンの4ピンコネクタにおいて、3ピンファンに追加された4本目のピン（第4ピン）の役割は何ですか？",
+    "document": "PWM（パルス幅変調）制御信号線 です（マザーボードから一定周期の矩形波を送り、デューティ比によってファンの回転数を精密かつ滑らかに制御します）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_fan_pwm_4pin",
+    "query": "PCケースファンの4ピンコネクタにおいて、3ピンファンに追加された4本目のピン（第4ピン）の役割は何ですか？",
+    "document": "自作PCのケースファンやCPUクーラーの4ピンコネクタには、古くからある3ピンファン（GND、12V電源、回転数パルスセンサー）の機能に加え最新規格が採用されており、マザーボードのファンヘッダーに接続して静音化制御を行います。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_fan_pwm_4pin",
+    "query": "PCケースファンの4ピンコネクタにおいて、3ピンファンに追加された4本目のピン（第4ピン）の役割は何ですか？",
+    "document": "水冷式CPUクーラーは冷却液をポンプで循環させ、CPUブロックで吸収した熱をラジエーターのフィンからファンで効率よく外部へ放出します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_ecc_ram_sideband",
+    "query": "DDR4 ECCメモリにおいて、非ECCメモリの64ビットデータバスに対して追加されているECC用サイドバンドのビット数は何ビットですか？",
+    "document": "8ビット（合計72ビット幅） です。この8ビットの検査ビット（Check Bits）を用いてシングルビットエラーの自動訂正（SEC）とダブルビットエラーの検出（DED）を行います。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_ecc_ram_sideband",
+    "query": "DDR4 ECCメモリにおいて、非ECCメモリの64ビットデータバスに対して追加されているECC用サイドバンドのビット数は何ビットですか？",
+    "document": "データセンターや金融システムのサーバーでは、宇宙線などに起因するビット反転（ソフトエラー）によるシステムクラッシュやデータ破損を防ぐためにECCメモリの導入が必須とされています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_ecc_ram_sideband",
+    "query": "DDR4 ECCメモリにおいて、非ECCメモリの64ビットデータバスに対して追加されているECC用サイドバンドのビット数は何ビットですか？",
+    "document": "CASレイテンシ（CL）は、メモリコントローラーがメモリセルに列アドレスを送信してから目的のデータが出力ピンに現れるまでのクロックサイクル数を示すレイテンシ指標です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_pos_m2_key_m_vs_b",
+    "query": "M.2スロットにおける「Key M」と「Key B」の主なピン配置と用途の違いは何ですか？",
+    "document": "Key Mはピン59〜66が切り欠きとなっておりPCIe x4接続（NVMe高速SSD）に対応します。一方Key Bはピン12〜19が切り欠きでPCIe x2やSATA/USBに対応（LTEモデムやSATA SSD向け）します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_near_m2_key_m_vs_b",
+    "query": "M.2スロットにおける「Key M」と「Key B」の主なピン配置と用途の違いは何ですか？",
+    "document": "マザーボードのM.2コネクタには誤挿入を防ぐための物理的な切り欠き（Key）が定められています。SSDやWi-Fiカードなどのモジュールタイプに応じて適切なスロットを選択する必要があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "hw_unans_m2_key_m_vs_b",
+    "query": "M.2スロットにおける「Key M」と「Key B」の主なピン配置と用途の違いは何ですか？",
+    "document": "サーマルパッドはM.2 SSDとマザーボード付属のヒートシンクの間に挟んで熱を効率的にヒートシンクに伝える熱伝導シートです。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "hardware_specs"
+  },
+  {
+    "id": "leg_pos_nda_survival",
+    "query": "秘密保持契約（NDA）終了後における秘密保持義務の有効残存期間は通常何年間ですか？",
+    "document": "本契約が理由の如何を問わず終了した場合であっても、第4条に定める秘密保持義務は契約終了の日から 3年間（契約によっては2年間または5年間）有効に存続するものとする。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_nda_survival",
+    "query": "秘密保持契約（NDA）終了後における秘密保持義務の有効残存期間は通常何年間ですか？",
+    "document": "第8条（残存義務）本契約が期間満了または解除により終了した場合であっても、当事者の負う秘密保持義務および損害賠償義務は有効に存続するものとする。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_nda_survival",
+    "query": "秘密保持契約（NDA）終了後における秘密保持義務の有効残存期間は通常何年間ですか？",
+    "document": "第12条（準拠法および管轄裁判所）本契約の解釈および適用に関しては日本法に準拠するものとし、本契約に関する一切の紛争については東京地方裁判所を第一審の専属的合意管轄裁判所とする。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_subcontract_act_payment",
+    "query": "下請法において親事業者が下請事業者に対して下請代金を支払うべき法定支払期日の上限は何日以内ですか？",
+    "document": "下請代金の支払期日は、下請事業者が物品等を受領した日（役務提供日）から起算して 60日以内 かつできる限り短い期間内で定めなければなりません。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_subcontract_act_payment",
+    "query": "下請法において親事業者が下請事業者に対して下請代金を支払うべき法定支払期日の上限は何日以内ですか？",
+    "document": "下請代金支払遅延等防止法（下請法）は、親事業者の優越的地位の濫用行為を取り締まり、下請事業者の利益を保護するための法律です。親事業者は納品受領後、速やかに代金を支払う義務があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_subcontract_act_payment",
+    "query": "下請法において親事業者が下請事業者に対して下請代金を支払うべき法定支払期日の上限は何日以内ですか？",
+    "document": "民法上の瑕疵担保責任（契約不適合責任）において、買主は目的物の不適合を知った時から1年以内に売主に通知しなければ、追完請求や代金減額請求を行うことができません。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_gdpr_dpo_threshold",
+    "query": "GDPR（EU一般データ保護規則）においてデータ保護責任者（DPO）の選任が義務付けられる主要な条件は何ですか？",
+    "document": "1) 取扱機関が公的機関である場合、2) 管理者等の中核的活動が個人の大規模かつ体系的な常時監視を伴う場合、または 3) センシティブデータ（特質カテゴリデータ）や犯罪歴データの大規模な取扱いを伴う場合の3つの条件のいずれかに該当する場合です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_gdpr_dpo_threshold",
+    "query": "GDPR（EU一般データ保護規則）においてデータ保護責任者（DPO）の選任が義務付けられる主要な条件は何ですか？",
+    "document": "欧州のGDPRでは、個人データの適切な保護とコンプライアンス遵守を監視するためにデータ保護責任者（DPO）の制度が設けられています。企業は組織の取扱データ規模や性質に応じてDPOの任命要否を判断しなければなりません。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_gdpr_dpo_threshold",
+    "query": "GDPR（EU一般データ保護規則）においてデータ保護責任者（DPO）の選任が義務付けられる主要な条件は何ですか？",
+    "document": "著作権法において、著作権の保護期間は原則として著作者の生存期間および死後70年（法人著作の場合は公表後70年）と規定されています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_labor_standards_overtime",
+    "query": "労働基準法第36条（36協定）における時間外労働の上限規制の原則（限度時間）は何時間ですか？",
+    "document": "原則として 月45時間・年360時間 です（特別条項付き協定を結ぶ場合でも年720時間、単月100時間未満などの厳格な上限が課されます）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_labor_standards_overtime",
+    "query": "労働基準法第36条（36協定）における時間外労働の上限規制の原則（限度時間）は何時間ですか？",
+    "document": "働き方改革関連法の施行により、労働基準法における時間外労働の上限規制が強化されました。使用者は法定労働時間を超えて労働させる場合、労使協定（36協定）を締結し労働基準監督署に届け出る義務があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_labor_standards_overtime",
+    "query": "労働基準法第36条（36協定）における時間外労働の上限規制の原則（限度時間）は何時間ですか？",
+    "document": "労働契約法第16条において、解雇は客観的に合理的な理由を欠き、社会通念上相当であると認められない場合は、その権利を濫用したものとして無効とされます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_electronic_books_preservation",
+    "query": "電子帳簿保存法の電子取引データ保存において、訂正削除履歴が残るシステム等の要件を満たさない場合の代替措置は何ですか？",
+    "document": "正当な理由のない訂正及び削除の防止に関する事務処理規程（改ざん防止等の事務処理規程）を策定し、その規程に沿って運用・備え付けることです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_electronic_books_preservation",
+    "query": "電子帳簿保存法の電子取引データ保存において、訂正削除履歴が残るシステム等の要件を満たさない場合の代替措置は何ですか？",
+    "document": "電子帳簿保存法に基づき、電子的に受領した請求書や領収書などの電子取引データは紙に出力して保存することが原則廃止され、所定の真実性および可視性の要件を満たした電磁的記録としての保存が義務付けられています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_electronic_books_preservation",
+    "query": "電子帳簿保存法の電子取引データ保存において、訂正削除履歴が残るシステム等の要件を満たさない場合の代替措置は何ですか？",
+    "document": "印紙税法において、売上代金に係る受取書（金銭又は有価証券の受取書）は記載金額が5万円未満の場合は非課税とされています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_personal_info_leak_report",
+    "query": "個人情報保護法において漏えい等が発生した際、個人情報保護委員会への確報の提出期限は発覚から何日以内ですか？",
+    "document": "漏えい等の事態を知った日から 30日以内（不正アクセス等の故意による事案の場合は60日以内） に確報を提出しなければなりません（速報は概ね3〜5日以内）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_personal_info_leak_report",
+    "query": "個人情報保護法において漏えい等が発生した際、個人情報保護委員会への確報の提出期限は発覚から何日以内ですか？",
+    "document": "改正個人情報保護法において、個人の権利利益を害するおそれが大きい重大な個人データ漏えい事案が発生した場合、個人情報保護委員会への報告および本人への通知が義務化されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_personal_info_leak_report",
+    "query": "個人情報保護法において漏えい等が発生した際、個人情報保護委員会への確報の提出期限は発覚から何日以内ですか？",
+    "document": "特定商取引法におけるクーリング・オフ制度では、訪問販売や電話勧誘販売の場合、契約書面を受領した日から8日以内であれば無条件で契約を解除できます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_insolvency_revocation",
+    "query": "破産法において否認権（詐害行為否認）を行使できる主体は誰ですか？",
+    "document": "破産管財人 のみが裁判所に対して否認権の行使（否認の訴えまたは否認の請求）を行うことができます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_insolvency_revocation",
+    "query": "破産法において否認権（詐害行為否認）を行使できる主体は誰ですか？",
+    "document": "破産法における否認権（詐害行為否認）の手続きにおいて、破産者が破産申立て前に行った財産の流出行為や一部の債権者に対する偏頗弁済は、債権者全体の平等を害するため一定の要件のもとで否認の対象となります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_insolvency_revocation",
+    "query": "破産法において否認権（詐害行為否認）を行使できる主体は誰ですか？",
+    "document": "特許法において、特許出願の日から20年（延長登録が認められた場合は最長25年）で特許権は満了し消滅します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_anti_monopoly_merger",
+    "query": "独占禁止法における株式取得に関する事前届出が必要となる国内売上高の閾値（提出会社側）はいくらですか？",
+    "document": "株式を取得する会社グループの国内売上高合計額が 200億円 を超え、かつ被取得会社およびその子会社の国内売上高合計額が 50億円 を超える場合です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_anti_monopoly_merger",
+    "query": "独占禁止法における株式取得に関する事前届出が必要となる国内売上高の閾値（提出会社側）はいくらですか？",
+    "document": "独占禁止法における株式取得や企業結合（M&A）の事前届出制度に関して、公正取引委員会は市場の公正かつ自由な競争を維持するため、一定の取引分野における競争を実質的に制限することとならないか事前審査を行っています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_anti_monopoly_merger",
+    "query": "独占禁止法における株式取得に関する事前届出が必要となる国内売上高の閾値（提出会社側）はいくらですか？",
+    "document": "不正競争防止法において、営業秘密として保護されるためには「秘密管理性」「有用性」「非公知性」の3つの要件をすべて満たす必要があります。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_company_act_special_resolution",
+    "query": "会社法における株主総会の特別決議の可決要件（議決権割合）は何ですか？",
+    "document": "議決権を行使することができる株主の議決権の過半数を有する株主が出席し、出席した当該株主の 議決権の3分の2以上 にあたる多数をもって可決します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_company_act_special_resolution",
+    "query": "会社法における株主総会の特別決議の可決要件（議決権割合）は何ですか？",
+    "document": "株式会社の株主総会における決議には普通決議、特別決議、特殊決議があり、会社の定款変更や事業譲渡、組織再編などの重要事項については厳格な特別決議要件が課されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_company_act_special_resolution",
+    "query": "会社法における株主総会の特別決議の可決要件（議決権割合）は何ですか？",
+    "document": "商業登記法に基づき、株式会社の役員（取締役・監査役）に変更が生じた場合は、その事由が生じた日から2週間以内に本店所在地を管轄する法務局で変更登記を行わなければなりません。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_consumer_contract_act_void",
+    "query": "消費者契約法第8条において、事業者の損害賠償責任を全部免除する条項の効力はどうなりますか？",
+    "document": "事業者の損害賠償責任の全部を免除する条項、または事業者に故意・重過失がある場合に一部を免除する条項は 無効 となります。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_consumer_contract_act_void",
+    "query": "消費者契約法第8条において、事業者の損害賠償責任を全部免除する条項の効力はどうなりますか？",
+    "document": "消費者契約法は、事業者と消費者との間の情報の質・量および交渉力の格差に鑑み、消費者の利益を保護することを目的としています。消費者の権利を不当に害する不条理な条項は法的に制限されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_consumer_contract_act_void",
+    "query": "消費者契約法第8条において、事業者の損害賠償責任を全部免除する条項の効力はどうなりますか？",
+    "document": "民法上の不法行為責任（第709条）に基づく損害賠償請求権の消滅時効は、被害者が損害および加害者を知った時から3年間（人の生命・身体の侵害の場合は5年間）です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_cyber_security_framework",
+    "query": "NISTサイバーセキュリティフレームワーク（CSF 2.0）で追加された6つ目のコア機能は何ですか？",
+    "document": "Govern（統治） です（従来のIdentify、Protect、Detect、Respond、Recoverの5つにGovernが加わり全6機能に拡張されました）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_cyber_security_framework",
+    "query": "NISTサイバーセキュリティフレームワーク（CSF 2.0）で追加された6つ目のコア機能は何ですか？",
+    "document": "米国立標準技術研究所（NIST）のサイバーセキュリティフレームワークは世界中で広く参照されています。組織のセキュリティリスク管理を包括的に実施するための機能群が定義されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_cyber_security_framework",
+    "query": "NISTサイバーセキュリティフレームワーク（CSF 2.0）で追加された6つ目のコア機能は何ですか？",
+    "document": "ISO/IEC 27001は情報セキュリティマネジメントシステム（ISMS）の国際規格であり、組織が情報セキュリティリスクを適切に管理するための要求事項を定めています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_copyright_fair_use",
+    "query": "日本の著作権法第32条において、公表された著作物の「引用」が適法と認められるための基本要件は何ですか？",
+    "document": "公正な慣行に合致し、かつ報道・批評・研究その他の引用の目的上正当な範囲内で行われること、および自己の著作物が主で引用部分が従である「主従関係」が明確であり、出所の明示がなされていることです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_copyright_fair_use",
+    "query": "日本の著作権法第32条において、公表された著作物の「引用」が適法と認められるための基本要件は何ですか？",
+    "document": "他人の著作物を無断で利用することは著作権侵害となりますが、著作権法には一定の例外規定（私的使用のための複製、教育機関での利用、図書館での複製など）が設けられています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_copyright_fair_use",
+    "query": "日本の著作権法第32条において、公表された著作物の「引用」が適法と認められるための基本要件は何ですか？",
+    "document": "商標登録出願において、商品や役務の指定は政令で定める国際分類（ニース分類）に従って区分ごとに指定しなければなりません。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_labor_union_unfair",
+    "query": "労働組合法第7条において禁止されている「不当労働行為」の主要な類型は何ですか？",
+    "document": "1) 組合員であることを理由とする不利益取扱い、2) 黄犬契約の締結、3) 正当な理由のない団体交渉の拒否、4) 労働組合の結成・運営に対する支配介入および経費援助の4類型です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_labor_union_unfair",
+    "query": "労働組合法第7条において禁止されている「不当労働行為」の主要な類型は何ですか？",
+    "document": "労働組合法は憲法第28条の労働三権を保障するために制定されており、使用者が労働者の団結権や団体交渉権を侵害することを禁止しています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_labor_union_unfair",
+    "query": "労働組合法第7条において禁止されている「不当労働行為」の主要な類型は何ですか？",
+    "document": "最低賃金法に基づき決定される地域別最低賃金は、雇用形態（正社員・契約社員・パート・アルバイト）を問わず、該当地域内で働くすべての労働者に適用されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_product_liability_act",
+    "query": "製造物責任法（PL法）において、損害賠償責任を追及する際に被害者側が立証を免除される要素は何ですか？",
+    "document": "製造業者等の「過失」の立証です（被害者は製造物の「欠陥」、生じた「損害」、およびその間の「因果関係」を立証すれば足り、事業者の故意・過失を立証する必要がありません）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_product_liability_act",
+    "query": "製造物責任法（PL法）において、損害賠償責任を追及する際に被害者側が立証を免除される要素は何ですか？",
+    "document": "製造物責任法（PL法）は、製造物の欠陥により人の生命、身体または財産に損害が生じた場合における製造業者等の損害賠償責任について定めています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_product_liability_act",
+    "query": "製造物責任法（PL法）において、損害賠償責任を追及する際に被害者側が立証を免除される要素は何ですか？",
+    "document": "民事訴訟法において、訴状の送達を受けた被告が答弁書を提出せず口頭弁論期日にも出頭しない場合、原告の請求原因事実を自白したものとみなされます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_sox_internal_control",
+    "query": "日本版SOX法（J-SOX）において、経営者が提出する「内部統制報告書」に記載すべき対象の会計年度は何年度ですか？",
+    "document": "該当する事業年度（当事業年度）の末日時点における財務報告に係る内部統制の有効性を評価して記載します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_sox_internal_control",
+    "query": "日本版SOX法（J-SOX）において、経営者が提出する「内部統制報告書」に記載すべき対象の会計年度は何年度ですか？",
+    "document": "金融商品取引法に基づき上場企業に義務付けられている内部統制報告制度（J-SOX）は、財務報告の信頼性を確保するための仕組みを評価・監査する制度です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_sox_internal_control",
+    "query": "日本版SOX法（J-SOX）において、経営者が提出する「内部統制報告書」に記載すべき対象の会計年度は何年度ですか？",
+    "document": "有価証券報告書は、事業年度終了後3ヶ月以内に内閣総理大臣（管轄財務局）に提出しなければならない上場企業の法定開示書類です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_whistleblower_protection",
+    "query": "公益通報者保護法において保護される「通報者」の範囲に退職者は含まれますか？",
+    "document": "はい、法改正により退職後1年以内の労働者（および役員）も通報者保護の対象に含まれるよう拡充されました。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_whistleblower_protection",
+    "query": "公益通報者保護法において保護される「通報者」の範囲に退職者は含まれますか？",
+    "document": "公益通報者保護法は、事業者の法令違反行為を通報した労働者に対し、解雇や降格などの不利益な取扱いをすることを禁止して通報者を保護する法律です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_whistleblower_protection",
+    "query": "公益通報者保護法において保護される「通報者」の範囲に退職者は含まれますか？",
+    "document": "労働者派遣法において、同一の派遣労働者を同一の組織単位（課など）に派遣できる期間の上限は原則として最長3年間です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_civil_code_guarantee",
+    "query": "改正民法において、個人が法人の事業用融資の連帯保証人になる際に必要な公正証書の作成期限はいつですか？",
+    "document": "保証契約締結の日前 1箇月以内 に公正証書（保証意思宣明公正証書）を作成して保証意思を表明しなければ、保証契約は無効となります。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_civil_code_guarantee",
+    "query": "改正民法において、個人が法人の事業用融資の連帯保証人になる際に必要な公正証書の作成期限はいつですか？",
+    "document": "民法改正により個人の保証人を保護するための規定が見直されました。安易な保証債務の負担によって生活破綻に追い込まれる事態を防止するための厳格な手続きが規定されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_civil_code_guarantee",
+    "query": "改正民法において、個人が法人の事業用融資の連帯保証人になる際に必要な公正証書の作成期限はいつですか？",
+    "document": "抵当権は、債務者または第三者が占有を移転しないで債務の担保に供した不動産について、他の債権者に先立って自己の債権の弁済を受けることができる担保物権です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_antifraud_kyt",
+    "query": "犯罪収益移転防止法において、特定事業者が顧客の本人特定事項を確認する際に対面で行う場合の原則的な身分証明書は何ですか？",
+    "document": "マイナンバーカード、運転免許証、パスポートなどの官公署発行の写真付き本人確認書類の原本提示です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_antifraud_kyt",
+    "query": "犯罪収益移転防止法において、特定事業者が顧客の本人特定事項を確認する際に対面で行う場合の原則的な身分証明書は何ですか？",
+    "document": "金融機関等の特定事業者は、マネー・ローンダリングやテロ資金供与を防止するため、取引時に顧客の本人確認や取引目的の確認を厳格に行う義務を負っています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_antifraud_kyt",
+    "query": "犯罪収益移転防止法において、特定事業者が顧客の本人特定事項を確認する際に対面で行う場合の原則的な身分証明書は何ですか？",
+    "document": "預金保険制度（ペイオフ）により、万一金融機関が破綻した場合に保護される預金限度額は、1金融機関ごとに預金者1人あたり元本1,000万円までとその利息です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_subcontract_delay_interest",
+    "query": "下請法第4条の2に規定されている、支払遅延時の遅延利息の法定年率は何パーセントですか？",
+    "document": "受領日から60日を経過した日から実際に支払いをする日までの期間について、年率 14.6％ の遅延利息を支払わなければなりません。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_subcontract_delay_interest",
+    "query": "下請法第4条の2に規定されている、支払遅延時の遅延利息の法定年率は何パーセントですか？",
+    "document": "下請法第4条の2に規定されている下請代金の支払期日までに親事業者が代金を支払わなかった場合、下請法上の重大な支払遅延違反行為となり、遅延日数に応じた遅延利息の支払い義務が生じます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_subcontract_delay_interest",
+    "query": "下請法第4条の2に規定されている、支払遅延時の遅延利息の法定年率は何パーセントですか？",
+    "document": "手形法において、約束手形の振出人は手形の満期において手形金額を所持人に支払う絶対的かつ無条件の義務を負います。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_gdpr_fine_maximum",
+    "query": "GDPRにおいて重大な違反（基本的権利や同意要件の侵害等）に対する制裁金の法定上限額はいくらですか？",
+    "document": "最大 2,000万ユーロ（約32億円）または全世界年間売上高の 4％ のいずれか高い方の金額です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_gdpr_fine_maximum",
+    "query": "GDPRにおいて重大な違反（基本的権利や同意要件の侵害等）に対する制裁金の法定上限額はいくらですか？",
+    "document": "EUのGDPRは違反に対する巨額の制裁金が設定されていることで知られています。個人データの取扱いにあたり適切な技術的・組織的安全管理措置を怠った企業には厳しいペナルティが科されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_gdpr_fine_maximum",
+    "query": "GDPRにおいて重大な違反（基本的権利や同意要件の侵害等）に対する制裁金の法定上限額はいくらですか？",
+    "document": "特定秘密保護法は、我が国の安全保障に関する情報のうち特に秘匿することが必要なものを特定秘密として指定し、その漏えいを防止するための法律です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_commercial_code_carrier",
+    "query": "商法第575条において、運送人の責任が消滅する荷受人の受取後の期間は原則として何年間ですか？",
+    "document": "運送品の滅失・損傷に係る運送人の責任は、荷受人が運送品を受け取った日から 1年間（悪意の場合は5年間）を経過したときは時効により消滅します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_commercial_code_carrier",
+    "query": "商法第575条において、運送人の責任が消滅する荷受人の受取後の期間は原則として何年間ですか？",
+    "document": "物品運送契約において、運送人が輸送中の荷物の破損や滅失について負う損害賠償責任には商法上特別な消滅時効期間が定められています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_commercial_code_carrier",
+    "query": "商法第575条において、運送人の責任が消滅する荷受人の受取後の期間は原則として何年間ですか？",
+    "document": "手付金（解約手付）の交付された売買契約において、相手方が契約の履行に着手するまでは、買主は手付金を放棄し、売主は手付金の倍額を現実に提供して契約を解除できます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_labor_probation_period",
+    "query": "労働基準法において、試用期間中の労働者を即時解雇（解雇予告手当なし）できる期間は雇入れから何日以内ですか？",
+    "document": "雇入れの日から 14日以内 です（14日を超えて引き続き雇用した後は通常の解雇予告または30日分の解雇予告手当が必要となります）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_labor_probation_period",
+    "query": "労働基準法において、試用期間中の労働者を即時解雇（解雇予告手当なし）できる期間は雇入れから何日以内ですか？",
+    "document": "多くの企業で採用時に設けられる試用期間は、労働者の適格性や勤務態度の見極めを目的としています。試用期間中であっても労働基準法による解雇制限のルールが適用されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_labor_probation_period",
+    "query": "労働基準法において、試用期間中の労働者を即時解雇（解雇予告手当なし）できる期間は雇入れから何日以内ですか？",
+    "document": "労働災害保険（労災）は、業務上の事由または通勤による労働者の負傷、疾病、障害、死亡等に対して迅速かつ公正な保護をするための公的保険制度です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_patent_prior_art",
+    "query": "特許法第29条第1項各号に掲げられている新規性を喪失する発明の類型は何ですか？",
+    "document": "1) 公然知られた発明、2) 公然実施をされた発明、3) 頒布された刊行物に記載された発明または電気通信回線を通じて公衆に利用可能となった発明の3つです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_patent_prior_art",
+    "query": "特許法第29条第1項各号に掲げられている新規性を喪失する発明の類型は何ですか？",
+    "document": "特許を取得するためには出願時にその技術が従来知られていなかった新規性を有している必要があります。特許出願前に自ら論文発表等を行う場合は新規性喪失の例外規定の適用申請が必要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_patent_prior_art",
+    "query": "特許法第29条第1項各号に掲げられている新規性を喪失する発明の類型は何ですか？",
+    "document": "意匠権は、物品の形状、模様、色彩またはこれらの結合であって視覚を通じて美感を起こさせる創作（デザイン）を独占的に保護する産業財産権です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_financial_instruments_suitability",
+    "query": "金融商品取引法における「適合性の原則」とはどのような義務ですか？",
+    "document": "金融商品取引業者は、顧客の知識、経験、財産の状況および金融取引契約を締結する目的に照らして、不適当と認められる勧誘を行ってはならないという義務です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_financial_instruments_suitability",
+    "query": "金融商品取引法における「適合性の原則」とはどのような義務ですか？",
+    "document": "投資者保護のため、金融商品取引業者には契約締結前の書面交付義務や虚偽の告知の禁止、損失補填の禁止など多面的な行為規制が課されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_financial_instruments_suitability",
+    "query": "金融商品取引法における「適合性の原則」とはどのような義務ですか？",
+    "document": "インサイダー取引（内部者取引）規制は、上場会社の重要事実を知った会社関係者がその公表前に株式等の売買を行うことを禁止しています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_anti_bribery_fcpa",
+    "query": "米国連邦海外腐敗行為防止法（FCPA）において禁止されている主な行為は何ですか？",
+    "document": "外国政府高官、政党幹部、候補者に対し、ビジネスの獲得や維持を目的として金銭その他価値のあるものを不正に供与、申し出、または約束することです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_anti_bribery_fcpa",
+    "query": "米国連邦海外腐敗行為防止法（FCPA）において禁止されている主な行為は何ですか？",
+    "document": "国際的なビジネスを展開する企業にとって各国の反贈賄法規制の遵守は最重要課題です。FCPAは域外適用が認められており、米国内で直接活動していない日本企業も対象となるリスクがあります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_anti_bribery_fcpa",
+    "query": "米国連邦海外腐敗行為防止法（FCPA）において禁止されている主な行為は何ですか？",
+    "document": "マネー・ローンダリング対策（AML）において、リスクベース・アプローチに基づき高リスク取引に対して追加のデューデリジェンス（EDD）を実施することが求められます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_personal_info_anonymized",
+    "query": "個人情報保護法における「仮名加工情報」と「匿名加工情報」の取り扱いの決定的な違いは何ですか？",
+    "document": "仮名加工情報は他の情報と照合しない限り特定の個人を識別できない情報で社内分析用途に限定され第三者提供が原則禁止されるのに対し、匿名加工情報は完全に復元不可能な情報で第三者提供が認められている点です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_personal_info_anonymized",
+    "query": "個人情報保護法における「仮名加工情報」と「匿名加工情報」の取り扱いの決定的な違いは何ですか？",
+    "document": "ビッグデータの利活用と個人のプライバシー保護のバランスを図るため、個人情報保護法には特定の個人を識別できなく加工した情報類型が定義されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_personal_info_anonymized",
+    "query": "個人情報保護法における「仮名加工情報」と「匿名加工情報」の取り扱いの決定的な違いは何ですか？",
+    "document": "プライバシーポリシー（個人情報保護方針）は、事業者が保有する個人情報の利用目的や第三者提供、開示請求手続きなどを明示するための公表文書です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_electronic_contract_signature",
+    "query": "電子署名法第3条に基づき、真正な成立が推定される電子署名の技術的要件は何ですか？",
+    "document": "本人だけが行うことができるものであること（本人性の担保、暗号鍵の厳格管理）を担保するための符号・暗号化処理が施されていることです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_electronic_contract_signature",
+    "query": "電子署名法第3条に基づき、真正な成立が推定される電子署名の技術的要件は何ですか？",
+    "document": "電子契約の普及に伴い、紙の契約書における押印に代わって電子署名の法的効力が重視されています。クラウド型電子署名と当事者型電子署名で証拠力の担保方法が検討されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_electronic_contract_signature",
+    "query": "電子署名法第3条に基づき、真正な成立が推定される電子署名の技術的要件は何ですか？",
+    "document": "公正証書は公証人が法律に従って作成する公文書であり、強い証拠力と執行力（金銭債権における強制執行認諾文言）を有します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_corporate_governance_code",
+    "query": "東京証券取引所のプライム市場上場企業において求められる独立社外取締役の最低人数の割合は何ですか？",
+    "document": "取締役会の「3分の1以上」 の独立社外取締役を選任することが求められています（必要に応じて過半数の選任を検討することが推奨）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_corporate_governance_code",
+    "query": "東京証券取引所のプライム市場上場企業において求められる独立社外取締役の最低人数の割合は何ですか？",
+    "document": "東京証券取引所のプライム市場上場企業に適用されるコーポレートガバナンス・コードは、上場企業が持続的な成長と中長期的な企業価値向上のために実践すべき独立社外取締役の活用など統治原則を取りまとめたガイドラインです。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_corporate_governance_code",
+    "query": "東京証券取引所のプライム市場上場企業において求められる独立社外取締役の最低人数の割合は何ですか？",
+    "document": "取締役の忠実義務（会社法第355条）は、取締役が法令および定款ならびに株主総会の決議を遵守し、株式会社のため忠実にその職務を遂行する義務を定めています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_antimonopoly_resale_price",
+    "query": "独占禁止法において原則として違法とされる「再販売価格の維持行為」の例外として認められている品目は何ですか？",
+    "document": "書籍、雑誌、新聞、レコード盤、音楽用テープ、音楽用CDの6品目（著作物再販制度の対象品目）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_antimonopoly_resale_price",
+    "query": "独占禁止法において原則として違法とされる「再販売価格の維持行為」の例外として認められている品目は何ですか？",
+    "document": "独占禁止法において原則として違法とされる「再販売価格の維持行為」に関して、メーカーが小売業者に対して商品の販売価格を指定し、これを下回る価格での安売りを禁止・強制することは、市場の自由な価格競争を阻害する不公正な取引方法として禁止されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_antimonopoly_resale_price",
+    "query": "独占禁止法において原則として違法とされる「再販売価格の維持行為」の例外として認められている品目は何ですか？",
+    "document": "カルテルは複数の事業者が相互に連絡を取り合って価格や生産量を協調決定する行為であり、独占禁止法上最も重い処罰の対象となります。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_pos_labor_dispatched_prohibition",
+    "query": "労働者派遣法において労働者派遣事業を行ってはならない「適用除外業務」の代表例は何ですか？",
+    "document": "港湾運送業務、建設業務、警備業務、および医療関連業務（一部の例外を除く）の4業務です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_near_labor_dispatched_prohibition",
+    "query": "労働者派遣法において労働者派遣事業を行ってはならない「適用除外業務」の代表例は何ですか？",
+    "document": "労働者派遣法は派遣労働者の就業条件の整備と保護を目的としていますが、業務の特殊性や歴史的経緯から特定の業種・業務への派遣が法律で禁じられています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "leg_unans_labor_dispatched_prohibition",
+    "query": "労働者派遣法において労働者派遣事業を行ってはならない「適用除外業務」の代表例は何ですか？",
+    "document": "有期労働契約が通算5年を超えて反復更新された場合、労働者の申込みにより期間の定めのない労働契約（無期雇用）に転換できる無期転換ルールが存在します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "legal_compliance"
+  },
+  {
+    "id": "fin_pos_invoice_small_amount",
+    "query": "インボイス制度の少額特例（税込1万円未満の帳簿保存のみで控除可能）の対象となる事業者の基準期間の課税売上高上限はいくらですか？",
+    "document": "基準期間（前々事業年度）における課税売上高が 1億円以下（または特定期間における課税売上高が5,000万円以下）の事業者が対象です（令和5年10月1日から令和11年9月30日までの取引が対象）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_invoice_small_amount",
+    "query": "インボイス制度の少額特例（税込1万円未満の帳簿保存のみで控除可能）の対象となる事業者の基準期間の課税売上高上限はいくらですか？",
+    "document": "インボイス制度の導入に伴い、中小事業者の事務負担を軽減するための経過措置として「少額特例」が設けられました。税込1万円未満の課税仕入れについて適格請求書の保存がなくとも帳簿のみの保存で仕入税額控除が認められます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_invoice_small_amount",
+    "query": "インボイス制度の少額特例（税込1万円未満の帳簿保存のみで控除可能）の対象となる事業者の基準期間の課税売上高上限はいくらですか？",
+    "document": "消費税の簡易課税制度は、中小事業者の納税事務負担を軽減するため、実額の仕入税額の計算に代えて売上税額に事業区分ごとのみなし仕入率を乗じて納付税額を計算する制度です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_corp_tax_depreciation_small",
+    "query": "中小企業者等の少額減価償却資産の取得価額の損金算入特例における上限金額（1資産あたりおよび年間合計）はいくらですか？",
+    "document": "取得価額が 30万円未満 の減価償却資産について、年間合計 300万円 を限度として取得年度に全額損金算入（即時償却）できます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_corp_tax_depreciation_small",
+    "query": "中小企業者等の少額減価償却資産の取得価額の損金算入特例における上限金額（1資産あたりおよび年間合計）はいくらですか？",
+    "document": "税法上、固定資産を取得した場合は原則として法定耐用年数にわたり減価償却を行いますが、一定の要件を満たす青色申告の中小法人については少額資産の損金算入に関する特例措置が認められています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_corp_tax_depreciation_small",
+    "query": "中小企業者等の少額減価償却資産の取得価額の損金算入特例における上限金額（1資産あたりおよび年間合計）はいくらですか？",
+    "document": "損益計算書（P/L）における営業利益は、売上高から売上原価を差し引いた売上総利益から、さらに販売費及び一般管理費（販管費）を控除して算出されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_gift_tax_exemption",
+    "query": "贈与税（暦年課税方式）の基礎控除額は受贈者1人あたり年間いくらですか？",
+    "document": "暦年課税における贈与税の基礎控除額は、1月1日から12月31日までの1年間で受贈者（もらう人）1人あたり 110万円 です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_gift_tax_exemption",
+    "query": "贈与税（暦年課税方式）の基礎控除額は受贈者1人あたり年間いくらですか？",
+    "document": "個人から財産の贈与を受けた場合、受贈者に贈与税が課税されます。贈与税の課税方法には暦年課税と相続時精算課税の選択制があり、年間受贈額から基礎控除を差し引いた残額に累進税率を適用します。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_gift_tax_exemption",
+    "query": "贈与税（暦年課税方式）の基礎控除額は受贈者1人あたり年間いくらですか？",
+    "document": "相続税の基礎控除額は「3,000万円 ＋（600万円 × 法定相続人の数）」という計算式によって求められます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_per_pbr_roe",
+    "query": "PBR（株価純資産倍率）の計算式は何ですか？",
+    "document": "PBRは 株価 ÷ 1株当たり純資産（BPS） で算出されます（企業の純資産に対して株価が何倍まで買われているかを示し、1倍未満は解散価値割れとみなされます）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_per_pbr_roe",
+    "query": "PBR（株価純資産倍率）の計算式は何ですか？",
+    "document": "株式投資の代表的な指標としてPER（株価収益率）、PBR（株価純資産倍率）、ROE（自己資本利益率）があります。企業の収益力や資産価値、株主資本の効率性を多角的に分析するために組み合わせて用いられます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_per_pbr_roe",
+    "query": "PBR（株価純資産倍率）の計算式は何ですか？",
+    "document": "キャッシュフロー計算書（C/F）は、営業活動、投資活動、財務活動の3つの区分ごとに現金の増減と期末残高を表示する財務諸表です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_housing_loan_deduction",
+    "query": "2024年以降に入居した新築の認定長期優良住宅における住宅ローン控除の借入限度額はいくらですか？",
+    "document": "新築の認定長期優良住宅および認定低炭素住宅の借入限度額は 4,500万円（子育て世帯・若者夫婦世帯の場合は特例で5,000万円）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_housing_loan_deduction",
+    "query": "2024年以降に入居した新築の認定長期優良住宅における住宅ローン控除の借入限度額はいくらですか？",
+    "document": "住宅ローン控除（住宅借入金等特別控除）は、住宅ローンを利用してマイホームを新築・購入・増改築した場合に、年末借入残高に一定率を乗じた額を所得税額から控除できる税額控除制度です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_housing_loan_deduction",
+    "query": "2024年以降に入居した新築の認定長期優良住宅における住宅ローン控除の借入限度額はいくらですか？",
+    "document": "ふるさと納税は、任意の自治体に寄附を行うことで、寄附金控除により2,000円を超える部分について所得税および住民税が控除・還付される制度です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_corp_tax_loss_carryforward",
+    "query": "法人税法において青色申告法人の繰越欠損金の繰越控除期間は何年間ですか？",
+    "document": "発生した事業年度の翌事業年度以降 10年間 です（中小法人等は所得の100%まで控除可能、大法人は50%上限）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_corp_tax_loss_carryforward",
+    "query": "法人税法において青色申告法人の繰越欠損金の繰越控除期間は何年間ですか？",
+    "document": "法人税法において青色申告法人の事業年度に生じた繰越欠損金（赤字）について、税務上の承認を受けている法人は将来の黒字年度の所得と相殺して税負担を軽減する繰越控除の適用を受けることができます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_corp_tax_loss_carryforward",
+    "query": "法人税法において青色申告法人の繰越欠損金の繰越控除期間は何年間ですか？",
+    "document": "法人住民税の均等割は、法人の所得（利益）の有無にかかわらず、資本金等の額や従業員数に応じて定額で課税される地方税です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_withholding_tax_lawyer",
+    "query": "弁護士や公認会計士への報酬において、1回の支払金額が100万円を超える場合の源泉徴収税率は何パーセントですか？",
+    "document": "100万円以下の部分は10.21%、100万円を超える部分の金額については 20.42％（復興特別所得税を含む）の源泉徴収税率が適用されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_withholding_tax_lawyer",
+    "query": "弁護士や公認会計士への報酬において、1回の支払金額が100万円を超える場合の源泉徴収税率は何パーセントですか？",
+    "document": "事業者がフリーランスや外部の専門家に原稿料や報酬を支払う際、所得税法に基づき支払金額からあらかじめ所得税および復興特別所得税を源泉徴収して国に納付する義務があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_withholding_tax_lawyer",
+    "query": "弁護士や公認会計士への報酬において、1回の支払金額が100万円を超える場合の源泉徴収税率は何パーセントですか？",
+    "document": "固定資産税は、毎年1月1日時点で土地、家屋、償却資産を所有している人に対して課される地方税であり、標準税率は1.4%です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_medical_expense_deduction",
+    "query": "所得税の医療費控除において、その年の総所得金額が200万円以上の場合の足切り額（控除対象外となる最低金額）はいくらですか？",
+    "document": "その年に支払った医療費の合計額から保険金等で補填された金額を差し引いた後、一律 10万円 が控除額の計算において差し引かれます（上限は200万円）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_medical_expense_deduction",
+    "query": "所得税の医療費控除において、その年の総所得金額が200万円以上の場合の足切り額（控除対象外となる最低金額）はいくらですか？",
+    "document": "自分や生計を一にする配偶者その他の親族のために支払った一定額以上の医療費がある場合、確定申告により所得控除として医療費控除を受けることができます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_medical_expense_deduction",
+    "query": "所得税の医療費控除において、その年の総所得金額が200万円以上の場合の足切り額（控除対象外となる最低金額）はいくらですか？",
+    "document": "セルフメディケーション税制は、健康の維持増進に取り組む個人が対象のスイッチOTC医薬品を年間1万2千円を超えて購入した場合に適用される所得控除の特例です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_wacc_definition",
+    "query": "WACC（加重平均資本コスト）の計算における株主資本コストの推計に最も一般的に用いられる理論モデルは何ですか？",
+    "document": "CAPM（Capital Asset Pricing Model：資本資産評価モデル） です（リスクフリーレート ＋ β × マーケットリスクプレミアムで算出）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_wacc_definition",
+    "query": "WACC（加重平均資本コスト）の計算における株主資本コストの推計に最も一般的に用いられる理論モデルは何ですか？",
+    "document": "企業財務において、企業が資金調達を行う際のコストを表す指標としてWACC（加重平均資本コスト）が使用されます。負債コストと株主資本コストをそれぞれの時価構成比で加重平均して求めます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_wacc_definition",
+    "query": "WACC（加重平均資本コスト）の計算における株主資本コストの推計に最も一般的に用いられる理論モデルは何ですか？",
+    "document": "EBITDA（利払い前・税引き前・減価償却前利益）は、国ごとの金利水準や税率、減価償却方法の違いを排除して企業本来の営業キャッシュ創出力を比較するための指標です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_consumption_tax_export",
+    "query": "消費税法において輸出取引に適用される免税措置（輸出免税）の適用税率は何パーセントですか？",
+    "document": "輸出取引は消費税が免除されるため 0％（ゼロ税率） が適用され、仕入れにかかった消費税は仕入税額控除の対象となり還付を受けることができます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_consumption_tax_export",
+    "query": "消費税法において輸出取引に適用される免税措置（輸出免税）の適用税率は何パーセントですか？",
+    "document": "国内において事業者が対価を得て行う資産の譲渡等には原則として消費税が課税されますが、国外で消費される輸出取引など特定の取引については二重課税防止のため特別な取り扱いが定められています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_consumption_tax_export",
+    "query": "消費税法において輸出取引に適用される免税措置（輸出免税）の適用税率は何パーセントですか？",
+    "document": "関税は外国から貨物を輸入する際に課される税金であり、国内産業の保護や国の財政収入を目的として品目ごとに税率が設定されています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_corp_entertainment_expense",
+    "query": "法人税法において交際費等の損金不算入の例外とされる「1人あたりの飲食費」の上限金額は何円ですか？",
+    "document": "令和6年度税制改正により、1人あたり 10,000円以下（改正前は5,000円以下）の飲食費で一定の書類を保存しているものは交際費等から除外され全額損金算入できます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_corp_entertainment_expense",
+    "query": "法人税法において交際費等の損金不算入の例外とされる「1人あたりの飲食費」の上限金額は何円ですか？",
+    "document": "企業が取引先との関係構築のために支出する接待交際費は、原則として法人税法上損金不算入とされていますが、中小企業向けの定額控除枠や少額飲食費の除外規定が設けられています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_corp_entertainment_expense",
+    "query": "法人税法において交際費等の損金不算入の例外とされる「1人あたりの飲食費」の上限金額は何円ですか？",
+    "document": "役員報酬の定期同額給与は、支給時期が1か月以下の一定の期間ごとであり、各支給時期の支給額が同額である給与を指し、原則として損金算入が認められます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_bonds_duration",
+    "query": "債券投資における「デュレーション」が測定する2つの主要な要素は何ですか？",
+    "document": "債券の投資元本の回収までに要する「平均回収期間（年数）」と、金利が1%変動した際の「債券価格の変動感応度」の2つです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_bonds_duration",
+    "query": "債券投資における「デュレーション」が測定する2つの主要な要素は何ですか？",
+    "document": "債券の利回りやリスクを分析する際、クーポンレートや残存期間だけでなくデュレーションの概念が重要視されます。金利変動リスクをコントロールするためのポートフォリオ管理に活用されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_bonds_duration",
+    "query": "債券投資における「デュレーション」が測定する2つの主要な要素は何ですか？",
+    "document": "信用格付けは、格付機関が債券や発行体の元利金の支払い能力（デフォルトリスク）を評価し、AAAやBBBなどの記号で示した指標です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_revenue_recognition_standard",
+    "query": "企業会計基準第29号「収益認識に関する会計基準」における収益認識の5つのステップの「ステップ2」は何ですか？",
+    "document": "契約における「履行義務の識別」 です（ステップ1: 契約の識別、ステップ2: 履行義務の識別、ステップ3: 取引価格の算定、ステップ4: 取引価格の配分、ステップ5: 履行義務充足による収益認識）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_revenue_recognition_standard",
+    "query": "企業会計基準第29号「収益認識に関する会計基準」における収益認識の5つのステップの「ステップ2」は何ですか？",
+    "document": "従来の実現主義に代わり導入された新収益認識基準は、顧客との契約から生じる収益の計上タイミングと金額を厳格にルール化しています。履行義務が顧客に移転した時点で収益を認識します。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_revenue_recognition_standard",
+    "query": "企業会計基準第29号「収益認識に関する会計基準」における収益認識の5つのステップの「ステップ2」は何ですか？",
+    "document": "減損会計は、固定資産の収益性が低下し投資額を回収できる見込みがなくなった場合に、その回収可能価額まで帳簿価額を切り下げて特別損失を計上する会計処理です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_ifrs_goodwill_amortization",
+    "query": "国際財務報告基準（IFRS）における「のれん（Goodwill）」の会計処理と日本基準の違いは何ですか？",
+    "document": "日本基準では最長20年以内の定額法等で定期的に規則的償却を行いますが、IFRSでは規則的な償却を行わず、毎期減損テストを実施して減損損失を認識する点です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_ifrs_goodwill_amortization",
+    "query": "国際財務報告基準（IFRS）における「のれん（Goodwill）」の会計処理と日本基準の違いは何ですか？",
+    "document": "国際財務報告基準（IFRS）における「のれん（Goodwill）」や日本基準の会計処理において、企業買収（M&A）の際に買収価格が対象企業の純資産時価を上回る部分を資産計上します。適用する会計基準によって期間損益への影響が大きく異なります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_ifrs_goodwill_amortization",
+    "query": "国際財務報告基準（IFRS）における「のれん（Goodwill）」の会計処理と日本基準の違いは何ですか？",
+    "document": "繰延税金資産は、会計上の費用と税務上の損金算入時期の差異（将来減算一時差異）に基づき、将来の税負担を軽減する効果を資産計上するものです。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_capital_gains_tax_stocks",
+    "query": "上場株式等の譲渡益（キャピタルゲイン）に対して課される申告分離課税の合計税率は何パーセントですか？",
+    "document": "合計 20.315％（所得税15% ＋ 住民税5% ＋ 復興特別所得税0.315%）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_capital_gains_tax_stocks",
+    "query": "上場株式等の譲渡益（キャピタルゲイン）に対して課される申告分離課税の合計税率は何パーセントですか？",
+    "document": "個人投資家が株式や投資信託を売却して得た譲渡益は、他の給与所得などとは合算せずに独自の税率で計算する申告分離課税の対象となります。特定口座（源泉徴収あり）の利用が一般的です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_capital_gains_tax_stocks",
+    "query": "上場株式等の譲渡益（キャピタルゲイン）に対して課される申告分離課税の合計税率は何パーセントですか？",
+    "document": "配当控除は、国内株式の配当金を受け取った個人が総合課税を選択した場合に、法人税との二重課税を調整するために所得税額から一定割合を控除する制度です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_nisa_growth_quota",
+    "query": "新NISA（少額投資非課税制度）の生涯非課税保有限度額（全体および成長投資枠）はいくらですか？",
+    "document": "全体の生涯投資枠は 1,800万円、そのうち成長投資枠の内枠上限は 1,200万円（年間投資枠はつみたて投資枠120万＋成長投資枠240万の計360万円）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_nisa_growth_quota",
+    "query": "新NISA（少額投資非課税制度）の生涯非課税保有限度額（全体および成長投資枠）はいくらですか？",
+    "document": "非課税で長期の資産形成を支援するために新しいNISA制度が恒久化されました。投資枠の再利用が可能となり、つみたて投資枠と成長投資枠の併用ができるよう設計されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_nisa_growth_quota",
+    "query": "新NISA（少額投資非課税制度）の生涯非課税保有限度額（全体および成長投資枠）はいくらですか？",
+    "document": "iDeCo（個人型確定拠出年金）は、自分で拠出した掛金を自ら運用し資産形成を行う私的年金制度であり、掛金全額が小規模企業共済等掛金控除の対象となります。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_operating_vs_financial_leverage",
+    "query": "財務レバレッジ（Financial Leverage）を高めた場合に企業価値や株式リターンに生じる影響は何ですか？",
+    "document": "負債比率を高めることで自己資本利益率（ROE）の振れ幅が拡大し株主リターンをブーストできる一方、支払利息負担が増加して財務リスク（倒産リスク）が高まる影響が生じます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_operating_vs_financial_leverage",
+    "query": "財務レバレッジ（Financial Leverage）を高めた場合に企業価値や株式リターンに生じる影響は何ですか？",
+    "document": "レバレッジには固定費の存在に起因する営業レバレッジと、負債利子の存在に起因する財務レバレッジの2種類があり、企業の事業リスクと財務リスクの構造を決定づけます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_operating_vs_financial_leverage",
+    "query": "財務レバレッジ（Financial Leverage）を高めた場合に企業価値や株式リターンに生じる影響は何ですか？",
+    "document": "自己株式の取得（自社株買い）は、企業が市場から自社の株式を買い戻すことで1株当たり利益（EPS）を引き上げ、株主還元を行う手法の一つです。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_working_capital_formula",
+    "query": "正味運転資本（Net Working Capital：NWC）の標準的な計算式は何ですか？",
+    "document": "流動資産（または売上債権＋棚卸資産） － 流動負債（または仕入債務） で算出されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_working_capital_formula",
+    "query": "正味運転資本（Net Working Capital：NWC）の標準的な計算式は何ですか？",
+    "document": "正味運転資本（Net Working Capital：NWC）は、企業が日常の事業活動を継続していくために必要な手元資金の規模を把握する指標として運転資本が管理されます。資金ショートを防ぐためのキャッシュマネジメントに不可欠です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_working_capital_formula",
+    "query": "正味運転資本（Net Working Capital：NWC）の標準的な計算式は何ですか？",
+    "document": "当座比率は、流動負債に対する当座資産（現金預金、売掛金、有価証券）の割合を示し、短期的な債務支払能力の安全性を厳格に測定する指標です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_black_scholes_inputs",
+    "query": "ブラック・ショールズ方程式において、ヨーロピアン・コールオプションの価格決定に必要な5つの入力パラメータは何ですか？",
+    "document": "原資産価格（株価）、行使価格、満期までの残存期間、無リスク金利、および原資産のボラティリティ（価格変動率）の5つです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_black_scholes_inputs",
+    "query": "ブラック・ショールズ方程式において、ヨーロピアン・コールオプションの価格決定に必要な5つの入力パラメータは何ですか？",
+    "document": "金融工学における金字塔であるブラック・ショールズモデルは、裁定取引のない完全市場を仮定してデリバティブ（金融派生商品）の理論価格を導出する計算式です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_black_scholes_inputs",
+    "query": "ブラック・ショールズ方程式において、ヨーロピアン・コールオプションの価格決定に必要な5つの入力パラメータは何ですか？",
+    "document": "信用スプレッドは、社債などのデフォルトリスクのある債券の利回りと、同期間の国債などの安全資産の利回りとの差（上乗せ金利）を指します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_accrual_vs_cash_accounting",
+    "query": "発生主義（Accrual Basis）会計と現金主義（Cash Basis）会計の根本的な違いは何ですか？",
+    "document": "現金主義が現金の実際の入出金時点で収益・費用を計上するのに対し、発生主義は経済的な取引や事象が発生した（権利や義務が確定した）時点で収益・費用を認識する点です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_accrual_vs_cash_accounting",
+    "query": "発生主義（Accrual Basis）会計と現金主義（Cash Basis）会計の根本的な違いは何ですか？",
+    "document": "近現代の企業会計原則は発生主義を基盤としており、期間損益計算を適正に行うために売掛金や買掛金、引当金などの会計概念が導入されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_accrual_vs_cash_accounting",
+    "query": "発生主義（Accrual Basis）会計と現金主義（Cash Basis）会計の根本的な違いは何ですか？",
+    "document": "減価償却における定額法は毎期同額の償却費を計上する方法であり、定率法は期首の未償却残高に一定の償却率を乗じて初年度ほど多額の償却費を計上する方法です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_transfer_pricing_methods",
+    "query": "移転価格税制において独立企業間価格を算定するための3つの基本的方法は何ですか？",
+    "document": "独立価格比準法（CUP法）、再販売価格基準法（RP法）、および原価基準法（CP法）の3つです（近年では取引単位営業利益法（TNMM）も多用されます）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_transfer_pricing_methods",
+    "query": "移転価格税制において独立企業間価格を算定するための3つの基本的方法は何ですか？",
+    "document": "移転価格税制において独立企業間価格を算定する実務において、多国籍企業が関連会社間の国際取引価格を操作して税率の低い国へ利益を移転させることを防ぐため、独立した第三者間で取引されたとみなした場合の適正価格で課税する税制です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_transfer_pricing_methods",
+    "query": "移転価格税制において独立企業間価格を算定するための3つの基本的方法は何ですか？",
+    "document": "タックス・ヘイブン対策税制（CFC税制）は、軽課税国にある外国子会社等を利用した租税回避を防止するため、一定の要件のもとで親会社の所得に子会社の所得を合算して課税する制度です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_bad_debt_reserve_tax",
+    "query": "法人税法において貸倒引当金の繰入限度額を計算する際、法定繰入率の適用が認められている法人の区分は何ですか？",
+    "document": "資本金の額が1億円以下の中小法人等、公益法人等、協同組合等、および人格のない社団等です（大企業には法定繰入率の適用は認められません）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_bad_debt_reserve_tax",
+    "query": "法人税法において貸倒引当金の繰入限度額を計算する際、法定繰入率の適用が認められている法人の区分は何ですか？",
+    "document": "売掛金や貸付金などの金銭債権の回収不能リスクに備えて計上する貸倒引当金について、税法上損金として認められる繰入額には厳格な算定制限が設けられています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_bad_debt_reserve_tax",
+    "query": "法人税法において貸倒引当金の繰入限度額を計算する際、法定繰入率の適用が認められている法人の区分は何ですか？",
+    "document": "有形固定資産の除却損は、老朽化や陳腐化によって使用を中止し解体・廃棄した固定資産の帳簿残高を損失として計上する勘定科目です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_direct_vs_indirect_cashflow",
+    "query": "キャッシュフロー計算書の営業活動のCFを作成する際、「間接法」と「直接法」の違いは何ですか？",
+    "document": "直接法が主要な取引ごとの総額（商品の販売による収入、仕入れによる支出等）を直接表示するのに対し、間接法は税引前当期純利益を出発点として非資金損益項目（減価償却費等）や運転資本の増減を調整して営業CFを導出する点です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_direct_vs_indirect_cashflow",
+    "query": "キャッシュフロー計算書の営業活動のCFを作成する際、「間接法」と「直接法」の違いは何ですか？",
+    "document": "財務諸表作成において営業CFの表示方法には直接法と間接法の2種類が認められていますが、実務上の作成容易性から日本の上場企業の大半が間接法を採用しています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_direct_vs_indirect_cashflow",
+    "query": "キャッシュフロー計算書の営業活動のCFを作成する際、「間接法」と「直接法」の違いは何ですか？",
+    "document": "フリーキャッシュフロー（FCF）は、企業が事業維持のための投資を行った後に自由に使える現金を指し、一般に営業CFから投資CFを差し引いて求められます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_dividend_discount_model",
+    "query": "ゴードン・グロース・モデル（配当割引モデル）における株式の理論価格を求める計算式は何ですか？",
+    "document": "理論株価 ＝ 予想配当（D1） ÷（株主の要求収益率（r） － 配当成長率（g）） です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_dividend_discount_model",
+    "query": "ゴードン・グロース・モデル（配当割引モデル）における株式の理論価格を求める計算式は何ですか？",
+    "document": "将来得られる配当金の現在価値の合計から株式の本源的価値を算出する配当割引モデル（DDM）は、伝統的な企業価値評価手法の一つです。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_dividend_discount_model",
+    "query": "ゴードン・グロース・モデル（配当割引モデル）における株式の理論価格を求める計算式は何ですか？",
+    "document": "インフレリスクは、物価の上昇によって保有している現金や固定利回り資産の実質的な購買力が低下するリスクを意味します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_tax_investigation_statute",
+    "query": "国税通則法において、偽りその他不正の行為がない場合の所得税・法人税の更正決定の除斥期間は何年間ですか？",
+    "document": "原則として法定申告期限から 5年間 です（なお不正行為による脱税等の場合は7年間、純損失等の繰越控除に関する更正は10年間）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_tax_investigation_statute",
+    "query": "国税通則法において、偽りその他不正の行為がない場合の所得税・法人税の更正決定の除斥期間は何年間ですか？",
+    "document": "税務署による税務調査によって申告内容の誤りが指摘された場合、修正申告や更正決定が行われますが、法的安定性の観点から過去に遡って課税できる期間に制限があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_tax_investigation_statute",
+    "query": "国税通則法において、偽りその他不正の行為がない場合の所得税・法人税の更正決定の除斥期間は何年間ですか？",
+    "document": "青色申告の承認取消処分を受けた法人は、原則としてその取消通知を受けた日から1年間は再度の青色申告の承認申請を行うことができません。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_var_value_at_risk",
+    "query": "金融工学におけるVaR（Value at Risk）の定義は何ですか？",
+    "document": "ある一定の保有期間および信頼水準（例: 99%信頼水準で1日）において、市場の通常変動に伴いポートフォリオが被る可能性のある「最大損失予測額」です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_var_value_at_risk",
+    "query": "金融工学におけるVaR（Value at Risk）の定義は何ですか？",
+    "document": "金融機関の市場リスク管理においてVaRは国際的な標準指標として用いられています。ヒストリカル・シミュレーション法や分散・共分散法、モンテカルロ法などを用いて計測されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_var_value_at_risk",
+    "query": "金融工学におけるVaR（Value at Risk）の定義は何ですか？",
+    "document": "ストレステストは、歴史的な金融危機や極端な市場ショックシナリオを想定し、ポートフォリオや金融機関全体が耐えうるかシミュレーションする手法です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_consolidation_minority_interest",
+    "query": "連結会計において、連結子会社の純資産のうち親会社に帰属しない持分を表す貸借対照表の純資産項目の名称は何ですか？",
+    "document": "連結財務諸表において、子会社の純資産のうち親会社の持分に属しない部分は「非支配株主持分（旧称: 少数株主持分）」として純資産の部に計上されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_consolidation_minority_interest",
+    "query": "連結会計において、連結子会社の純資産のうち親会社に帰属しない持分を表す貸借対照表の純資産項目の名称は何ですか？",
+    "document": "親会社が子会社を支配している場合、企業集団を単一の組織とみなして連結財務諸表を作成します。親会社持分以外の外部株主が保有する割合を正しく区分表示します。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_consolidation_minority_interest",
+    "query": "連結会計において、連結子会社の純資産のうち親会社に帰属しない持分を表す貸借対照表の純資産項目の名称は何ですか？",
+    "document": "持分法は、親会社が完全支配には至らないものの重要な影響力を持つ関連会社（持株比率20%〜50%）に適用される簡便な連結投資評価手法です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_carried_interest_pe",
+    "query": "プライベート・エクイティ（PE）ファンドにおける「キャリード・インタレスト（Success Fee）」の一般的な配分割合は何パーセントですか？",
+    "document": "ファンドの運用益（ハードルレート超過益）のうち、ファンドマネージャー（GP）に成功報酬として配分される割合は通常 20％（出資者LPへの配分が80%）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_carried_interest_pe",
+    "query": "プライベート・エクイティ（PE）ファンドにおける「キャリード・インタレスト（Success Fee）」の一般的な配分割合は何パーセントですか？",
+    "document": "投資ファンドの報酬体系は「2 and 20」と呼ばれるように、運用資産残高に応じた固定の管理報酬（通常2%程度）と、利益に応じた成果配分報酬で構成されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_carried_interest_pe",
+    "query": "プライベート・エクイティ（PE）ファンドにおける「キャリード・インタレスト（Success Fee）」の一般的な配分割合は何パーセントですか？",
+    "document": "メザニンファイナンスは、シニアローン（普通借入）とエクイティ（普通株式）の中間に位置する資金調達手段であり、劣後債や優先株などが該当します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_corporate_split_tax",
+    "query": "税制適格分社型分割（適格組織再編）に該当するための基本的な要件（完全親子間の場合を除く）は何ですか？",
+    "document": "分割対価として株式のみが交付されること、移転事業の主要資産・負債が引き継がれること、事業の従業員の概ね80%以上が従事すること、事業が継続されること等の要件を満たすことです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_corporate_split_tax",
+    "query": "税制適格分社型分割（適格組織再編）に該当するための基本的な要件（完全親子間の場合を除く）は何ですか？",
+    "document": "企業の構造改革や事業承継において会社分割が活用されます。組織再編税制上の適格要件を満たすか否かによって、移転資産の譲渡損益の計上繰延べの可否が決定されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_corporate_split_tax",
+    "query": "税制適格分社型分割（適格組織再編）に該当するための基本的な要件（完全親子間の場合を除く）は何ですか？",
+    "document": "現物出資は、金銭以外の動産・不動産・特許権などの財産を出資して株式を取得する設立・増資形態であり、原則として裁判所の選任した検査役の調査が必要です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_pos_audit_opinion_types",
+    "query": "公認会計士の財務諸表監査において表明される4種類の監査意見の類型は何ですか？",
+    "document": "無限定適正意見、限定付適正意見、不適正意見、および意見不表明の4種類です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_near_audit_opinion_types",
+    "query": "公認会計士の財務諸表監査において表明される4種類の監査意見の類型は何ですか？",
+    "document": "監査法人は企業が作成した財務諸表が一般に公正妥当と認められる会計基準に準拠して適正に表示されているかを検証し、監査報告書を通じて意見を表明します。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "fin_unans_audit_opinion_types",
+    "query": "公認会計士の財務諸表監査において表明される4種類の監査意見の類型は何ですか？",
+    "document": "内部監査は組織の内部部門が独立した立場から業務活動の合規性・効率性を評価し、業務改善を提言するマネジメント支援活動です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "finance_tax"
+  },
+  {
+    "id": "med_pos_loxonin_dose",
+    "query": "ロキソプロフェンナトリウム水和物（ロキソニン）の成人における1回あたりの通常用量と1日最大用量は何mgですか？",
+    "document": "成人の1回通常用量は 60mg（1錠） であり、頓用の場合も1回60mgを服用します。1日の最大投与限度は 180mg（3錠） です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_loxonin_dose",
+    "query": "ロキソプロフェンナトリウム水和物（ロキソニン）の成人における1回あたりの通常用量と1日最大用量は何mgですか？",
+    "document": "ロキソニン（ロキソプロフェンナトリウム）は非ステロイド性抗炎症薬（NSAIDs）に分類される速効性の解熱鎮痛消炎剤です。関節痛や抜歯後の疼痛、急性上気道炎の解熱鎮痛に広く処方されますが、胃腸障害などの副作用に配慮が必要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_loxonin_dose",
+    "query": "ロキソプロフェンナトリウム水和物（ロキソニン）の成人における1回あたりの通常用量と1日最大用量は何mgですか？",
+    "document": "インフルエンザワクチンの予防接種は、インフルエンザウイルスの感染による重症化を予防することを目的としており、通常は毎年秋から初冬にかけて接種が行われます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_warfarin_inr",
+    "query": "非弁膜症性心房細動におけるワルファリン投与時の目標PT-INR（70歳未満の成人）は何ですか？",
+    "document": "70歳未満の成人における目標PT-INRは 2.0 〜 3.0 です（なお70歳以上の高齢者の場合は出血リスクを考慮して1.6〜2.6が目標値となります）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_warfarin_inr",
+    "query": "非弁膜症性心房細動におけるワルファリン投与時の目標PT-INR（70歳未満の成人）は何ですか？",
+    "document": "ワルファリンカリウムはビタミンKの作用を阻害して血液凝固因子の生合成を抑制する経口抗凝固薬です。血栓塞栓症の予防に用いられますが、血液凝固能を定期的にモニタリングして投与量を厳格に調整する必要があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_warfarin_inr",
+    "query": "非弁膜症性心房細動におけるワルファリン投与時の目標PT-INR（70歳未満の成人）は何ですか？",
+    "document": "骨粗鬆症は骨強度の低下により骨折のリスクが高くなる全身性の骨疾患であり、ビスホスホネート系製剤やカルシウム製剤が治療に用いられます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_metformin_lactic_acidosis",
+    "query": "ビグアナイド系糖尿病薬メトホルミンの最も警戒すべき重篤な副作用は何ですか？",
+    "document": "乳酸アシドーシス（血液中の乳酸が異常に増加し急激なアシドーシスに陥る状態。致死率が高い）です。特に腎機能低下患者やヨード造影剤検査前後での休薬が必須とされます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_metformin_lactic_acidosis",
+    "query": "ビグアナイド系糖尿病薬メトホルミンの最も警戒すべき重篤な副作用は何ですか？",
+    "document": "メトホルミン塩酸塩は肝臓での糖新生を抑制し筋肉でのインスリン感受性を改善する2型糖尿病の第一選択薬です。体重増加をきたしにくく低血糖リスクが単独では低い利点があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_metformin_lactic_acidosis",
+    "query": "ビグアナイド系糖尿病薬メトホルミンの最も警戒すべき重篤な副作用は何ですか？",
+    "document": "アトピー性皮膚炎の局所治療においては、皮膚の炎症を抑える外用ステロイド薬やタクロリムス軟膏と、皮膚バリア機能を補うヘパリン類似物質等の保湿剤が併用されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_amoxicillin_contraindication",
+    "query": "アモキシシリンなどのペニシリン系抗生物質において原則禁忌とされる患者の代表例は何ですか？",
+    "document": "本剤の成分に対しショックやアナフィラキシー等の過敏症の既往歴のある患者、および伝染性単核症の患者（紅斑性発疹の発現率が高いため）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_amoxicillin_contraindication",
+    "query": "アモキシシリンなどのペニシリン系抗生物質において原則禁忌とされる患者の代表例は何ですか？",
+    "document": "アモキシシリン水和物は広範囲の細菌に殺菌作用を示すβ-ラクタム系抗生物質であり、呼吸器感染症やヘリコバクター・ピロリ除菌療法など多岐にわたる感染症治療に使用されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_amoxicillin_contraindication",
+    "query": "アモキシシリンなどのペニシリン系抗生物質において原則禁忌とされる患者の代表例は何ですか？",
+    "document": "白内障は加齢に伴い水晶体が混濁して視力低下を引き起こす疾患であり、混濁した水晶体を摘出して眼内レンズを挿入する手術が一般的な根治療法です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_hba1c_diagnostic_criteria",
+    "query": "日本糖尿病学会の診断基準において、糖尿病型と判定されるHbA1c（NGSP値）の基準値は何パーセント以上ですか？",
+    "document": "HbA1c（NGSP）が 6.5％ 以上 です（空腹時血糖値126mg/dL以上または随時血糖値200mg/dL以上などと組み合わせて診断されます）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_hba1c_diagnostic_criteria",
+    "query": "日本糖尿病学会の診断基準において、糖尿病型と判定されるHbA1c（NGSP値）の基準値は何パーセント以上ですか？",
+    "document": "HbA1cは赤血球中のヘモグロビンにブドウ糖が結合したもので、過去1〜2ヶ月間の平均的な血糖状態を反映する指標です。糖尿病の早期発見や血糖コントロールのモニタリングに不可欠な検査項目です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_hba1c_diagnostic_criteria",
+    "query": "日本糖尿病学会の診断基準において、糖尿病型と判定されるHbA1c（NGSP値）の基準値は何パーセント以上ですか？",
+    "document": "高血圧症の予防には、日々の生活習慣における食塩摂取量の制限（1日6g未満推奨）や適度な有酸素運動、肥満の解消が極めて有効です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_statin_rhabdomyolysis",
+    "query": "HMG-CoA還元酵素阻害薬（スタチン系）とフィブラート系薬剤の併用時に特にリスクが高まる筋障害は何ですか？",
+    "document": "横紋筋融解症（筋肉痛、脱力感、CK急上昇、赤褐色尿などを伴い急性腎障害に至る重篤な病態）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_statin_rhabdomyolysis",
+    "query": "HMG-CoA還元酵素阻害薬（スタチン系）とフィブラート系薬剤の併用時に特にリスクが高まる筋障害は何ですか？",
+    "document": "スタチン系薬剤は肝臓でのコレステロール合成を強力に阻害し、脂質異常症の治療においてLDLコレステロールを低下させる代表薬です。定期的な血液検査による肝機能や筋肉酵素のチェックが推奨されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_statin_rhabdomyolysis",
+    "query": "HMG-CoA還元酵素阻害薬（スタチン系）とフィブラート系薬剤の併用時に特にリスクが高まる筋障害は何ですか？",
+    "document": "逆流性食道炎（GERD）は、胃酸や胃内容物が食道に逆流して粘膜に炎症を起こす疾患であり、プロトンポンプ阻害薬（PPI）が第一選択薬として処方されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_clarithromycin_cyp3a4",
+    "query": "クラリスロマイシン（マクロライド系抗生剤）が多くの薬剤との併用注意・禁忌を持つ薬物動態学的理由は何ですか？",
+    "document": "肝臓の薬物代謝酵素 CYP3A4を強力に阻害 する作用があるため、CYP3A4で代謝される他の併用薬の血中濃度を著しく上昇させるからです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_clarithromycin_cyp3a4",
+    "query": "クラリスロマイシン（マクロライド系抗生剤）が多くの薬剤との併用注意・禁忌を持つ薬物動態学的理由は何ですか？",
+    "document": "クラリスロマイシンはマイコプラズマ肺炎や非定型抗酸菌症、ピロリ菌除菌などに広く用いられる抗生物質です。患者のお薬手帳を確認し、相互作用のある薬剤の有無をチェックすることが不可欠です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_clarithromycin_cyp3a4",
+    "query": "クラリスロマイシン（マクロライド系抗生剤）が多くの薬剤との併用注意・禁忌を持つ薬物動態学的理由は何ですか？",
+    "document": "緑内障は視神経が障害されて視野が徐々に欠損していく進行性の眼疾患であり、眼圧を下げる点眼薬治療が基本となります。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_paracetamol_toxic_metabolite",
+    "query": "アセトアミノフェンの大量過量投与時に肝細胞壊死を引き起こす有毒代謝物の名称は何ですか？",
+    "document": "NAPQI（N-アセチル-p-ベンゾキノンイミン） です（グルタチオンが枯渇することで肝細胞タンパク質と結合し肝毒性を発揮。解毒剤としてN-アセチルシステインが投与されます）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_paracetamol_toxic_metabolite",
+    "query": "アセトアミノフェンの大量過量投与時に肝細胞壊死を引き起こす有毒代謝物の名称は何ですか？",
+    "document": "アセトアミノフェン（カロナール）は中枢神経系に作用して解熱鎮痛効果を発揮し、NSAIDsと比較して胃腸障害が少なく小児や妊婦にも比較的安全に使用できる薬剤です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_paracetamol_toxic_metabolite",
+    "query": "アセトアミノフェンの大量過量投与時に肝細胞壊死を引き起こす有毒代謝物の名称は何ですか？",
+    "document": "痛風発作は高尿酸血症により関節内に形成された尿酸ナトリウム結晶に対する炎症反応であり、コルヒチンや非ステロイド性抗炎症薬で急性期の痛みを抑えます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_digoxin_toxic_level",
+    "query": "強心薬ジゴキシンの血中有効濃度域とジギタリス中毒を疑う血中濃度の目安は何ng/mLですか？",
+    "document": "治療有効域は 0.5 〜 0.9 ng/mL（心不全時）であり、血中濃度が 2.0 ng/mL を超えると不整脈や悪心・黄視症などのジギタリス中毒のリスクが急激に高まります。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_digoxin_toxic_level",
+    "query": "強心薬ジゴキシンの血中有効濃度域とジギタリス中毒を疑う血中濃度の目安は何ng/mLですか？",
+    "document": "ジゴキシンは心筋細胞膜のNa+/K+-ATPaseを阻害して心筋収縮力を高める古典的な強心薬ですが、安全域（治療域）が極めて狭いためTDM（治療薬物モニタリング）が必須のハイリスク薬です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_digoxin_toxic_level",
+    "query": "強心薬ジゴキシンの血中有効濃度域とジギタリス中毒を疑う血中濃度の目安は何ng/mLですか？",
+    "document": "甲状腺機能低下症（橋本病など）では甲状腺ホルモンの分泌が低下し、易疲労感、浮腫、徐脈などが現れ、レボチロキシンナトリウムの経口補充が行われます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_acei_cough_mechanism",
+    "query": "ACE（アンジオテンシン変換酵素）阻害薬の服用時に特徴的に発生する空咳の原因物質は何ですか？",
+    "document": "ACEが不活性化するはずの ブラジキニン（およびサブスタンスP） が肺組織内に蓄積することによって気道受容体を刺激するためです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_acei_cough_mechanism",
+    "query": "ACE（アンジオテンシン変換酵素）阻害薬の服用時に特徴的に発生する空咳の原因物質は何ですか？",
+    "document": "ACE阻害薬は降圧作用とともに心保護作用や腎保護作用を持ち、高血圧や慢性心不全の標準的治療薬です。副作用として持続する乾性咳嗽（空咳）が知られており、ARBへの変更が検討されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_acei_cough_mechanism",
+    "query": "ACE（アンジオテンシン変換酵素）阻害薬の服用時に特徴的に発生する空咳の原因物質は何ですか？",
+    "document": "狭心症の急性発作時には、血管拡張作用を持つニトログリセリンの舌下錠やスプレーを投与して冠動脈を拡張させ、心筋への酸素供給を回復させます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_aspirin_reye_syndrome",
+    "query": "小児のインフルエンザや水痘罹患時にアスピリンの投与が原則禁忌とされている理由はどの疾患の発症リスクのためですか？",
+    "document": "ライ症候群（急性脳症と肝臓の脂肪変性を主徴とする致死率の高い小児疾患）の発症リスクがあるためです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_aspirin_reye_syndrome",
+    "query": "小児のインフルエンザや水痘罹患時にアスピリンの投与が原則禁忌とされている理由はどの疾患の発症リスクのためですか？",
+    "document": "アスピリン（アセチルサリチル酸）は鎮痛解熱作用とともに強力な抗血小板作用を有し、低用量アスピリン療法として虚血性心疾患の再発予防に広く用いられています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_aspirin_reye_syndrome",
+    "query": "小児のインフルエンザや水痘罹患時にアスピリンの投与が原則禁忌とされている理由はどの疾患の発症リスクのためですか？",
+    "document": "気管支喘息の長期管理（コントローラー）には吸入ステロイド薬（ICS）が基本となり、気道の慢性炎症を持続的に抑制します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_levothyroxine_iron_interaction",
+    "query": "甲状腺ホルモン薬レボチロキシンと鉄剤（フェロミア等）を同時服用する際の相互作用への対処法は何ですか？",
+    "document": "両剤が消化管内で難溶性のキレートを形成してレボチロキシンの吸収が著しく低下するため、服用時間を 少なくとも2〜4時間以上ずらして 服用します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_levothyroxine_iron_interaction",
+    "query": "甲状腺ホルモン薬レボチロキシンと鉄剤（フェロミア等）を同時服用する際の相互作用への対処法は何ですか？",
+    "document": "レボチロキシンナトリウムは甲状腺機能低下症の治療に用いられる重要な薬剤ですが、カルシウム剤や鉄剤、制酸剤など多くのミネラル含有薬剤と胃腸内で相互作用を起こしやすい特性があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_levothyroxine_iron_interaction",
+    "query": "甲状腺ホルモン薬レボチロキシンと鉄剤（フェロミア等）を同時服用する際の相互作用への対処法は何ですか？",
+    "document": "鉄欠乏性貧血の治療では経口鉄剤の投与が行われますが、主な副作用として悪心や便秘、黒色便などがみられます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_ssri_serotonin_syndrome",
+    "query": "SSRI（選択的セロトニン再取り込み阻害薬）の過剰投与や相互作用によって生じる「セロトニン症候群」の3大徴候は何ですか？",
+    "document": "1) 精神状態の変化（錯乱・不穏）、2) 自律神経過活動（発熱・頻脈・発汗）、3) 神経筋症状（ミオクローヌス・腱反射亢進・振戦）の3徴です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_ssri_serotonin_syndrome",
+    "query": "SSRI（選択的セロトニン再取り込み阻害薬）の過剰投与や相互作用によって生じる「セロトニン症候群」の3大徴候は何ですか？",
+    "document": "SSRIはうつ病やパニック障害、強迫性障害の第一選択薬として頻用されます。モノアミン酸化酵素阻害薬（MAOI）などのセロトニン濃度を上昇させる薬剤との併用は厳格に禁忌とされています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_ssri_serotonin_syndrome",
+    "query": "SSRI（選択的セロトニン再取り込み阻害薬）の過剰投与や相互作用によって生じる「セロトニン症候群」の3大徴候は何ですか？",
+    "document": "統合失調症の薬物療法にはドパミンD2受容体を遮断する非定型抗精神病薬が主に使用され、陽性症状および陰性症状の改善を図ります。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_benzodiazepine_withdrawal",
+    "query": "ベンゾジアゼピン系睡眠薬・抗不安薬の長期連用後の急激な休薬によって生じる症状は何ですか？",
+    "document": "離脱症状（反跳性不眠、強い不安、振戦、発汗、重篤な場合は痙攣発作やせん妄）です（徐々に減量する漸減法や隔日投与法での中止が必要）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_benzodiazepine_withdrawal",
+    "query": "ベンゾジアゼピン系睡眠薬・抗不安薬の長期連用後の急激な休薬によって生じる症状は何ですか？",
+    "document": "ベンゾジアゼピン系薬剤はGABA_A受容体に作用して鎮静・抗不安・筋弛緩作用をもたらします。即効性に優れますが、耐性や依存性の形成に留意した慎重な処方が求められます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_benzodiazepine_withdrawal",
+    "query": "ベンゾジアゼピン系睡眠薬・抗不安薬の長期連用後の急激な休薬によって生じる症状は何ですか？",
+    "document": "認知症の中で最も患者数が多いアルツハイマー型認知症では、コリンエステラーゼ阻害薬（ドネペジル等）やNMDA受容体拮抗薬（メマンチン）が進行抑制に用いられます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_corticosteroid_osteoporosis",
+    "query": "経口ステロイド（プレドニゾロン等）の長期投与時における骨粗鬆症予防の第一選択薬は何ですか？",
+    "document": "ビスホスホネート系製剤（アレンドロン酸、リセドロン酸など） です（骨吸収を抑制して骨折リスクを低減）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_corticosteroid_osteoporosis",
+    "query": "経口ステロイド（プレドニゾロン等）の長期投与時における骨粗鬆症予防の第一選択薬は何ですか？",
+    "document": "副腎皮質ステロイド薬は強力な抗炎症・免疫抑制作用を持ち、自己免疫疾患やアレルギー疾患の治療に不可欠です。しかし長期大量投与では骨粗鬆症や易感染性、満月様顔貌などの副作用が現れます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_corticosteroid_osteoporosis",
+    "query": "経口ステロイド（プレドニゾロン等）の長期投与時における骨粗鬆症予防の第一選択薬は何ですか？",
+    "document": "慢性腎臓病（CKD）の進展抑制には、血圧管理とともにタンパク尿の減少が重要視され、SGLT2阻害薬やRAS阻害薬が有効性を示しています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_sglt2_mechanism",
+    "query": "SGLT2阻害薬の薬理作用機序は何ですか？",
+    "document": "腎臓の近位尿細管におけるSGLT2（ナトリウム・グルコース共輸送体2）を選択的に阻害し、原尿からのブドウ糖の再吸収を抑制して尿中に過剰な糖を排泄させる機序です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_sglt2_mechanism",
+    "query": "SGLT2阻害薬の薬理作用機序は何ですか？",
+    "document": "SGLT2阻害薬は当初2型糖尿病治療薬として開発されましたが、大規模臨床試験において心不全の入院リスク低減や慢性腎臓病の進行抑制効果が証明され適応が拡大されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_sglt2_mechanism",
+    "query": "SGLT2阻害薬の薬理作用機序は何ですか？",
+    "document": "尿路結石の疝痛発作に対しては、激痛を緩和するために非ステロイド性抗炎症薬（坐剤など）が第一選択として使用されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_morphine_constipation",
+    "query": "オピオイド系鎮痛薬モルヒネの投与開始時に耐性が形成されにくくほぼ必発するため下剤の併用が必須となる副作用は何ですか？",
+    "document": "便秘 です（腸管壁のオピオイドμ受容体を刺激して蠕動運動を強力に抑制するため、耐性がつきにくく継続的な下剤投与が必要となります）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_morphine_constipation",
+    "query": "オピオイド系鎮痛薬モルヒネの投与開始時に耐性が形成されにくくほぼ必発するため下剤の併用が必須となる副作用は何ですか？",
+    "document": "モルヒネなどの強オピオイドはがん性疼痛のコントロールにおいて極めて重要な役割を果たします。悪心・嘔吐や眠気は投与継続により耐性が生じやすい一方、適切な支持療法の併用が不可欠です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_morphine_constipation",
+    "query": "オピオイド系鎮痛薬モルヒネの投与開始時に耐性が形成されにくくほぼ必発するため下剤の併用が必須となる副作用は何ですか？",
+    "document": "がん化学療法に伴う悪心・嘔吐（CINV）の予防には、5-HT3受容体拮抗薬、NK1受容体拮抗薬、デキサメタゾンの3剤併用療法が広く行われます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_lithium_monitoring",
+    "query": "双極性障害治療薬リチウム炭酸塩の投与において定期的な測定が義務付けられている血液検査項目は何ですか？",
+    "document": "血清リチウム濃度（有効血中濃度0.4〜1.0 mEq/L）に加え、腎機能（クレアチニン、eGFR）および 甲状腺機能（TSH、FT4） です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_lithium_monitoring",
+    "query": "双極性障害治療薬リチウム炭酸塩の投与において定期的な測定が義務付けられている血液検査項目は何ですか？",
+    "document": "炭酸リチウムは気分安定薬として双極性障害の躁状態の治療や再発予防に確立された有効性を持ちます。過量投与によるリチウム中毒（運動失調、振戦、意識障害）を防ぐための厳格なモニタリングが必要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_lithium_monitoring",
+    "query": "双極性障害治療薬リチウム炭酸塩の投与において定期的な測定が義務付けられている血液検査項目は何ですか？",
+    "document": "パーキンソン病は中脳黒質のドパミン作動性神経細胞の脱落により振戦や固縮、無動が生じる神経変性疾患であり、レボドパ（L-dopa）が補充療法として使用されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_tetracycline_teeth",
+    "query": "テトラサイクリン系抗生物質を8歳未満の小児や妊婦に投与することが原則禁忌とされている理由は何ですか？",
+    "document": "発育中の骨や歯のハイドロキシアパタイトにキレート結合して沈着し、歯の永久的な黄変・着色やエナメル質形成不全、骨発育不全を引き起こすためです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_tetracycline_teeth",
+    "query": "テトラサイクリン系抗生物質を8歳未満の小児や妊婦に投与することが原則禁忌とされている理由は何ですか？",
+    "document": "テトラサイクリン系抗生剤はクラミジアやリケッチア、ざ瘡（ニキビ）などの治療に用いられる静菌性の抗菌薬ですが、カルシウムと結合しやすい特性に由来する特有の禁忌事項が存在します。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_tetracycline_teeth",
+    "query": "テトラサイクリン系抗生物質を8歳未満の小児や妊婦に投与することが原則禁忌とされている理由は何ですか？",
+    "document": "蕁麻疹の薬物治療では、ヒスタミンH1受容体を遮断して血管透過性亢進や痒みを抑える第2世代抗ヒスタミン薬が第一選択薬となります。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_clopidogrel_cyp2c19",
+    "query": "抗血小板薬クロピドグレル（プラビックス）がプロドラッグとして活性代謝物に変換される際に関与する主要な代謝酵素は何ですか？",
+    "document": "CYP2C19 です（プロトンポンプ阻害薬オメプラゾールなどのCYP2C19阻害薬を併用すると抗血小板効果が減弱する懸念があります）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_clopidogrel_cyp2c19",
+    "query": "抗血小板薬クロピドグレル（プラビックス）がプロドラッグとして活性代謝物に変換される際に関与する主要な代謝酵素は何ですか？",
+    "document": "虚血性脳血管障害や冠動脈ステント留置後の血栓予防にクロピドグレルが用いられます。患者の遺伝的多型によって代謝能が異なるPoor Metabolizer（PM）の存在が知られています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_clopidogrel_cyp2c19",
+    "query": "抗血小板薬クロピドグレル（プラビックス）がプロドラッグとして活性代謝物に変換される際に関与する主要な代謝酵素は何ですか？",
+    "document": "心電図検査におけるQT延長症候群は、心室の再分極の遅延によりTorsades de Pointesと呼ばれる致死性不整脈を誘発するリスクがあります。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_infliximab_tb_screening",
+    "query": "抗TNF-α抗体インフリキシマブ（レミケード）などの生物学的製剤を開始する前に必須とされる感染症スクリーニングは何ですか？",
+    "document": "結核（インターフェロン-γ遊離試験（T-SPOT/QFT）および胸部X線/CT） と B型肝炎ウイルス（HBs抗原、HBs抗体、HBc抗体）のスクリーニングです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_infliximab_tb_screening",
+    "query": "抗TNF-α抗体インフリキシマブ（レミケード）などの生物学的製剤を開始する前に必須とされる感染症スクリーニングは何ですか？",
+    "document": "関節リウマチや炎症性腸疾患の治療を劇的に進歩させた生物学的製剤は、特定の炎症性サイトカインをピンポイントで阻害します。しかし免疫抑制作用に伴う日和見感染症の再活性化に厳重な注意が必要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_infliximab_tb_screening",
+    "query": "抗TNF-α抗体インフリキシマブ（レミケード）などの生物学的製剤を開始する前に必須とされる感染症スクリーニングは何ですか？",
+    "document": "潰瘍性大腸炎は主として大腸粘膜を侵す原因不明のびらん性・潰瘍性大腸炎であり、メサラジン（5-ASA製剤）が基本薬として投与されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_warfarin_green_vegetables",
+    "query": "ワルファリンを服用中の患者が納豆やクロレラ、青汁の摂取を厳格に禁止される理由は何ですか？",
+    "document": "これらの食品に極めて豊富に含まれる ビタミンK がワルファリンの抗凝固作用を拮抗・阻害し、薬効を消失させて血栓症リスクを高めるためです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_warfarin_green_vegetables",
+    "query": "ワルファリンを服用中の患者が納豆やクロレラ、青汁の摂取を厳格に禁止される理由は何ですか？",
+    "document": "抗凝固薬ワルファリンは食事中のビタミンK摂取量による影響を強く受けます。日常的な食生活においてビタミンKを多量に含む食品の摂取制限について服薬指導が行われます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_warfarin_green_vegetables",
+    "query": "ワルファリンを服用中の患者が納豆やクロレラ、青汁の摂取を厳格に禁止される理由は何ですか？",
+    "document": "深部静脈血栓症（DVT）は下肢の深部静脈に血栓が生じる疾患であり、血栓が血流に乗って肺動脈を閉塞すると致死的な肺血栓塞栓症（エコノミークラス症候群）を引き起こします。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_insulin_hypoglycemia_treatment",
+    "query": "インスリン治療中の糖尿病患者が意識障害のない低血糖症状を起こした際の第一選択の対処法は何ですか？",
+    "document": "ブドウ糖 10g（またはブドウ糖を含む清涼飲料水150〜200mL、砂糖20g）を経口摂取し、15分後に症状が改善しない場合は同量を再度摂取することです。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_insulin_hypoglycemia_treatment",
+    "query": "インスリン治療中の糖尿病患者が意識障害のない低血糖症状を起こした際の第一選択の対処法は何ですか？",
+    "document": "インスリン自己注射療法は1型糖尿病やインスリン枯渇状態の2型糖尿病に不可欠な治療ですが、最も高頻度かつ危険な急性合併症が低血糖です。患者および家族への緊急時対応の指導が必要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_insulin_hypoglycemia_treatment",
+    "query": "インスリン治療中の糖尿病患者が意識障害のない低血糖症状を起こした際の第一選択の対処法は何ですか？",
+    "document": "糖尿病ケトアシドーシス（DKA）はインスリンの絶対的欠乏により高血糖、ケトーシス、代謝性アシドーシスを呈する急性代謝障害であり、生食輸液とインスリン静注が治療の基本です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_allopurinol_skin_reaction",
+    "query": "高尿酸血症治療薬アロプリノールの重篤な皮膚粘膜眼症候群の発症リスクと関連する遺伝子多型は何ですか？",
+    "document": "HLA-B*58:01 アレルです（特にアジア系人種においてこのアレルを保有する患者で重篤な薬疹スティーブンス・ジョンソン症候群のリスクが高まります）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_allopurinol_skin_reaction",
+    "query": "高尿酸血症治療薬アロプリノールの重篤な皮膚粘膜眼症候群の発症リスクと関連する遺伝子多型は何ですか？",
+    "document": "アロプリノールはキサンチンオキシダーゼを阻害して尿酸の生成を抑える古典的な尿酸降下薬です。痛風結節や尿路結石を伴う高尿酸血症に広く用いられますが、重症薬疹の初期症状に警戒が必要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_allopurinol_skin_reaction",
+    "query": "高尿酸血症治療薬アロプリノールの重篤な皮膚粘膜眼症候群の発症リスクと関連する遺伝子多型は何ですか？",
+    "document": "慢性閉塞性肺疾患（COPD）はタバコ煙などの有害物質の長期吸入により気道狭窄が生じる進行性の呼吸器疾患であり、長時間作用性抗コリン薬（LAMA）吸入が中心となります。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_ppi_gastric_acid_rebound",
+    "query": "プロトンポンプ阻害薬（PPI）の急激な投与中止時に起こることがある胃酸分泌の現象を何と呼びますか？",
+    "document": "酸分泌のリバウンド現象（リバウンド性胃酸過多：高ガストリン血症に起因する一時的な胃酸過剰分泌）です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_ppi_gastric_acid_rebound",
+    "query": "プロトンポンプ阻害薬（PPI）の急激な投与中止時に起こることがある胃酸分泌の現象を何と呼びますか？",
+    "document": "PPIは胃壁細胞のプロトンポンプ（H+/K+-ATPase）に非可逆的に結合して胃酸分泌を強力に抑制します。消化性潰瘍の治癒や逆流性食道炎の治療において高い治癒率を誇ります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_ppi_gastric_acid_rebound",
+    "query": "プロトンポンプ阻害薬（PPI）の急激な投与中止時に起こることがある胃酸分泌の現象を何と呼びますか？",
+    "document": "ヘリコバクター・ピロリ菌の1次除菌療法では、PPI（またはP-CAB）＋アモキシシリン＋クラリスロマイシンの3剤を7日間経口投与します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_spironolactone_hyperkalemia",
+    "query": "カリウム保持性利尿薬スピロノラクトンの服用時に最も注意すべき電解質異常は何ですか？",
+    "document": "高カリウム血症 です（遠位尿細管のアリドステロン受容体を遮断してNaの排泄を促す一方、Kの排泄を抑制するため。特に腎機能低下患者やACEI/ARB併用時にリスクが増大）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_spironolactone_hyperkalemia",
+    "query": "カリウム保持性利尿薬スピロノラクトンの服用時に最も注意すべき電解質異常は何ですか？",
+    "document": "スピロノラクトンは抗アルドステロン薬として心不全や肝硬変に伴う浮腫、高血圧症に処方されます。利尿薬による低カリウム血症を是正する目的でも併用されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_spironolactone_hyperkalemia",
+    "query": "カリウム保持性利尿薬スピロノラクトンの服用時に最も注意すべき電解質異常は何ですか？",
+    "document": "心房細動における脳梗塞発症リスクの評価には、うっ血性心不全、高血圧、年齢、糖尿病、脳卒中既往などをスコア化したCHADS2スコアやCHA2DS2-VAScスコアが用いられます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_amiodarone_pulmonary_toxicity",
+    "query": "抗不整脈薬アミオダロン（アンカロン）の長期投与時に生じる重篤で致命的になりうる肺の副作用は何ですか？",
+    "document": "間質性肺炎・肺線維症 です（肺胞マクロファージへのリン脂質蓄積などに起因し、乾性咳嗽や労作時呼吸困難が現れた場合は即時中止とステロイド投与が必要です）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_amiodarone_pulmonary_toxicity",
+    "query": "抗不整脈薬アミオダロン（アンカロン）の長期投与時に生じる重篤で致命的になりうる肺の副作用は何ですか？",
+    "document": "アミオダロンはVaughan Williams分類のクラスIIIに属する抗不整脈薬で、難治性の心室頻拍や心房細動に対して強力な洞調律維持効果を示します。肺、甲状腺、角膜など多臓器への沈着・副作用管理が重要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_amiodarone_pulmonary_toxicity",
+    "query": "抗不整脈薬アミオダロン（アンカロン）の長期投与時に生じる重篤で致命的になりうる肺の副作用は何ですか？",
+    "document": "心筋梗塞の超急性期治療（PCI）では、閉塞した冠動脈をバルーンやステントを用いて速やかに再開通させ、虚血心筋を救済することが最も重要です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_valproate_teratogenicity",
+    "query": "抗てんかん薬バルプロ酸ナトリウムを妊婦に投与した際、胎児に引き起こされる特徴的な先天奇形は何ですか？",
+    "document": "神経管閉鎖障害（二分脊椎や無脳症） です（胎児の葉酸代謝拮抗などに起因し、妊娠可能年齢の女性への処方には厳重な注意が必要です）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_valproate_teratogenicity",
+    "query": "抗てんかん薬バルプロ酸ナトリウムを妊婦に投与した際、胎児に引き起こされる特徴的な先天奇形は何ですか？",
+    "document": "バルプロ酸ナトリウムは全般てんかんや部分てんかん、片頭痛予防、双極性障害の躁状態に広く処方される有効な薬剤ですが、催奇形性リスクに関する情報提供が不可欠です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_valproate_teratogenicity",
+    "query": "抗てんかん薬バルプロ酸ナトリウムを妊婦に投与した際、胎児に引き起こされる特徴的な先天奇形は何ですか？",
+    "document": "熱性痙攣は生後6ヶ月から5歳頃の乳幼児が発熱に伴って意識障害や痙攣発作を起こす病態であり、大半は良性で数分以内に頓挫します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_methotrexate_folic_acid",
+    "query": "関節リウマチ治療においてメトトレキサート（MTX）の骨髄抑制や口内炎などの副作用を軽減するために救援投与される薬剤は何ですか？",
+    "document": "葉酸（フォリアミン） です（MTX服用後24〜48時間後に5mgを服用するスケジュールが一般的です）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_methotrexate_folic_acid",
+    "query": "関節リウマチ治療においてメトトレキサート（MTX）の骨髄抑制や口内炎などの副作用を軽減するために救援投与される薬剤は何ですか？",
+    "document": "メトトレキサートは葉酸代謝拮抗薬であり、関節リウマチ治療のアンカードラッグ（主軸薬）として疾患活動性を抑えます。定期的な血算や肝機能の検査が安全管理のために義務付けられています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_methotrexate_folic_acid",
+    "query": "関節リウマチ治療においてメトトレキサート（MTX）の骨髄抑制や口内炎などの副作用を軽減するために救援投与される薬剤は何ですか？",
+    "document": "乾癬は皮膚の角化サイクルが極端に短縮し鱗屑を伴う紅斑が全身に多発する慢性炎症性皮膚疾患であり、ビタミンD3外用薬や生物学的製剤が用いられます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_pos_ciprofloxacin_tendon_rupture",
+    "query": "ニューキノロン系抗菌薬シプロフロキサシンやレボフロキサシンの使用時に警告されている筋・骨格系の副作用は何ですか？",
+    "document": "アキレス腱炎および腱断裂 です（投与中から投与後数ヶ月にわたり発症リスクがあり、腱部の疼痛や腫脹が現れた場合は直ちに投与を中止します）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_near_ciprofloxacin_tendon_rupture",
+    "query": "ニューキノロン系抗菌薬シプロフロキサシンやレボフロキサシンの使用時に警告されている筋・骨格系の副作用は何ですか？",
+    "document": "キノロン系抗菌薬は細菌のDNAジャイレースおよびトポイソメラーゼIVを阻害して強力な殺菌効果を発揮し、呼吸器系や尿路系の複雑性感染症に汎用されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "med_unans_ciprofloxacin_tendon_rupture",
+    "query": "ニューキノロン系抗菌薬シプロフロキサシンやレボフロキサシンの使用時に警告されている筋・骨格系の副作用は何ですか？",
+    "document": "敗血症は感染症に対する生体反応が調節不能に陥り多臓器不全を引き起こす生命を脅かす病態であり、早期の輸液と適切な広域抗菌薬投与が救命の鍵を握ります。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "medical_pharma"
+  },
+  {
+    "id": "corp_pos_childcare_leave_max",
+    "query": "当社の育児休業規程において、育児休業を取得できる最長期間は子供が何歳に達するまでですか？",
+    "document": "原則として子が1歳に達するまでですが、保育所に入所できない等の事情がある場合は1歳6ヶ月まで、さらに延長が必要な場合は最長で子が 2歳に達するまで 延長取得が可能です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_childcare_leave_max",
+    "query": "当社の育児休業規程において、育児休業を取得できる最長期間は子供が何歳に達するまでですか？",
+    "document": "育児休業規程に基づき、従業員は子の養育を目的として育児休業を取得することができます。休業開始予定日の所定日前までに人事労務部へ申請書を提出する必要があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_childcare_leave_max",
+    "query": "当社の育児休業規程において、育児休業を取得できる最長期間は子供が何歳に達するまでですか？",
+    "document": "当社の社内表彰制度では、年間を通じて極めて顕著な業績を挙げたプロジェクトチームまたは個人に対し、期末納会において社長賞が授与されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_domestic_per_diem",
+    "query": "旅費規程第7条における国内出張の日当支給額は1日あたりいくらですか？",
+    "document": "国内出張における日当は、役職を問わず一律 1日あたり 3,000円 を支給します（宿泊を伴う出張のみならず、移動距離片道100km以上のの日帰り出張も対象）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_domestic_per_diem",
+    "query": "旅費規程第7条における国内出張の日当支給額は1日あたりいくらですか？",
+    "document": "旅費規程第7条に基づき、業務上の必要により社命を受けて国内出張を行う従業員に対しては、交通費実費および宿泊費のほか、所定の日当が支給されます。精算申請は帰任後速やかに行ってください。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_domestic_per_diem",
+    "query": "旅費規程第7条における国内出張の日当支給額は1日あたりいくらですか？",
+    "document": "社内無線LAN（Wi-Fi）への接続にあたっては、情報セキュリティ部門が発行した端末証明書がインストールされた業務用PCのみが許可されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_condolence_leave_parent",
+    "query": "慶弔休暇規程において、実父母が死亡した場合の忌引有給休暇は何日付与されますか？",
+    "document": "実父母が死亡した場合の慶弔有給休暇は 連続 5日（休日を含む場合は休日を除外） 付与されます（喪主を務める場合はさらに2日加算）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_condolence_leave_parent",
+    "query": "慶弔休暇規程において、実父母が死亡した場合の忌引有給休暇は何日付与されますか？",
+    "document": "慶弔休暇規程により、従業員本人またはその親族に慶弔事があった場合、所定の手続きを経て慶弔特別休暇を取得することができます。事由を証明する書類の提出が求められます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_condolence_leave_parent",
+    "query": "慶弔休暇規程において、実父母が死亡した場合の忌引有給休暇は何日付与されますか？",
+    "document": "オフィス内での私用スマートフォンの充電は、漏電や火災予防の観点から指定されたリフレッシュルーム内の充電ステーションでのみ許可されています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_remote_work_allowance",
+    "query": "在宅勤務（テレワーク）規程において、月間の在宅勤務手当の支給額はいくらですか？",
+    "document": "月10日以上在宅勤務を実施した対象従業員に対し、通信費および光熱費の補助として 月額 5,000円 を支給します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_remote_work_allowance",
+    "query": "在宅勤務（テレワーク）規程において、月間の在宅勤務手当の支給額はいくらですか？",
+    "document": "テレワーク運用規程に基づき、所定の要件を満たす従業員は所属長の承認を得て在宅勤務を実施することができます。在宅勤務時の業務連絡はチャットツールおよびビデオ会議を用います。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_remote_work_allowance",
+    "query": "在宅勤務（テレワーク）規程において、月間の在宅勤務手当の支給額はいくらですか？",
+    "document": "健康保険組合が提携する保養施設およびスポーツジムは、社員証を提示することで会員割引料金にて利用することが可能です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_overtime_meal_allowance",
+    "query": "給与規程第15条における深夜残業食事代補助の支給要件と支給額は何ですか？",
+    "document": "所定労働時間を超えて午後9時（21時）以降まで残業勤務を行った場合、1食あたり 1,000円 の食事手当を現金または給与振込にて支給します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_overtime_meal_allowance",
+    "query": "給与規程第15条における深夜残業食事代補助の支給要件と支給額は何ですか？",
+    "document": "給与規程第15条に基づき、長時間の時間外勤務を余儀なくされた従業員の健康管理および労労報奨を目的として、所定の基準時刻を超えて勤務した場合に食事補助手当が支給されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_overtime_meal_allowance",
+    "query": "給与規程第15条における深夜残業食事代補助の支給要件と支給額は何ですか？",
+    "document": "社用車を運転する従業員は、安全運転管理者による事前のアルコール検知器を用いた酒気帯び確認を受け、運行記録簿に記録しなければなりません。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_security_password_policy",
+    "query": "情報セキュリティ規程において社内アカウントのパスワードに求められる最小文字数は何文字ですか？",
+    "document": "社内アカウントのパスワードは 12文字以上 で、英大文字、英小文字、数字、記号のうち3種類以上を組み合わせたものでなければなりません。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_security_password_policy",
+    "query": "情報セキュリティ規程において社内アカウントのパスワードに求められる最小文字数は何文字ですか？",
+    "document": "情報セキュリティ管理規程により、社内基幹システムおよび業務PCにログインするためのパスワードは強固なものを設定し、定期的な見直しを行うことが全従業員に義務付けられています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_security_password_policy",
+    "query": "情報セキュリティ規程において社内アカウントのパスワードに求められる最小文字数は何文字ですか？",
+    "document": "社内図書コーナーの技術書およびビジネス書は、1回につき最大3冊まで、最長2週間の期間で貸出手続きを行うことができます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_side_business_approval",
+    "query": "副業・兼業取扱規程において、副業を開始する際に必要な社内手続きの提出期限はいつですか？",
+    "document": "副業を開始する日の 30日前 までに、所定の「副業・兼業許可申請書」を所属長経由で人事統括部長に提出し承認を得なければなりません。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_side_business_approval",
+    "query": "副業・兼業取扱規程において、副業を開始する際に必要な社内手続きの提出期限はいつですか？",
+    "document": "当社では多様なキャリア形成を支援するため副業・兼業制度を導入しています。本業への支障や利益相反が生じないよう、所定の社内審査基準に基づく申請・承認手続きが定められています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_side_business_approval",
+    "query": "副業・兼業取扱規程において、副業を開始する際に必要な社内手続きの提出期限はいつですか？",
+    "document": "ノー残業デーは毎週水曜日に設定されており、全社一斉に18時30分までの退社を推奨しワークライフバランスの推進を図っています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_annual_paid_leave_carryover",
+    "query": "就業規則第28条において、未消化の年次有給休暇の最大繰越し可能日数は何日ですか？",
+    "document": "当該年度に付与された有給休暇の未消化分は翌年度に限り繰り越すことができ、前年繰越分と当年度付与分を合わせて 最大 40日 まで保有することができます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_annual_paid_leave_carryover",
+    "query": "就業規則第28条において、未消化の年次有給休暇の最大繰越し可能日数は何日ですか？",
+    "document": "就業規則に基づき、勤続年数に応じて法定どおり年次有給休暇が付与されます。有給休暇の取得希望者は、業務の円滑な遂行を考慮し原則として前日までに申請システムより届け出てください。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_annual_paid_leave_carryover",
+    "query": "就業規則第28条において、未消化の年次有給休暇の最大繰越し可能日数は何日ですか？",
+    "document": "社内サークル活動に対しては、所定の認定基準（部員5名以上等）を満たした場合に年間上限5万円の活動費補助が支給されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_commutation_allowance_limit",
+    "query": "福利厚生規程における通勤交通費手当の1ヶ月あたりの支給上限額はいくらですか？",
+    "document": "公共交通機関を利用した通勤定期券代の実費支給上限は 1ヶ月あたり 150,000円（非課税限度額に準拠） です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_commutation_allowance_limit",
+    "query": "福利厚生規程における通勤交通費手当の1ヶ月あたりの支給上限額はいくらですか？",
+    "document": "福利厚生規程第8条に定める通勤交通費手当の支給に関して、最も経済的かつ合理的な通勤経路に基づく定期券代が実費支給されます。転居等により通勤経路が変更となる場合は速やかに変更届を提出してください。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_commutation_allowance_limit",
+    "query": "福利厚生規程における通勤交通費手当の1ヶ月あたりの支給上限額はいくらですか？",
+    "document": "防災備蓄品として、全社員の3日分の食料および飲料水、簡易トイレセットが各オフィスの防災倉庫に常備保管されています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_maternity_leave_period",
+    "query": "就業規則における産前産後休業の期間（単胎妊娠の場合）はそれぞれ何週間ですか？",
+    "document": "産前休業は出産予定日の 6週間前（多胎妊娠の場合は14週間前） から本人の請求により取得可能で、産後休業は出産翌日から 8週間（本人が請求し医師が支障なしと認めた場合は6週間後から就業可） 就業が禁止されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_maternity_leave_period",
+    "query": "就業規則における産前産後休業の期間（単胎妊娠の場合）はそれぞれ何週間ですか？",
+    "document": "女性従業員が出産を迎えるにあたり、母体の保護および安全な出産を期するため、労働基準法および社内就業規則に準拠した産前産後休暇が保障されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_maternity_leave_period",
+    "query": "就業規則における産前産後休業の期間（単胎妊娠の場合）はそれぞれ何週間ですか？",
+    "document": "メンタルヘルス相談窓口として、外部の専門カウンセラーによる無料の電話およびオンラインカウンセリングを年中無休で利用することができます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_expense_approval_route",
+    "query": "経理規程における稟議・経費精算で「100万円以上500万円未満」の支出の最終決裁権限者は誰ですか？",
+    "document": "100万円以上500万円未満の支出についての最終決裁者は 担当執行役員（または担当本部長） です（500万円以上は代表取締役社長決裁）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_expense_approval_route",
+    "query": "経理規程における稟議・経費精算で「100万円以上500万円未満」の支出の最終決裁権限者は誰ですか？",
+    "document": "会社の資金支出を伴うすべての物品購入・外部発注にあたっては、金額区分に応じた職務権限規程に基づき、所定の承認ルートを経て事前稟議を通過させる必要があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_expense_approval_route",
+    "query": "経理規程における稟議・経費精算で「100万円以上500万円未満」の支出の最終決裁権限者は誰ですか？",
+    "document": "社内の名刺発注は、総務ポータルサイトのオンライン発注フォームより1箱（100枚単位）で申請を受け付けています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_refresh_leave_years",
+    "query": "永年勤続リフレッシュ休暇規程において、勤続10年を迎えた従業員に付与される特別休暇日数と旅行補助金はいくらですか？",
+    "document": "勤続10年到達者には、連続 5日間の有給特別休暇 と、旅行・自己啓発補助金として 100,000円 のリフレッシュ補助金が支給されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_refresh_leave_years",
+    "query": "永年勤続リフレッシュ休暇規程において、勤続10年を迎えた従業員に付与される特別休暇日数と旅行補助金はいくらですか？",
+    "document": "長年にわたり会社に貢献した従業員を慰労し心身のリフレッシュを図るため、勤続年数の節目（10年、20年、30年）ごとに特別休暇と報奨金が支給される制度を設けています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_refresh_leave_years",
+    "query": "永年勤続リフレッシュ休暇規程において、勤続10年を迎えた従業員に付与される特別休暇日数と旅行補助金はいくらですか？",
+    "document": "社員食堂の精算は、社員証ICカードによるキャッシュレス決済のみに対応しており、毎月の給与天引きにより精算されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_confidentiality_nda_employee",
+    "query": "秘密保持誓約書において、従業員が退職後に社内の営業秘密および顧客情報を第三者に開示・漏洩してはならない義務期間は何年間ですか？",
+    "document": "退職の日から起算して 2年間（技術開発等の極めて機密性の高い特定業務従事者は個別の合意に基づき最長3年間） です。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_confidentiality_nda_employee",
+    "query": "秘密保持誓約書において、従業員が退職後に社内の営業秘密および顧客情報を第三者に開示・漏洩してはならない義務期間は何年間ですか？",
+    "document": "従業員は入社時および退職時に会社の情報資産を保護するための秘密保持誓約書を提出する義務があります。在職中のみならず退職後においても不正な開示や私的利用は厳禁です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_confidentiality_nda_employee",
+    "query": "秘密保持誓約書において、従業員が退職後に社内の営業秘密および顧客情報を第三者に開示・漏洩してはならない義務期間は何年間ですか？",
+    "document": "全社キックオフミーティングは毎年4月と10月の第1営業日にハイブリッド形式で開催され、経営方針および各事業部の重点施策が共有されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_volunteer_leave_days",
+    "query": "社会貢献活動支援規程におけるボランティア休暇の年間取得可能日数と給与の取り扱いはどうなっていますか？",
+    "document": "年間最大 3日まで 有給休暇（無給ではなく通常の給与が満額支給される特別有給休暇）として取得することができます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_volunteer_leave_days",
+    "query": "社会貢献活動支援規程におけるボランティア休暇の年間取得可能日数と給与の取り扱いはどうなっていますか？",
+    "document": "地域社会への貢献や災害復旧支援活動に主体的に参画する従業員を支援するため、会社はボランティア活動のための特別休暇制度を整備しています。活動計画書の事前提出が必要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_volunteer_leave_days",
+    "query": "社会貢献活動支援規程におけるボランティア休暇の年間取得可能日数と給与の取り扱いはどうなっていますか？",
+    "document": "クールビズ期間（毎年5月1日〜10月31日）においては、執務室内の冷房温度を28度に設定し、ノーネクタイ・ノージャケットでの勤務が推奨されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_harassment_consultation_flow",
+    "query": "ハラスメント防止規程において、ハラスメント被害の申立てを受けたハラスメント相談窓口が事実関係の調査を開始する期限は何日以内ですか？",
+    "document": "相談申立てを受理した日から 7日（1週間）以内 に、中立的な立場から被害者・行為者および関係者への事実確認ヒアリングを開始しなければなりません。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_harassment_consultation_flow",
+    "query": "ハラスメント防止規程において、ハラスメント被害の申立てを受けたハラスメント相談窓口が事実関係の調査を開始する期限は何日以内ですか？",
+    "document": "当社はパワーハラスメント、セクシュアルハラスメント、マタニティハラスメント等の一切のハラスメントを許容しません。被害を受けた従業員が安心して相談できる社内外の窓口を設置しています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_harassment_consultation_flow",
+    "query": "ハラスメント防止規程において、ハラスメント被害の申立てを受けたハラスメント相談窓口が事実関係の調査を開始する期限は何日以内ですか？",
+    "document": "オフィスビルの入退館ゲートはセキュリティカードによる認証が常時稼働しており、部外者の同伴入館は事前登録が必要です。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_flexible_hours_core_time",
+    "query": "フレックスタイム制就業規程において定められている「コアタイム（必ず勤務すべき時間帯）」は何時から何時までですか？",
+    "document": "コアタイムは 午前11時00分から午後15時00分まで（うち休憩1時間を含む） です（フレキシブルタイムは7:00〜11:00および15:00〜22:00）。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_flexible_hours_core_time",
+    "query": "フレックスタイム制就業規程において定められている「コアタイム（必ず勤務すべき時間帯）」は何時から何時までですか？",
+    "document": "柔軟な働き方による生産性の向上を企図し、企画業務型裁量労働制の対象者を除く多くの部署においてフレックスタイム制度が導入されています。月の総所定労働時間の充足が必要です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_flexible_hours_core_time",
+    "query": "フレックスタイム制就業規程において定められている「コアタイム（必ず勤務すべき時間帯）」は何時から何時までですか？",
+    "document": "PCの画面ロックは、離席時に第三者による画面の覗き見や不正操作を防ぐため、キーボードの「Windows + L」による即時ロックが義務付けられています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_qualification_allowance_aws",
+    "query": "自己啓発支援規程において、AWS認定ソリューションアーキテクト - プロフェッショナル資格に合格した際の資格取得報奨金はいくらですか？",
+    "document": "一時報奨金として 100,000円 が支給され、さらに受験料全額（実費）が会社負担として精算されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_qualification_allowance_aws",
+    "query": "自己啓発支援規程において、AWS認定ソリューションアーキテクト - プロフェッショナル資格に合格した際の資格取得報奨金はいくらですか？",
+    "document": "従業員の自律的なスキルアップおよび専門性の向上を奨励するため、会社が指定する公的資格やベンダー資格を取得した従業員に対して受験料補助および合格報奨金を支給しています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_qualification_allowance_aws",
+    "query": "自己啓発支援規程において、AWS認定ソリューションアーキテクト - プロフェッショナル資格に合格した際の資格取得報奨金はいくらですか？",
+    "document": "社内報「フロンティア」は四半期ごとにWebポータル上で発行され、新入社員紹介や各拠点のニュース、社長メッセージが掲載されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_nursing_care_leave_limit",
+    "query": "介護休業規程における対象家族1人あたりの介護休業の通算取得可能日数の上限は何日ですか？",
+    "document": "対象家族1人につき、通算 93日 まで取得可能であり、最大3回まで分割して取得することができます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_nursing_care_leave_limit",
+    "query": "介護休業規程における対象家族1人あたりの介護休業の通算取得可能日数の上限は何日ですか？",
+    "document": "要介護状態にある家族を介護する従業員が仕事と介護を両立できるよう、介護休業および介護短時間勤務の制度が整備されています。介護保険制度の要介護認定状況に応じた相談が可能です。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_nursing_care_leave_limit",
+    "query": "介護休業規程における対象家族1人あたりの介護休業の通算取得可能日数の上限は何日ですか？",
+    "document": "定期健康診断は毎年秋（9月〜10月）に全従業員を対象として実施され、受診率は100%を目標として受診奨励が行われます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_loss_compensation_company_property",
+    "query": "社内備品管理規程において、貸与された業務用スマートフォンやPCを紛失した際の第一連絡先と報告期限は何時間以内ですか？",
+    "document": "紛失に気づいた時点から 直ちに（遅くとも2時間以内） に情報セキュリティ緊急対応窓口（CSIRT）および所属長へ電話連絡し、リモートワイプの手続きを行わなければなりません。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_loss_compensation_company_property",
+    "query": "社内備品管理規程において、貸与された業務用スマートフォンやPCを紛失した際の第一連絡先と報告期限は何時間以内ですか？",
+    "document": "会社から貸与されるIT機器は会社の重要な情報資産です。紛失・盗難が発生した際は個人情報漏洩や企業機密流出を防止するため、迅速な初期対応と全社報告手順が義務付けられています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_loss_compensation_company_property",
+    "query": "社内備品管理規程において、貸与された業務用スマートフォンやPCを紛失した際の第一連絡先と報告期限は何時間以内ですか？",
+    "document": "年末年始休暇は12月29日から翌年1月3日までの6日間と定められており、全社一斉休業日となります。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_stock_option_exercise_period",
+    "query": "新株予約権割当契約書において、第3回ストックオプションの権利行使期間の終了日はいつですか？",
+    "document": "付与決議の日の翌日から起算して 8年を経過する日の前日（令和14年6月30日） までに行使しなければ権利は消滅します。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_stock_option_exercise_period",
+    "query": "新株予約権割当契約書において、第3回ストックオプションの権利行使期間の終了日はいつですか？",
+    "document": "役員および従業員の中長期的な企業価値向上へのインセンティブ付与を目的として新株予約権（ストックオプション）が付与されています。所定の行使条件および期間が定められています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_stock_option_exercise_period",
+    "query": "新株予約権割当契約書において、第3回ストックオプションの権利行使期間の終了日はいつですか？",
+    "document": "オフィスのゴミ分別は「燃えるゴミ」「プラスチック」「ペットボトル」「ビン・カン」「機密書類」の5分別が徹底されています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_jury_duty_leave",
+    "query": "裁判員休暇規程において、従業員が裁判員または裁判員候補者に選ばれて出頭する際の休暇の扱いはどうなりますか？",
+    "document": "職務の遂行に必要な日数について、無給ではなく「通常の給与が全額支給される特別有給休暇（裁判員休暇）」として取り扱われます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_jury_duty_leave",
+    "query": "裁判員休暇規程において、従業員が裁判員または裁判員候補者に選ばれて出頭する際の休暇の扱いはどうなりますか？",
+    "document": "裁判員法に基づき裁判員の候補者として呼出状を受け取った従業員、または裁判員に選任された従業員に対しては、公の職務を全うできるよう所定の特別休暇が保障されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_jury_duty_leave",
+    "query": "裁判員休暇規程において、従業員が裁判員または裁判員候補者に選ばれて出頭する際の休暇の扱いはどうなりますか？",
+    "document": "社内勉強会は毎週木曜日のランチタイムに開催され、自由参加形式で様々な技術トレンドやプロジェクト事例がライトニングトーク形式で共有されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_overseas_travel_insurance",
+    "query": "海外出張規程において、海外出張期間中に会社が加入手配する海外旅行傷害保険の治療・救援費用補償限度額はいくらですか？",
+    "document": "渡航地域に関わらず、病気・ケガの治療および救援者費用として 一人あたり無制限（実費全額補償） の保険プランに加入手配されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_overseas_travel_insurance",
+    "query": "海外出張規程において、海外出張期間中に会社が加入手配する海外旅行傷害保険の治療・救援費用補償限度額はいくらですか？",
+    "document": "従業員の安全確保のため、海外出張の際は渡航先の治安状況や医療環境に応じた安全対策が講じられます。会社負担による包括的な海外旅行保険への加入が義務付けられています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_overseas_travel_insurance",
+    "query": "海外出張規程において、海外出張期間中に会社が加入手配する海外旅行傷害保険の治療・救援費用補償限度額はいくらですか？",
+    "document": "外注先への業務委託契約締結にあたっては、法務部門の標準契約書ひな形を使用し、反社会的勢力排除条項が必須で盛り込まれます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_rehire_after_retirement",
+    "query": "定年後再雇用規程において、60歳の定年を迎えた後の継続雇用の上限年齢は何歳ですか？",
+    "document": "希望者全員を対象として、最長 65歳まで（1年ごとの雇用契約更新） 嘱託社員として継続雇用されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_rehire_after_retirement",
+    "query": "定年後再雇用規程において、60歳の定年を迎えた後の継続雇用の上限年齢は何歳ですか？",
+    "document": "高年齢者雇用安定法の趣旨に則り、定年到達後も長年培った知識や技術を社内で発揮できるよう、意欲と能力に応じた再雇用制度を整備しています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_rehire_after_retirement",
+    "query": "定年後再雇用規程において、60歳の定年を迎えた後の継続雇用の上限年齢は何歳ですか？",
+    "document": "社内チャットツールでは全社アナウンス用チャンネル、各部署チャンネル、プロジェクトチャンネルが用途に応じて体系的に運用されています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_dress_code_guidelines",
+    "query": "オフィスカジュアル運用ガイドラインにおいて、クライアント訪問予定のない平常執務時におけるジーンズ（デニムパンツ）の着用は許可されていますか？",
+    "document": "はい、ダメージ加工や極端な色落ちのない清潔感のあるものであれば、平常執務時におけるジーンズの着用は 正式に許可 されています。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_dress_code_guidelines",
+    "query": "オフィスカジュアル運用ガイドラインにおいて、クライアント訪問予定のない平常執務時におけるジーンズ（デニムパンツ）の着用は許可されていますか？",
+    "document": "オフィスカジュアル運用ガイドラインにおいて、クライアント訪問予定のない平常執務時における服装を含め、当社では柔軟で快適な職場環境づくりを目的としてビジネスカジュアルを導入しています。来客対応や社外訪問の有無に応じ、清潔感と相手に不快感を与えないマナーが求められます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_dress_code_guidelines",
+    "query": "オフィスカジュアル運用ガイドラインにおいて、クライアント訪問予定のない平常執務時におけるジーンズ（デニムパンツ）の着用は許可されていますか？",
+    "document": "郵便物および宅配便の受領・仕分けは、総務部スタッフにより毎朝10時および午後14時の1日2回行われます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_intellectual_property_invention_bonus",
+    "query": "職務発明規程第8条における特許出願補償金（国内特許出願時）の発明者への支給額は1件あたりいくらですか？",
+    "document": "特許出願が完了した時点で、出願補償金として発明者に対し 1件あたり 30,000円（共同発明の場合は持分に応じて配分） が支給されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_intellectual_property_invention_bonus",
+    "query": "職務発明規程第8条における特許出願補償金（国内特許出願時）の発明者への支給額は1件あたりいくらですか？",
+    "document": "職務発明規程第8条における特許出願補償金（国内特許出願時）に関して、従業員が職務上行った発明・考案について特許を受ける権利は会社に帰属するものとし、その対価として出願時、登録時、および実績に応じた報奨金が支払われます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_intellectual_property_invention_bonus",
+    "query": "職務発明規程第8条における特許出願補償金（国内特許出願時）の発明者への支給額は1件あたりいくらですか？",
+    "document": "社内備品のプロジェクターやモバイルディスプレイの貸出予約は、グループウェアのカレンダー設備予約機能から行います。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_security_badge_loss_fee",
+    "query": "入退館セキュリティカード管理細則において、社員証（セキュリティカード）を過失により紛失・破損した際の再発行手数料負担額はいくらですか？",
+    "document": "紛失または自己の過失による破損の場合、再発行実費手数料として 2,000円 を本人が負担（給与控除）しなければなりません。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_security_badge_loss_fee",
+    "query": "入退館セキュリティカード管理細則において、社員証（セキュリティカード）を過失により紛失・破損した際の再発行手数料負担額はいくらですか？",
+    "document": "社員証兼入館カードは厳格な管理が求められます。破損や紛失の際は直ちに総務部門に届け出てカードの無効化処理を行い、再発行の手続きを進める必要があります。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_security_badge_loss_fee",
+    "query": "入退館セキュリティカード管理細則において、社員証（セキュリティカード）を過失により紛失・破損した際の再発行手数料負担額はいくらですか？",
+    "document": "喫煙所はオフィスビル所定の地下屋外喫煙スペースのみとなっており、加熱式タバコを含め執務フロア全域が完全禁煙となっています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_disaster_drill_frequency",
+    "query": "防災管理規程において、全事業所を対象とした総合防災避難訓練は年に何回実施することが義務付けられていますか？",
+    "document": "春期および秋期の 年2回（年2回以上） 実施することが義務付けられています。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_disaster_drill_frequency",
+    "query": "防災管理規程において、全事業所を対象とした総合防災避難訓練は年に何回実施することが義務付けられていますか？",
+    "document": "防災管理規程において全事業所を対象とした総合防災避難訓練の実施について、地震や火災などの大規模災害発生時に全従業員の生命の安全を確保し被害を最小限にとどめるため、定期的な避難訓練および安否確認システムの運用テストが計画されています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_disaster_drill_frequency",
+    "query": "防災管理規程において、全事業所を対象とした総合防災避難訓練は年に何回実施することが義務付けられていますか？",
+    "document": "社内便は東京本社と大阪支社および名古屋支社の間で毎日定期運行されており、重要な社内書類の送受に使用されます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_executive_meeting_schedule",
+    "query": "経営会議運営規程において、定例経営会議の開催頻度と標準的な開催日日時について、標準的な開催日時はいつですか？",
+    "document": "原則として 毎週月曜日の午前9時00分から11時00分まで の週1回開催されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_executive_meeting_schedule",
+    "query": "経営会議運営規程において、定例経営会議の開催頻度と標準的な開催日日時について、標準的な開催日時はいつですか？",
+    "document": "経営会議運営規程において定例経営会議の開催頻度や運営について、業務執行に関する重要方針を審議・決定する機関であり、代表取締役、常務取締役、執行役員および関係部長が出席して重要案件の迅速な意思決定を行います。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_executive_meeting_schedule",
+    "query": "経営会議運営規程において、定例経営会議の開催頻度と標準的な開催日日時について、標準的な開催日時はいつですか？",
+    "document": "社内システムのメンテナンスウィンドウは、毎月第3土曜日の深夜23時から翌朝6時までの時間帯に設定されています。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_customer_complaint_escalation",
+    "query": "顧客対応規程における重大クレーム発生時、担当部署が経営陣およびコンプライアンス委員会へ第一報を入れる制限時間は何時間以内ですか？",
+    "document": "重大クレームと判定された事案が発生した場合は、覚知から 2時間以内 に第一報（概要と初期対応方針）を報告しなければなりません。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_customer_complaint_escalation",
+    "query": "顧客対応規程における重大クレーム発生時、担当部署が経営陣およびコンプライアンス委員会へ第一報を入れる制限時間は何時間以内ですか？",
+    "document": "顧客満足の向上とコンプライアンスリスクの極小化を図るため、お客様からの苦情・問い合わせに関する受付手順およびエスカレーション基準が明確に定められています。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_customer_complaint_escalation",
+    "query": "顧客対応規程における重大クレーム発生時、担当部署が経営陣およびコンプライアンス委員会へ第一報を入れる制限時間は何時間以内ですか？",
+    "document": "オフィスの施錠管理は最終退社者が行い、セキュリティ会社へのセット確認および消灯確認を実施して退館します。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_pos_special_reward_patent_registration",
+    "query": "職務発明規程における特許登録報償金（特許権が設定登録された際）の支給額は1件あたりいくらですか？",
+    "document": "特許庁による設定登録が完了した時点で、登録報償金として発明者に対し 1件あたり 50,000円 が支給されます。",
+    "label": 1,
+    "type": "positive",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_near_special_reward_patent_registration",
+    "query": "職務発明規程における特許登録報償金（特許権が設定登録された際）の支給額は1件あたりいくらですか？",
+    "document": "職務発明規程における特許登録報償金（特許権の設定登録時）に関して、発明に対する適正なインセンティブを付与するため、出願補償金に加えて特許登録時にも報償金が支払われます。特許の商業的成功度合いに応じて実績補償金も追加されます。",
+    "label": 0,
+    "type": "near_miss",
+    "domain": "corporate_rules"
+  },
+  {
+    "id": "corp_unans_special_reward_patent_registration",
+    "query": "職務発明規程における特許登録報償金（特許権が設定登録された際）の支給額は1件あたりいくらですか？",
+    "document": "給茶機およびウォーターサーバーは各フロアのリフレッシュスペースに設置されており、従業員は自由に利用できます。",
+    "label": 0,
+    "type": "unanswerable",
+    "domain": "corporate_rules"
+  }
+]
