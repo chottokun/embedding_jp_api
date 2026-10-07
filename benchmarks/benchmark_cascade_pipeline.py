@@ -95,22 +95,30 @@ def run_stage1_dense_retrieval(
     gc.collect()
     model = get_model(model_name, device=device)
 
-    # Prefix handling for ruri models
-    is_ruri = "ruri" in model_name
+    # Prefix & Prompt handling
+    is_ruri = "ruri" in model_name.lower()
+    is_gemma = "embeddinggemma" in model_name.lower()
+
     query_prefix = "クエリ: " if is_ruri else ""
     doc_prefix = "文章: " if is_ruri else ""
 
     formatted_corpus = [doc_prefix + d for d in corpus_docs]
     formatted_queries = [query_prefix + q["query"] for q in queries_list]
 
+    corpus_kwargs = {"prompt_name": "Document"} if is_gemma else {}
+    query_kwargs = {"prompt_name": "SearchQuery"} if is_gemma else {}
+
     # Warmup
     print("Warming up Stage 1 model...")
-    model.encode(["ウォームアップ"])
+    if is_gemma:
+        model.encode(["ウォームアップ"], **query_kwargs)
+    else:
+        model.encode(["ウォームアップ"])
 
     # Encode Corpus
     print(f"Encoding {len(corpus_docs)} corpus documents...")
     t0 = time.perf_counter()
-    corpus_embeds_raw = model.encode(formatted_corpus, batch_size=32)
+    corpus_embeds_raw = model.encode(formatted_corpus, batch_size=32, **corpus_kwargs)
     corpus_time = time.perf_counter() - t0
     corpus_embeds = np.asarray(corpus_embeds_raw)
     if dim is not None:
@@ -125,7 +133,7 @@ def run_stage1_dense_retrieval(
     query_embeds_list = []
     for q_text in formatted_queries:
         t_q = time.perf_counter()
-        q_emb_raw = model.encode([q_text])
+        q_emb_raw = model.encode([q_text], **query_kwargs)
         lat = (time.perf_counter() - t_q) * 1000.0  # ms
         query_latencies.append(lat)
         query_embeds_list.append(np.asarray(q_emb_raw)[0])
@@ -275,12 +283,20 @@ def main():
     ]:
         topk, s1_lat = topk_rankings[s1_label]
         print(f"\nEvaluating Cascade: [{s1_label}] -> [Cross-Encoder]...")
+        # Evaluation loop with threshold gate tracking
         stage2_latencies = []
         top1_correct = 0
         top1_near_miss = 0
         top1_unans = 0
         dom_correct: dict[str, int] = {}
         dom_total: dict[str, int] = {}
+
+        # Gate metrics (Threshold tau = 0.50 for CE)
+        tau_ce = 0.50
+        gate_accepted = 0
+        gate_accepted_correct = 0
+        gate_rejected_when_no_pos = 0
+        total_no_pos_in_topk = 0
 
         for i, q_info in enumerate(queries_list):
             q_text = q_info["query"]
@@ -292,9 +308,15 @@ def main():
             lat = (time.perf_counter() - t0) * 1000.0
             stage2_latencies.append(lat)
 
-            best_cand = cands[int(np.argmax(scores))]
+            best_idx = int(np.argmax(scores))
+            best_cand = cands[best_idx]
+            best_score = float(scores[best_idx])
             dom = q_info["domain"]
             dom_total[dom] = dom_total.get(dom, 0) + 1
+
+            pos_in_topk = q_info["positive_idx"] in cands
+            if not pos_in_topk:
+                total_no_pos_in_topk += 1
 
             if best_cand == q_info["positive_idx"]:
                 top1_correct += 1
@@ -303,6 +325,15 @@ def main():
                 top1_near_miss += 1
             elif best_cand == q_info["unanswerable_idx"]:
                 top1_unans += 1
+
+            # Gate threshold check
+            if best_score >= tau_ce:
+                gate_accepted += 1
+                if best_cand == q_info["positive_idx"]:
+                    gate_accepted_correct += 1
+            else:
+                if not pos_in_topk:
+                    gate_rejected_when_no_pos += 1
 
         n_q = len(queries_list)
         s2_mean_lat = float(np.mean(stage2_latencies))
@@ -316,6 +347,10 @@ def main():
             "top1_accuracy": round(top1_correct / n_q, 4),
             "top1_near_miss_rate": round(top1_near_miss / n_q, 4),
             "top1_unans_rate": round(top1_unans / n_q, 4),
+            "gate_precision": round(gate_accepted_correct / max(1, gate_accepted), 4),
+            "gate_rejection_rate_when_no_pos": round(
+                gate_rejected_when_no_pos / max(1, total_no_pos_in_topk), 4
+            ),
             "domain_accuracy": {
                 d: round(dom_correct.get(d, 0) / dom_total[d], 4) for d in dom_total
             },
@@ -347,6 +382,13 @@ def main():
         dom_correct: dict[str, int] = {}
         dom_total: dict[str, int] = {}
 
+        # Gate metrics (Threshold tau = 0.55 for Logit Gate)
+        tau_lg = 0.55
+        gate_accepted = 0
+        gate_accepted_correct = 0
+        gate_rejected_when_no_pos = 0
+        total_no_pos_in_topk = 0
+
         n_q = len(queries_list)
         for i, q_info in enumerate(queries_list):
             q_text = q_info["query"]
@@ -359,9 +401,15 @@ def main():
             stage2_latencies.append(lat)
 
             scores = [r["sufficiency_prob"] for r in res]
-            best_cand = cands[int(np.argmax(scores))]
+            best_idx = int(np.argmax(scores))
+            best_cand = cands[best_idx]
+            best_score = float(scores[best_idx])
             dom = q_info["domain"]
             dom_total[dom] = dom_total.get(dom, 0) + 1
+
+            pos_in_topk = q_info["positive_idx"] in cands
+            if not pos_in_topk:
+                total_no_pos_in_topk += 1
 
             if best_cand == q_info["positive_idx"]:
                 top1_correct += 1
@@ -370,6 +418,15 @@ def main():
                 top1_near_miss += 1
             elif best_cand == q_info["unanswerable_idx"]:
                 top1_unans += 1
+
+            # Gate threshold check
+            if best_score >= tau_lg:
+                gate_accepted += 1
+                if best_cand == q_info["positive_idx"]:
+                    gate_accepted_correct += 1
+            else:
+                if not pos_in_topk:
+                    gate_rejected_when_no_pos += 1
 
             if (i + 1) % 30 == 0 or (i + 1) == n_q:
                 print(
@@ -387,6 +444,10 @@ def main():
             "top1_accuracy": round(top1_correct / n_q, 4),
             "top1_near_miss_rate": round(top1_near_miss / n_q, 4),
             "top1_unans_rate": round(top1_unans / n_q, 4),
+            "gate_precision": round(gate_accepted_correct / max(1, gate_accepted), 4),
+            "gate_rejection_rate_when_no_pos": round(
+                gate_rejected_when_no_pos / max(1, total_no_pos_in_topk), 4
+            ),
             "domain_accuracy": {
                 d: round(dom_correct.get(d, 0) / dom_total[d], 4) for d in dom_total
             },
