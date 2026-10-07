@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Formatted all scripts in `scratch/` and `scripts/` using `ruff format` to meet repo coding standards.
 
 ### Added
+- **Google EmbeddingGemma 2 Support (`google/embeddinggemma-2`)**:
+  - Integrated Google DeepMind's multimodal embedding model (768d native, 270M text + 170M vision) into `POST /v1/embeddings`.
+  - Added `EmbeddingGemma2Model` wrapper with enforced 8,192 token maximum sequence length (overriding tokenizer sentinel `1e30`), `float16` fallback to `bfloat16`/`float32` for numerical stability, and modular lightweight loading (`audio_config: None`).
+  - Added multimodal input support allowing raw PIL images, base64 data URIs, and interleaved text-image representations with `<|image|>` placeholder injection.
+  - Implemented automatic prompt mapping from `input_type` (`SearchQuery`, `Document`, `Classification`, `Clustering`, `SentenceSimilarity`) with prompt suppression on image inputs.
+  - Upgraded dependencies to `sentence-transformers>=6.1.0` and `transformers>=5.19.0` maintaining `pytorch-cpu` compatibility and zero regressions across all 200 unit/integration tests.
+  - Benchmarked against `cl-nagoya/ruri-v3-310m`: achieved 139.6ms latency on CPU (vs 226.6ms for ruri), +0.2489 separation margin, and seamless MRL dimensionality reduction down to 256d/128d with minimal quality degradation.
 - **Qwen3.5-0.8B-Japanese-SFT-v2 Logit Gate Rerank Support (`Takenoko12345678/Qwen3.5-0.8B-Japanese-SFT-v2`)**:
   - Integrated the lightweight (0.8B parameters) Japanese fine-tuned causal model into the Logit Gate Rerank framework.
   - Successfully evaluated on the full $N=108$ dataset (`benchmarks/datasets/sufficiency_eval.json`): achieved **94.4% Accuracy, 94.1% Precision, 88.9% Recall, 0.914 F1**, with a **+0.5157 separation gap** between positive answers and topical near-misses, and 100.0% unanswerable rejection.

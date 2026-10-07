@@ -37,7 +37,7 @@ def test_get_model_embedding_success(mock_st, mock_cuda, caplog):
     if not EMBEDDING_MODELS:
         pytest.skip("No embedding models configured")
 
-    model_name = EMBEDDING_MODELS[0]
+    model_name = [m for m in EMBEDDING_MODELS if "embeddinggemma" not in m][0]
     mock_instance = MagicMock()
     mock_st.return_value = mock_instance
 
@@ -97,7 +97,7 @@ def test_get_model_caching(mock_st, mock_cuda):
     if not EMBEDDING_MODELS:
         pytest.skip("No embedding models configured")
 
-    model_name = EMBEDDING_MODELS[0]
+    model_name = [m for m in EMBEDDING_MODELS if "embeddinggemma" not in m][0]
     mock_instance = MagicMock()
     mock_st.return_value = mock_instance
 
@@ -117,7 +117,7 @@ def test_get_model_thread_safety():
     if not EMBEDDING_MODELS:
         pytest.skip("No embedding models configured")
 
-    model_name = EMBEDDING_MODELS[0]
+    model_name = [m for m in EMBEDDING_MODELS if "embeddinggemma" not in m][0]
 
     call_count = 0
     call_count_lock = threading.Lock()
@@ -148,7 +148,7 @@ def test_get_model_load_failure(mock_st):
     if not EMBEDDING_MODELS:
         pytest.skip("No embedding models configured")
 
-    model_name = EMBEDDING_MODELS[0]
+    model_name = [m for m in EMBEDDING_MODELS if "embeddinggemma" not in m][0]
 
     with pytest.raises(Exception) as excinfo:
         get_model(model_name)

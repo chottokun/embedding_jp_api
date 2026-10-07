@@ -29,8 +29,9 @@ from app.services.ascii_matcher import AsciiMatcher  # noqa: E402
 from app.services.logit_gate import LogitGateService, _sigmoid  # noqa: E402
 
 
-
-def evaluate_predictions(scores: list[float], labels: list[int], types: list[str]) -> dict[str, Any]:
+def evaluate_predictions(
+    scores: list[float], labels: list[int], types: list[str]
+) -> dict[str, Any]:
     best_th = 0.5
     best_f1 = 0.0
     best_acc = 0.0
@@ -55,8 +56,18 @@ def evaluate_predictions(scores: list[float], labels: list[int], types: list[str
         f1 = 2 * prec * rec / (prec + rec) if (prec + rec) > 0 else 0.0
         acc = (tp + tn) / len(labels)
 
-        near_rej = sum(1 for p, t in zip(preds, types) if t == "near_miss" and p == 0) / len(near_scores) if near_scores else 0.0
-        unans_rej = sum(1 for p, t in zip(preds, types) if t == "unanswerable" and p == 0) / len(unans_scores) if unans_scores else 0.0
+        near_rej = (
+            sum(1 for p, t in zip(preds, types) if t == "near_miss" and p == 0)
+            / len(near_scores)
+            if near_scores
+            else 0.0
+        )
+        unans_rej = (
+            sum(1 for p, t in zip(preds, types) if t == "unanswerable" and p == 0)
+            / len(unans_scores)
+            if unans_scores
+            else 0.0
+        )
 
         if f1 > best_f1 or (f1 == best_f1 and acc > best_acc):
             best_f1 = f1
@@ -86,7 +97,11 @@ def evaluate_predictions(scores: list[float], labels: list[int], types: list[str
     }
 
 
-def run_benchmark(device: str = "cuda", dataset_path: Path = Path("benchmarks/datasets/sufficiency_eval_v2_540.json"), output_json: Path = None):
+def run_benchmark(
+    device: str = "cuda",
+    dataset_path: Path = Path("benchmarks/datasets/sufficiency_eval_v2_540.json"),
+    output_json: Path = None,
+):
     with open(dataset_path, "r", encoding="utf-8") as f:
         items = json.load(f)
 
@@ -146,7 +161,11 @@ def run_benchmark(device: str = "cuda", dataset_path: Path = Path("benchmarks/da
                 final_z = res["logit_margin"] + 1.2 * c
                 scores.append(float(_sigmoid(final_z)))
                 if (idx + 1) % 50 == 0 or idx == len(items) - 1:
-                    print(f"  Processed {idx + 1}/{len(items)} items...", end="\r", flush=True)
+                    print(
+                        f"  Processed {idx + 1}/{len(items)} items...",
+                        end="\r",
+                        flush=True,
+                    )
             print()
             if device == "cuda" and torch.cuda.is_available():
                 torch.cuda.synchronize()
@@ -169,7 +188,9 @@ def run_benchmark(device: str = "cuda", dataset_path: Path = Path("benchmarks/da
             dom_scores = [scores[i] for i in dom_indices]
             dom_labels = [labels[i] for i in dom_indices]
             dom_types = [types[i] for i in dom_indices]
-            domain_breakdown[dom] = evaluate_predictions(dom_scores, dom_labels, dom_types)
+            domain_breakdown[dom] = evaluate_predictions(
+                dom_scores, dom_labels, dom_types
+            )
 
         results["models"][model_key] = {
             "model_name": model_name,
@@ -181,12 +202,18 @@ def run_benchmark(device: str = "cuda", dataset_path: Path = Path("benchmarks/da
         }
 
         print(f"\n[Results for {model_key}]")
-        print(f"  Latency: {latency_per_item_ms} ms/item (Total: {inference_duration:.2f}s)")
+        print(
+            f"  Latency: {latency_per_item_ms} ms/item (Total: {inference_duration:.2f}s)"
+        )
         if peak_vram_mb > 0:
             print(f"  Peak VRAM: {peak_vram_mb} MB")
-        print(f"  Accuracy: {overall_metrics['accuracy']:.4f} | F1: {overall_metrics['f1']:.4f}")
+        print(
+            f"  Accuracy: {overall_metrics['accuracy']:.4f} | F1: {overall_metrics['f1']:.4f}"
+        )
         print(f"  Discrimination Gap: {overall_metrics['discrimination_gap']:.4f}")
-        print(f"  Near-Miss Rejection: {overall_metrics['near_miss_rejection_rate']:.4f}")
+        print(
+            f"  Near-Miss Rejection: {overall_metrics['near_miss_rejection_rate']:.4f}"
+        )
 
     if output_json:
         output_json.parent.mkdir(parents=True, exist_ok=True)
@@ -199,8 +226,15 @@ def run_benchmark(device: str = "cuda", dataset_path: Path = Path("benchmarks/da
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run 540-item comparative benchmark.")
-    parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", choices=["cuda", "cpu"])
-    parser.add_argument("--output", type=Path, default=Path("scratch/benchmark_540_results.json"))
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda" if torch.cuda.is_available() else "cpu",
+        choices=["cuda", "cpu"],
+    )
+    parser.add_argument(
+        "--output", type=Path, default=Path("scratch/benchmark_540_results.json")
+    )
     args = parser.parse_args()
 
     run_benchmark(device=args.device, output_json=args.output)
