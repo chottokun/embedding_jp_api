@@ -133,3 +133,4 @@ load_test_*
 #
 .agents/
 plan/
+scratch/

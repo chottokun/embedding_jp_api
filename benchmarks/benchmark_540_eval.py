@@ -4,14 +4,14 @@ Comprehensive 540-Item Benchmark: Cross-Encoder 310M vs Qwen3.5-0.8B vs Qwen2.5-
 Evaluates on CPU and GPU across 6 specialized domains.
 """
 
-import sys
-import os
+import argparse
 import gc
 import json
-import time
-import argparse
 from pathlib import Path
+import sys
+import time
 from typing import Any
+
 import numpy as np
 
 # Ensure project root is in sys.path
@@ -21,11 +21,13 @@ if str(PROJECT_ROOT) not in sys.path:
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-import torch
-from sentence_transformers import CrossEncoder
-from app.models import get_model, unload_model
-from app.services.logit_gate import LogitGateService, _sigmoid
-from app.services.ascii_matcher import AsciiMatcher
+import torch  # noqa: E402
+from sentence_transformers import CrossEncoder  # noqa: E402
+
+from app.models import get_model, unload_model  # noqa: E402
+from app.services.ascii_matcher import AsciiMatcher  # noqa: E402
+from app.services.logit_gate import LogitGateService, _sigmoid  # noqa: E402
+
 
 
 def evaluate_predictions(scores: list[float], labels: list[int], types: list[str]) -> dict[str, Any]:
@@ -43,10 +45,10 @@ def evaluate_predictions(scores: list[float], labels: list[int], types: list[str
 
     for th in np.arange(0.01, 0.99, 0.01):
         preds = [1 if s >= th else 0 for s in scores]
-        tp = sum(1 for p, l in zip(preds, labels) if p == 1 and l == 1)
-        fp = sum(1 for p, l in zip(preds, labels) if p == 1 and l == 0)
-        fn = sum(1 for p, l in zip(preds, labels) if p == 0 and l == 1)
-        tn = sum(1 for p, l in zip(preds, labels) if p == 0 and l == 0)
+        tp = sum(1 for p, label in zip(preds, labels) if p == 1 and label == 1)
+        fp = sum(1 for p, label in zip(preds, labels) if p == 1 and label == 0)
+        fn = sum(1 for p, label in zip(preds, labels) if p == 0 and label == 1)
+        tn = sum(1 for p, label in zip(preds, labels) if p == 0 and label == 0)
 
         prec = tp / (tp + fp) if (tp + fp) > 0 else 0.0
         rec = tp / (tp + fn) if (tp + fn) > 0 else 0.0
@@ -105,9 +107,9 @@ def run_benchmark(device: str = "cuda", dataset_path: Path = Path("benchmarks/da
     ]
 
     for model_key, model_name, model_type in models_to_test:
-        print(f"\n==========================================")
+        print("\n==========================================")
         print(f"Testing Model: {model_key} ({model_name}) on {device.upper()}")
-        print(f"==========================================")
+        print("==========================================")
 
         gc.collect()
         if torch.cuda.is_available():
@@ -115,7 +117,6 @@ def run_benchmark(device: str = "cuda", dataset_path: Path = Path("benchmarks/da
             torch.cuda.reset_peak_memory_stats()
 
         scores = []
-        start_time = time.perf_counter()
 
         if model_type == "ce":
             ce = CrossEncoder(model_name, device=device)
