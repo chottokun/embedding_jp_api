@@ -1,0 +1,542 @@
+[
+  {
+    "id": "business_charts_01",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_01.png",
+    "query": "2026年度の事業別売上推移を示す棒グラフを検索してください。",
+    "positive_description": "2026年度のクラウド事業とAIソリューション事業の売上高推移を比較した棒グラフ。第3四半期に急成長していることが確認できる。",
+    "hard_negative_description": "2025年度の営業利益と経常利益の推移を示した折れ線グラフ。売上高ではなく利益の推移を表しているため不適切である。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_02",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_02.png",
+    "query": "各四半期の業績を比較したグラフを含む資料を提示してください。",
+    "positive_description": "第1四半期から第4四半期までの業績を比較した詳細なグラフ資料。季節要因による変動が明確に視覚化されている。",
+    "hard_negative_description": "年間の総業績のみを記載したサマリーレポート。四半期ごとの詳細な比較が含まれていないため要件を満たさない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_03",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_03.png",
+    "query": "国内スマートフォン市場のシェアを示す円グラフを探して。",
+    "positive_description": "2025年における国内スマートフォン市場のベンダー別シェアをパーセンテージで示した円グラフ。A社がトップである。",
+    "hard_negative_description": "グローバル市場におけるPC出荷台数のシェアを示した円グラフ。国内のスマートフォン市場ではないため該当しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_04",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_04.png",
+    "query": "マーケティング部門の主要KPIをまとめたダッシュボード画面。",
+    "positive_description": "マーケティング部門におけるCPAやCVRなどの主要KPIをリアルタイムで一覧表示しているダッシュボード画面。",
+    "hard_negative_description": "人事部門の採用目標達成率をまとめたダッシュボード画面。マーケティング部門のKPIではないため不適当である。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_05",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_05.png",
+    "query": "過去5年間の営業利益率の推移を示すチャートを見せてください。",
+    "positive_description": "2021年から2025年までの5年間における当社の営業利益率の推移を詳細に示した折れ線グラフチャート。",
+    "hard_negative_description": "過去5年間の売上高推移を示した棒グラフ。利益率ではなく売上高を示しているため検索要件に合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_06",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_06.png",
+    "query": "最新の顧客満足度アンケートの結果をまとめたグラフ資料。",
+    "positive_description": "2026年1月に実施された最新の顧客満足度アンケートの回答結果をカテゴリ別に集計した見やすいグラフ資料。",
+    "hard_negative_description": "3年前に実施された旧製品に関するアンケート結果資料。最新のデータではないため今回の要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_07",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_07.png",
+    "query": "関東・関西など地域別の売上構成比がわかるグラフを検索。",
+    "positive_description": "関東、関西、中部などの主要地域別の売上構成比を視覚的にわかりやすく表現した円グラフまたは帯グラフ。",
+    "hard_negative_description": "製品カテゴリ別の売上構成比を示したグラフ。地域別のデータが含まれていないため検索意図から外れている。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_08",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_08.png",
+    "query": "サービスの登録ユーザーの年齢層別分布状況を示すデータ。",
+    "positive_description": "当社の主力サービスにおける10代から60代までの登録ユーザーの年齢層別分布を詳細に示したヒストグラム。",
+    "hard_negative_description": "従業員の年齢構成比を示したグラフ。サービスのユーザー分布ではないため今回の検索要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_09",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_09.png",
+    "query": "MAU（月次アクティブユーザー）の直近1年間の推移グラフ。",
+    "positive_description": "直近1年間におけるMAU（月次アクティブユーザー数）の増減トレンドを月ごとにプロットした折れ線グラフ。",
+    "hard_negative_description": "DAU（日次アクティブユーザー）の直近1週間の推移グラフ。期間と指標が異なるため検索要件を満たしていない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_10",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_10.png",
+    "query": "主力製品Aと製品Bの月ごとの売上比較グラフを探して。",
+    "positive_description": "主力製品Aと製品Bについて、過去12ヶ月間の月次売上高を並べて比較したグループ化棒グラフによる資料。",
+    "hard_negative_description": "全製品の合計売上高の推移を示したグラフ。製品ごとの詳細な比較が含まれていないため今回の要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_11",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_11.png",
+    "query": "各広告チャネルのROAS（費用対効果）を分析したチャート。",
+    "positive_description": "SNS広告や検索連動型広告など、各広告チャネル別のROAS（費用対効果）を比較分析したバブルチャート。",
+    "hard_negative_description": "広告費用の総額推移のみを示したグラフ。費用対効果（ROAS）の分析が含まれていないため検索要件を満たさない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_12",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_12.png",
+    "query": "創業から現在までの従業員数の推移を示すグラフ資料。",
+    "positive_description": "会社設立時から現在に至るまでの、正社員および契約社員の合計従業員数の年次推移を示した面グラフ資料。",
+    "hard_negative_description": "部門別の現在の従業員数を示した円グラフ。時系列での推移が表現されていないため検索意図から外れている。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_13",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_13.png",
+    "query": "今年度の製造原価や販管費などのコスト構造を分析した図。",
+    "positive_description": "今年度における製造原価、販売費、および一般管理費の割合と内訳を詳細に分析したウォーターフォール図。",
+    "hard_negative_description": "次年度の売上目標をまとめた資料。コスト構造の分析結果が含まれていないため今回の検索要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_14",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_14.png",
+    "query": "Webサイトへのアクセス流入経路の比率を示すグラフ。",
+    "positive_description": "オーガニック検索、SNS、リファラルなど、当社のWebサイトへの主なアクセス流入経路の比率を示すドーナツグラフ。",
+    "hard_negative_description": "Webサイトの月間ページビュー数の推移を示すグラフ。流入経路の比率情報が含まれていないため不適当である。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "business_charts_15",
+    "category": "business_charts",
+    "image_path": "benchmarks/datasets/multimodal_images/business_charts_15.png",
+    "query": "キャンペーン期間中の新規獲得顧客数の推移グラフ。",
+    "positive_description": "夏季の特別キャンペーン期間中における日別の新規獲得顧客数の推移を詳細にトラッキングした折れ線グラフ。",
+    "hard_negative_description": "既存顧客の解約率の推移を示したグラフ。新規獲得顧客に関するデータではないため今回の要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_01",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_01.png",
+    "query": "クライアントへ送付する標準的な請求書と明細表のフォーマット。",
+    "positive_description": "システム開発案件の納品後にクライアントへ送付するための、標準的な御請求書および詳細な明細表のフォーマット。",
+    "hard_negative_description": "社内でのみ使用される仮払いの申請書フォーマット。クライアント向けの請求書ではないため検索意図と異なる。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_02",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_02.png",
+    "query": "新規案件提案時に使用する見積書の公式テンプレート。",
+    "positive_description": "新規プロジェクトの提案時にお客様に提出するための、金額や内訳が記載された公式な見積書テンプレート。",
+    "hard_negative_description": "すでに終了したプロジェクトの完了報告書。見積金額や提案内容が記載されていないため今回の要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_03",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_03.png",
+    "query": "秘密保持契約書（NDA）の標準的なヘッダー部分のレイアウト。",
+    "positive_description": "新規取引先と締結する秘密保持契約書（NDA）における、タイトルや日付、当事者名が記載されたヘッダーレイアウト。",
+    "hard_negative_description": "一般的な挨拶状のヘッダー部分。秘密保持契約（NDA）に関する法的な記載がないため検索要件を満たしていない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_04",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_04.png",
+    "query": "社内の新規設備導入時に使用する稟議申請書のテンプレート。",
+    "positive_description": "社内で新しいIT機器やソフトウェアを導入する際に承認を得るための、標準的な稟議申請書のテンプレートフォーマット。",
+    "hard_negative_description": "有給休暇の取得申請書フォーマット。新規設備導入のための稟議書ではないため今回の検索要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_05",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_05.png",
+    "query": "経費精算用に使用される標準的な領収書のフォーマット。",
+    "positive_description": "会社の経費精算において必要となる、金額、宛名、但し書き、および発行日を記載するための領収書フォーマット。",
+    "hard_negative_description": "商品の納品時に添付される納品書の控え。金額の受領を証明する領収書としての機能を持たないため不適当である。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_06",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_06.png",
+    "query": "商品発送時に同梱する納品書のレイアウトサンプル。",
+    "positive_description": "顧客へ商品を発送する際に同梱される、商品名、数量、納品日などが詳細に記載された納品書のレイアウトサンプル。",
+    "hard_negative_description": "商品の製造工程を記録した作業指示書。顧客への納品を証明する書類ではないため今回の検索要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_07",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_07.png",
+    "query": "フリーランスと契約する際の業務委託契約書のひな形。",
+    "positive_description": "外部のフリーランスエンジニアやデザイナーと業務を委託する際に締結するための、業務委託契約書の標準的なひな形。",
+    "hard_negative_description": "正社員の雇用条件を定めた雇用契約書。業務委託に関する条項が含まれていないため検索意図から外れている。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_08",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_08.png",
+    "query": "新入社員向けに発行する雇用契約書の標準テンプレート。",
+    "positive_description": "新しく採用した正社員に対して交付する、給与や労働時間などの労働条件が詳細に記載された雇用契約書のテンプレート。",
+    "hard_negative_description": "外部業者との取引基本契約書。社員の雇用に関する労働条件が記載されていないため今回の要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_09",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_09.png",
+    "query": "業務提携時に使用する秘密保持契約書（NDA）の全体レイアウト。",
+    "positive_description": "他社との業務提携を検討する際に、相互に機密情報を保護するために締結する秘密保持契約書の全体レイアウト。",
+    "hard_negative_description": "社内の情報セキュリティポリシー規定書。他社と締結する契約書としての体裁を備えていないため不適当である。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_10",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_10.png",
+    "query": "仕入先に対して商品を注文する際の発注書フォーマット。",
+    "positive_description": "取引先や仕入先に対して、必要な資材や商品の品名、数量、希望納期を指定して注文するための発注書フォーマット。",
+    "hard_negative_description": "仕入先から受け取った見積書のPDFファイル。こちらから発注を行うための書類ではないため検索要件を満たさない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_11",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_11.png",
+    "query": "社員が交通費や交際費を申請する経費精算書のレイアウト。",
+    "positive_description": "従業員が業務で立て替えた交通費や会議費、交際費などを会社に請求・精算するための経費精算書のレイアウト。",
+    "hard_negative_description": "出張の計画を記載した出張稟議書。精算金額の詳細や領収書の貼付欄がないため今回の検索要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_12",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_12.png",
+    "query": "経営会議の内容を記録するための標準的な議事録フォーマット。",
+    "positive_description": "月例の経営会議において、決定事項や今後の課題、各部門の報告内容を正確に記録するための議事録フォーマット。",
+    "hard_negative_description": "新製品のアイデアを自由に書き留めたブレインストーミングのメモ。公式な議事録のフォーマットではないため不適当。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_13",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_13.png",
+    "query": "新規事業のアイデアをまとめるための企画提案書テンプレート。",
+    "positive_description": "社内コンペや役員向けに新規事業のアイデアや市場分析、収益予測を説得力を持ってプレゼンするための企画提案書。",
+    "hard_negative_description": "既存事業の月次運用レポート。新規事業の提案やアイデアをまとめた資料ではないため今回の検索要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_14",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_14.png",
+    "query": "システム開発における外部設計仕様書のドキュメントレイアウト。",
+    "positive_description": "システム開発プロジェクトにおいて、画面レイアウトや機能要件、データ定義などを詳細に記載した外部設計仕様書。",
+    "hard_negative_description": "システムの操作方法をユーザー向けに解説したマニュアル。開発者向けの設計仕様書ではないため検索意図から外れる。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "document_layouts_15",
+    "category": "document_layouts",
+    "image_path": "benchmarks/datasets/multimodal_images/document_layouts_15.png",
+    "query": "システム納品後にクライアントから受領する検収書のフォーマット。",
+    "positive_description": "開発したシステムの納品後、クライアント側でのテスト完了および受け入れを証明してもらうための検収書フォーマット。",
+    "hard_negative_description": "開発着手前に取り交わす要件定義書の合意書。納品後の検収を証明する書類ではないため今回の要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_01",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_01.png",
+    "query": "CPUやメモリのリアルタイム使用率を表示する監視画面。",
+    "positive_description": "運用中のサーバー群におけるCPU使用率、メモリ消費量、ネットワークトラフィックをリアルタイムで表示する監視画面。",
+    "hard_negative_description": "過去1年間のサーバー稼働率をまとめた静的な月次レポートPDF。リアルタイムの監視画面ではないため要件を満たさない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_02",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_02.png",
+    "query": "PodのクラッシュループなどKubernetesのエラーログ画面。",
+    "positive_description": "Kubernetesクラスター上で発生しているPodのCrashLoopBackOffやOOMKilledなどの詳細なエラーログを表示する画面。",
+    "hard_negative_description": "アプリケーションの正常なアクセスログを一覧表示した画面。Kubernetes特有のエラー情報が含まれていないため不適当。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_03",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_03.png",
+    "query": "システム障害時にユーザーに表示される500エラー画面。",
+    "positive_description": "サーバー内部で予期せぬ重大な障害が発生した際に、一般ユーザーのブラウザ上に表示される500 Internal Server Error画面。",
+    "hard_negative_description": "ページが見つからない場合に表示される404 Not Found画面。サーバー内部のエラーを示す画面ではないため検索要件に合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_04",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_04.png",
+    "query": "ユーザーのプロフィール情報を変更するための設定モーダルウィンドウ。",
+    "positive_description": "Webアプリケーション内で、ユーザーが自身の表示名やアイコン画像、通知設定などを変更できる設定モーダルウィンドウ。",
+    "hard_negative_description": "全画面で表示される長文の利用規約ページ。モーダルウィンドウ形式の設定画面ではないため今回の検索要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_05",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_05.png",
+    "query": "ユーザー名とパスワードを入力するシステムのログイン画面。",
+    "positive_description": "企業の社内システムにアクセスするため、従業員ID（ユーザー名）とパスワードを入力する標準的なログイン画面のUI。",
+    "hard_negative_description": "ログイン後に表示されるホームダッシュボード画面。認証情報を入力するログイン画面自体ではないため検索意図から外れる。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_06",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_06.png",
+    "query": "システム管理者が登録ユーザーを一覧で確認できる画面。",
+    "positive_description": "システム管理者が、システムに登録されている全ユーザーのアカウント状態や最終ログイン日時を一覧で確認・管理できる画面。",
+    "hard_negative_description": "一般ユーザーが自身の情報のみを確認できるマイページ。管理者向けのユーザー一覧管理機能がないため今回の要件を満たさない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_07",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_07.png",
+    "query": "ECサイトで商品の購入が完了した直後に表示される画面。",
+    "positive_description": "オンラインショッピングサイトにおいて、クレジットカード決済が正常に処理され、注文番号やサンクスメッセージが表示される決済完了画面。",
+    "hard_negative_description": "商品をカートに入れた直後に表示されるカート確認画面。決済処理がまだ完了していないため今回の検索要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_08",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_08.png",
+    "query": "パスワードを忘れたユーザーがリセット用リンクを要求する画面。",
+    "positive_description": "ログインパスワードを忘却したユーザーが、登録済みのメールアドレスを入力してパスワードリセット用のリンク送信を要求する画面。",
+    "hard_negative_description": "新しいパスワードと確認用パスワードを入力して登録を完了する画面。リセットを要求する最初の画面ではないため不適当である。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_09",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_09.png",
+    "query": "キーワード検索後に該当する商品や記事が一覧表示される画面。",
+    "positive_description": "サイト内の検索ボックスからキーワードを入力した結果として、関連する商品データや記事のサムネイルがリスト形式で一覧表示される画面。",
+    "hard_negative_description": "検索キーワードを入力するためのトップページの検索フォーム画面。検索を実行した後の結果一覧ではないため検索要件に合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_10",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_10.png",
+    "query": "システム内のデータをCSVやPDFで出力する際の設定画面。",
+    "positive_description": "システムに蓄積されたレポートデータをCSVやPDF形式でダウンロードする前に、出力期間や項目を詳細に選択できるデータエクスポート設定画面。",
+    "hard_negative_description": "データをシステムに取り込むためのCSVインポート画面。データを出力（エクスポート）するための画面ではないため検索意図から外れる。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_11",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_11.png",
+    "query": "各ユーザーやグループに対するアクセス権限を設定する画面。",
+    "positive_description": "システム管理者が、特定のユーザーやロール（グループ）に対して各機能へのアクセス権や編集権限を詳細に割り当てるための権限管理画面。",
+    "hard_negative_description": "ユーザーの基本情報（氏名や部署名）のみを編集する画面。アクセス権限の詳細な設定機能が含まれていないため要件を満たさない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_12",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_12.png",
+    "query": "システムからのアラートやメッセージを一覧表示する通知パネル。",
+    "positive_description": "ヘッダーのベルアイコンをクリックした際にドロップダウンで表示される、システムからの最新のアラートや運営からのメッセージの一覧通知パネル。",
+    "hard_negative_description": "個別の通知の詳細内容を全画面で表示する画面。複数のお知らせを一覧で確認できるパネルUIではないため今回の検索要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_13",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_13.png",
+    "query": "ユーザーが自身の自己紹介文やアバター画像を変更する画面。",
+    "positive_description": "一般ユーザーがログイン後に自身のマイページからアクセスし、自己紹介文の更新や新しいアバター画像をアップロードできるプロフィール編集画面。",
+    "hard_negative_description": "他のユーザーの公開プロフィールを閲覧するだけの画面。自身の情報を編集・変更する機能が含まれていないため検索意図から外れている。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_14",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_14.png",
+    "query": "外部連携用のAPIキーを新規に発行・管理するための画面。",
+    "positive_description": "開発者向けの管理コンソールにおいて、外部アプリケーションと連携するための新しいAPIキーの生成や既存キーの無効化を行うための管理画面。",
+    "hard_negative_description": "APIの仕様やエンドポイントを解説したドキュメントページ。APIキーを実際に生成・管理するシステム画面ではないため要件を満たさない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "ui_system_screens_15",
+    "category": "ui_system_screens",
+    "image_path": "benchmarks/datasets/multimodal_images/ui_system_screens_15.png",
+    "query": "アクセスしたURLが存在しない場合に表示される404エラー画面。",
+    "positive_description": "ユーザーが誤ったURLを入力した、あるいはページが削除された場合に、「ページが見つかりません」というメッセージとともに表示される404エラー画面。",
+    "hard_negative_description": "サーバーの一時的な過負荷で表示される503 Service Unavailable画面。ページが存在しないことを示す404エラーではないため不適当である。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_01",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_01.png",
+    "query": "AWSを利用した標準的なWeb3層アーキテクチャの構成図。",
+    "positive_description": "AWS上で構築された、ALBによる負荷分散、ECSでのコンテナ実行、およびRDSを用いたデータストアからなる標準的なWeb3層のクラウドアーキテクチャ構成図。",
+    "hard_negative_description": "オンプレミスの物理サーバーラックの配置を示した図面。AWSなどのクラウドアーキテクチャの構成図ではないため検索要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_02",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_02.png",
+    "query": "OAuth 2.0やOIDCを用いたユーザー認証のフローを示すシーケンス図。",
+    "positive_description": "クライアントアプリケーション、認可サーバー、およびリソースサーバー間でのOAuth 2.0を用いたトークン発行からユーザー認証までのフローを示すシーケンス図。",
+    "hard_negative_description": "データベースのテーブル間のリレーションを示したER図。認証プロセスの時系列なフローを示すシーケンス図ではないため不適当である。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_03",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_03.png",
+    "query": "データレイクからDWHへデータをETL処理するパイプラインのフロー図。",
+    "positive_description": "Amazon S3のデータレイクから抽出・変換（ETL）処理を行い、Amazon RedshiftなどのDWHにデータをロードするまでの一連のデータパイプラインフロー図。",
+    "hard_negative_description": "Webアプリケーションの画面遷移を示したUIフロー図。データのバッチ処理やETLに関するパイプライン図ではないため今回の要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_04",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_04.png",
+    "query": "VPC、サブネット、ルーティングを詳細に記述したネットワーク図。",
+    "positive_description": "本番環境におけるVPCの分割、パブリック/プライベートサブネットの配置、NATゲートウェイおよびルーティングテーブルの設定を詳細に記述したネットワーク構成図。",
+    "hard_negative_description": "社内の座席表とオフィスの見取り図。ITインフラストラクチャのネットワーク構成を示す図ではないため検索意図から外れている。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_05",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_05.png",
+    "query": "GitHub Actionsからデプロイまでの自動化CI/CDパイプライン図。",
+    "positive_description": "コードのプッシュをトリガーとして、GitHub Actionsによる自動テストの実行、コンテナイメージのビルド、および本番環境への自動デプロイまでのCI/CDパイプライン図。",
+    "hard_negative_description": "システム開発のスケジュールを管理するガントチャート。ビルドやデプロイの自動化パイプラインの構成を示す図ではないため要件を満たさない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_06",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_06.png",
+    "query": "複数のマイクロサービス間のAPI通信と依存関係を示す図。",
+    "positive_description": "ECサイトの裏側で稼働する、注文サービス、決済サービス、在庫サービスといった複数のマイクロサービス間のAPI呼び出しフローと依存関係を示すアーキテクチャ連携図。",
+    "hard_negative_description": "単一のモノリシックアプリケーション内部のクラス構造図。複数の独立したサービス間の連携を示す図ではないため今回の検索要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_07",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_07.png",
+    "query": "主要なテーブルとそのリレーションシップ（1対多など）を示すER図。",
+    "positive_description": "顧客テーブル、注文テーブル、商品テーブルなどの主要なデータベーステーブルの構造と、それらの間の1対多などのリレーションシップを詳細に示したER図。",
+    "hard_negative_description": "システムのユースケースとアクタの関係を示したユースケース図。データベースの構造やテーブル間の関係を示す図ではないため不適当である。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_08",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_08.png",
+    "query": "注文のステータス（受付➔処理中➔発送済）の遷移を示す状態遷移図。",
+    "positive_description": "ECシステムにおける注文データのステータスが、「注文受付」「決済処理中」「発送準備中」「発送完了」へとどのように遷移するかを定義した状態遷移図（ステートマシン図）。",
+    "hard_negative_description": "処理の分岐やループを記述したフローチャート。特定のオブジェクトのライフサイクルや状態の遷移に焦点を当てた図ではないため検索意図から外れる。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_09",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_09.png",
+    "query": "夜間に実行される日次集計バッチの処理手順と依存関係を示す図。",
+    "positive_description": "毎晩深夜に実行される売上データの日次集計バッチについて、データの抽出、集計処理、およびレポート生成までの処理手順とジョブの依存関係を示すフロー図。",
+    "hard_negative_description": "リアルタイムで処理されるストリーミングデータのパイプライン図。夜間に定期実行されるバッチ処理のフローではないため今回の要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_10",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_10.png",
+    "query": "新規ユーザーがアカウントを作成する際の一連のシステム間通信を示す図。",
+    "positive_description": "新規ユーザーが登録フォームを送信してから、入力値バリデーション、DBへの保存、そして確認メールが送信されるまでのシステム間通信を時系列で示すシーケンス図。",
+    "hard_negative_description": "ユーザー登録画面のワイヤーフレームレイアウト。システム内部の通信や処理の順序を示すシーケンス図ではないため検索要件を満たさない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_11",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_11.png",
+    "query": "システムの主要なクラスとその属性、メソッド、継承関係を示す図。",
+    "positive_description": "オブジェクト指向設計に基づいて、システムの主要なクラス（User, Order, Product等）の持つ属性やメソッド、およびクラス間の継承・集約関係をUMLで記述したクラス図。",
+    "hard_negative_description": "ネットワーク機器の物理的な結線を示す物理構成図。ソフトウェアのオブジェクト指向設計に関するクラス図ではないため今回の検索要件には合致しない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_12",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_12.png",
+    "query": "RabbitMQやKafkaを用いた非同期メッセージ処理の構成図。",
+    "positive_description": "システムの負荷を平準化するために、RabbitMQやApache Kafkaなどのメッセージキューを用いてプロデューサーからコンシューマーへ非同期でタスクを渡す処理の構成図。",
+    "hard_negative_description": "REST APIを用いた同期的なリクエスト・レスポンス通信の図。メッセージキューを利用した非同期処理のアーキテクチャではないため不適当である。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_13",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_13.png",
+    "query": "メインリージョンからDRリージョンへのフェイルオーバー構成を示す図。",
+    "positive_description": "災害発生時に備えて、メインリージョン（東京）からスタンバイリージョン（大阪）へのデータベースのレプリケーションと、DNSによるフェイルオーバーの仕組みを示すDR構成図。",
+    "hard_negative_description": "通常の負荷分散のみを目的とした単一リージョン内のマルチAZ構成図。別リージョンへの障害復旧（DR）を想定した構成ではないため検索意図から外れる。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_14",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_14.png",
+    "query": "Fluentd ➔ Elasticsearch ➔ Kibanaなどのログ収集・分析基盤の図。",
+    "positive_description": "各アプリケーションサーバーからFluentdを用いてログを収集し、Elasticsearchに蓄積してKibanaで可視化する（EFKスタック）というログ収集・分析基盤のアーキテクチャ図。",
+    "hard_negative_description": "アクセス解析ツールのGoogle Analyticsのダッシュボード画面。システム内部のログ収集や分析基盤のアーキテクチャ構成図ではないため要件を満たさない。",
+    "domain": "business_tech"
+  },
+  {
+    "id": "technical_diagrams_15",
+    "category": "technical_diagrams",
+    "image_path": "benchmarks/datasets/multimodal_images/technical_diagrams_15.png",
+    "query": "多数のエッジデバイスからクラウドへセンサーデータを送信するフロー図。",
+    "positive_description": "工場内に設置された多数のIoTセンサーデバイスから、MQTTプロトコルを使用してAWS IoT Coreへ継続的に環境データを送信・収集する一連のシステムフロー図。",
+    "hard_negative_description": "企業の基幹システムにおける人事データの更新フロー図。IoTデバイスやセンサーからのデータ収集に関するフローではないため今回の検索要件には合致しない。",
+    "domain": "business_tech"
+  }
+]
