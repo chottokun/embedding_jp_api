@@ -29,6 +29,7 @@ sources:
 | `cl-nagoya/ruri-v3-310m` | テキスト | 768 | 8,192 tokens | 高精度・日本語特化・標準エンベディングモデル |
 | `BAAI/bge-m3` | テキスト | 1024 | 8,192 tokens | 多言語対応・Dense/Sparse 検索基盤 |
 | `bge-visualized-m3` | マルチモーダル | 1024 | 8,192 tokens | 画像（図面・表・チャート）＋日本語テキスト統合表現 |
+| `google/embeddinggemma-2` | マルチモーダル | 768 (MRL: 128/256/512/768) | 8,192 tokens | Google DeepMind製、多言語+Vision対応（270M Text + 170M Vision）。MRL次元削減対応 |
 
 ## 2. リランカーモデル (Reranking Models)
 
@@ -36,9 +37,11 @@ sources:
 | :--- | :---: | :---: | :--- |
 | `cl-nagoya/ruri-v3-reranker-310m` | Cross-Encoder | 8,192 tokens | 質問と文書のペアを高精度にスコアリング（Top-N 絞り込み用） |
 | `Qwen/Qwen2.5-1.5B-Instruct` | Causal-LM (Logit Gate) | 32,768 tokens | 単一フォワードパス十分性ロジット判定＋半角英数 3-gram ブースト（ニアミス・回答不能負例の完全遮断） |
+| `Takenoko12345678/Qwen3.5-0.8B-Japanese-SFT-v2` | Causal-LM (Logit Gate) | 32,768 tokens | 日本語軽量SFT（0.8B）。高速低メモリフットプリントでニアミス高精度遮断 |
 
-## 3. Ruri-v3 日本語タスク別プレフィックス
+## 3. 日本語タスク別プレフィックス・プロンプト定義
 
+### 3.1. Ruri-v3 プレフィックス
 Ruri-v3 モデルでは、非対称検索やクラスタリングの精度を最大化するため、以下のプレフィックスを自動適用または `input_type` パラメータで指定します。
 
 | `input_type` 値 | プレフィックス文字列 | 用途 |
@@ -50,3 +53,14 @@ Ruri-v3 モデルでは、非対称検索やクラスタリングの精度を最
 | `sts` | `""` (なし) | 対称的な文章間類似度比較 |
 
 - **二重付与防止**: テキストが既に `"検索クエリ: "` 等で始まっている場合は自動付与をスキップします。
+
+### 3.2. EmbeddingGemma-2 指示プロンプト (Task Prompts)
+EmbeddingGemma-2 はタスク指示プロンプトの指定が推奨されています。APIは `input_type` に応じて公式プロンプトを自動適用します（画像入力時はプロンプト付与は抑止されます）。
+
+| `input_type` 値 | 適用プロンプト | 用途 |
+| :--- | :--- | :--- |
+| `query` | `SearchQuery` | 非対称検索のクエリ |
+| `document` | `Document` | 検索対象ドキュメント |
+| `classification` | `Classification` | テキスト分類 |
+| `clustering` | `Clustering` | クラスタリング |
+| `sts` | `SentenceSimilarity` | 文の類似度比較 |
