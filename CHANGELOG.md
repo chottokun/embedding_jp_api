@@ -20,10 +20,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configured `fetch-depth: 0` in GitHub Actions checkout step to allow `gitleaks` secret detection to inspect the full commit history correctly.
 
 ### Changed
+- **PyTorch Source Constraint Relaxation (`pyproject.toml`)**:
+  - Relaxed CPU-exclusive wheel index pinning for `torch` and `torchvision` to allow out-of-the-box CUDA GPU hardware acceleration while preserving CPU fallback.
 - **Code Style Alignment**:
   - Formatted all scripts in `scratch/` and `scripts/` using `ruff format` to meet repo coding standards.
 
 ### Added
+- **1,200-Item Hybrid Evaluation Suite & Dynamic Cascade Routing (`benchmarks/benchmark_hybrid_full_suite.py`)**:
+  - Constructed synthetic and verified 1,200-item evaluation dataset across 6 enterprise domains (IT, HR, Legal, Hardware, Cloud, Medical) pairing questions with positive, topical near-miss, and unanswerable documents.
+  - Implemented dynamic uncertainty-driven routing: evaluating with fast Cross-Encoder first and escalating low-margin difficult queries ($\Delta < 0.05$) to Logit Gate, achieving Pareto-optimal 88.00% accuracy and 72.8ms average latency.
+- **Two-Stage Cascade Benchmark & Critical Validation (`benchmarks/benchmark_cascade_pipeline.py`)**:
+  - Validated all 8 permutations of Stage 1 (`ruri-310m`, `ruri-30m`, `embeddinggemma-2` 768d/256d) × Stage 2 (`Cross-Encoder`, `Logit Gate`).
+  - Proved that `EmbeddingGemma-2 (256d) + Logit Gate` matches the baseline `ruri-310m + Cross-Encoder` top-accuracy (141/180, 78.33%) while reducing vector storage by 67%.
 - **Google EmbeddingGemma 2 Support (`google/embeddinggemma-2`)**:
   - Integrated Google DeepMind's multimodal embedding model (768d native, 270M text + 170M vision) into `POST /v1/embeddings`.
   - Added `EmbeddingGemma2Model` wrapper with enforced 8,192 token maximum sequence length (overriding tokenizer sentinel `1e30`), `float16` fallback to `bfloat16`/`float32` for numerical stability, and modular lightweight loading (`audio_config: None`).

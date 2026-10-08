@@ -1,5 +1,16 @@
 # Knowledge Update Log
 
+## 2026-10-08
+* **Feature & Multimodal Support**: Google DeepMind のマルチモーダル埋め込みモデル `google/embeddinggemma-2` を完全実装・統合。
+  * **Multimodal Architecture**: テキスト＋画像複合入力対応（270M Text + 170M Vision）、`<|image|>` 自動挿入、8,192 トークン強制クリップ、bfloat16/float32 安全フォールバック。
+  * **MRL & Prompt Mapping**: 4段階 MRL 次元削減（128d, 256d, 512d, 768d）および `input_type` から公式指示プロンプト（`SearchQuery`, `Document` 等）への自動マッピング。
+* **Infrastructure & Acceleration**: GPU / CUDA 環境との相互運用性を高めるため、PyTorch の CPU 専用固定インデックス制約を緩和。
+* **Comprehensive Benchmarks & Pareto Optimal Routing**:
+  * **テキスト 540件評価**: MRL 256d で 768d 比 96.7% の分離マージンを維持し、インデックス容量 67% 削減を実証（`docs/infrastructure/benchmark_540_embeddinggemma_results.md`）。
+  * **マルチモーダル 60画像評価**: ビジネスチャート・図面・ダイアグラム・UI 画面の Text-to-Image / Image-to-Text 双方で高精度検索を実証（`docs/infrastructure/benchmark_multimodal_embeddinggemma_results.md`）。
+  * **二段カスケード批判的検証**: 公式プロンプト適用下での再測定により、`EmbeddingGemma-2 (256d) + Logit Gate` が従来の最高標準 `ruri-310m + Cross-Encoder` と完全同等の正解率（141/180件 78.33%）を達成することを客観的に立証（`docs/infrastructure/benchmark_cascade_ruri_vs_embeddinggemma.md`）。
+  * **動的ハイブリッドカスケード実証**: 1,200件実証データセットを整備し、Cross-Encoder 判定でスコア差 $\Delta < 0.05$ の難問のみ Logit Gate へエスカレーションする動的ルーティングにより、単体モデル（CE 87.5%, Gate 75.0%）を凌駕する最高正解率 88.00% / 72.8ms のパレート最適解を実証。
+
 ## 2026-09-25
 * **Feature & High-Precision Reranking**: `plan/logit.md` に基づく **Logit Gate 機能およびハイブリッド再ランキング（ASCII Matcher ＋ 単一フォワードパス ロジット判定）** を完全実装。
   * **Dynamic Dispatch**: `POST /v1/rerank` において `model` 指定（`Qwen/Qwen2.5-1.5B-Instruct` 等）に応じた自動ルーティングを実装。
