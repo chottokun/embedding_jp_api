@@ -3,7 +3,7 @@
 ## 1. 概要
 
 このプロジェクトは、日本語のテキスト埋め込み（Embedding）、マルチモーダル埋め込み（画像＋テキスト）、および再ランキング（Rerank）機能を提供する、OpenAI互換のFastAPIサーバーです。
-名古屋大学にて開発された[Ruri v3モデル](https://huggingface.co/cl-nagoya/ruri-v3-30m)や[Visualized-BGE (bge-visualized-m3)](https://huggingface.co/BAAI/bge-visualized-m3)などを利用することを想定しています。
+名古屋大学にて開発された[Ruri v3モデル](https://huggingface.co/cl-nagoya/ruri-v3-30m)や[Visualized-BGE (bge-visualized-m3)](https://huggingface.co/BAAI/bge-visualized-m3)、Google DeepMindのマルチモーダル埋め込みモデル[EmbeddingGemma 2 (google/embeddinggemma-2)](https://huggingface.co/google/embeddinggemma-2)などを利用することを想定しています。
 
 > 📖 **詳細ナレッジベース (OKF v0.2)**: システムアーキテクチャ、スレッドセーフティ、マルチモーダル仕様、オフライン設定、および実機ベンチマークデータの詳細は [docs/README.md](docs/README.md) をご覧ください。
 
@@ -13,30 +13,32 @@
 
 `POST /v1/embeddings`
 
-OpenAI標準パラメータに加え、Ruri-v3等のモデル性能を最大限に引き出すための拡張パラメータをサポートしています。
+OpenAI標準パラメータに加え、Ruri-v3やEmbeddingGemma-2等のモデル性能を最大限に引き出すための拡張パラメータをサポートしています。
 
 #### リクエストボディ (JSON)
 
 | フィールド名 | 型 | 必須 | 説明 |
 | --- | --- | --- | --- |
-| `input` | string \| array | Yes | 埋め込み対象のテキストまたはテキストのリスト。 |
-| `model` | string | Yes | 使用するモデルID（例: `cl-nagoya/ruri-v3-310m`）。 |
-| `dimensions` | integer | No | 出力埋め込みベクトルの次元数（Matryoshka 次元削減 + L2 再正規化）。 |
+| `input` | string \| array | Yes | 埋め込み対象のテキスト、テキストリスト、またはマルチモーダル（画像＋テキスト）コンテンツ。 |
+| `model` | string | Yes | 使用するモデルID（例: `cl-nagoya/ruri-v3-310m`, `google/embeddinggemma-2`）。 |
+| `dimensions` | integer | No | 出力埋め込みベクトルの次元数（Matryoshka 次元削減 + L2 再正規化。EmbeddingGemma 2 では 128, 256, 512, 768 に対応）。 |
 | `encoding_format` | string | No | 埋め込みベクトルの返却形式（`float` または `base64`。デフォルト: `float`）。 |
-| `input_type` | string | No | タスクの種類を指定。Ruri-v3のプレフィックスに自動マッピングされます。 |
+| `input_type` | string | No | タスクの種類を指定。モデル固有のプレフィックスやプロンプトに自動マッピングされます。 |
 | `instruction` | string | No | モデルへの具体的な指示文。将来的な指示ベースモデルへの対応用。 |
 | `apply_ruri_prefix` | boolean | No | `true`の場合、`input_type`が未指定でも入力形式に基づき自動でプレフィックスを付与します（互換性用）。 |
 | `user` | string | No | エンドユーザーの一意識別子（監査・追跡用）。 |
 
-#### `input_type` とプレフィックスのマッピング
+#### `input_type` とプレフィックス／プロンプトのマッピング
 
-`input_type`を指定すると、Ruri-v3モデルに対して以下の日本語プレフィックスが自動挿入されます。
+指定されたモデルに応じて、最適なプレフィックスまたはプロンプトが自動適用されます（画像入力時はプロンプト付与は抑止されます）。
 
-* **`query`**: `"検索クエリ: "` （非対称検索の質問側）
-* **`document`**: `"検索文書: "` （非対称検索の回答・知識ベース側）
-* **`classification`**: `"トピック: "` （分類、クラスタリング用）
-* **`clustering`**: `"トピック: "` （同上）
-* **`sts`**: `""` (空文字) （文の類似度、対称的タスク用）
+| `input_type` | `ruri-v3` プレフィックス | `google/embeddinggemma-2` プロンプト | 用途 |
+|---|---|---|---|
+| **`query`** | `"検索クエリ: "` | `SearchQuery` | 非対称検索の質問側 |
+| **`document`** | `"検索文書: "` | `Document` | 非対称検索の回答・知識ベース側 |
+| **`classification`** | `"トピック: "` | `Classification` | テキスト分類 |
+| **`clustering`** | `"トピック: "` | `Clustering` | クラスタリング |
+| **`sts`** | `""` (空文字) | `SentenceSimilarity` (Gemma 2) | 文の類似度（対称的タスク） |
 
 #### 処理ルール
 

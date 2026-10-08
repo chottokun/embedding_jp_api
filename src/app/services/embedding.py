@@ -36,6 +36,19 @@ def _determine_ruri_prefix(request: EmbeddingRequest) -> str:
     return prefix
 
 
+def _determine_gemma2_prompt(request: EmbeddingRequest) -> Optional[str]:
+    # Gemma2 specific prompts
+    mapping = {
+        "query": "SearchQuery",
+        "document": "Document",
+        "classification": "Classification",
+        "clustering": "Clustering",
+    }
+    if request.input_type in mapping:
+        return mapping[request.input_type]
+    return None
+
+
 def _apply_prefix(inputs: List[str], prefix: str) -> List[str]:
     if not prefix:
         return inputs
@@ -249,9 +262,17 @@ class EmbeddingService(BaseEmbeddingService):
                     clean_text = _apply_prefix([clean_text], prefix)[0]
                 processed_items.append((clean_text, img))
 
-            embeddings = await anyio.to_thread.run_sync(
-                model.encode_multimodal, processed_items
-            )
+            # Gemma 2 explicit prompt handling
+            kwargs = {}
+            if "embeddinggemma-2" in request.model.lower():
+                prompt = _determine_gemma2_prompt(request)
+                if prompt and not has_image:
+                    kwargs["prompt_name"] = prompt
+
+            def run_mm_inference():
+                return model.encode_multimodal(processed_items, **kwargs)
+
+            embeddings = await anyio.to_thread.run_sync(run_mm_inference)
             response_data = [
                 EmbeddingData(
                     embedding=_format_embedding(
@@ -274,9 +295,15 @@ class EmbeddingService(BaseEmbeddingService):
             model, processed_inputs
         )
 
+        kwargs = {}
+        if "embeddinggemma-2" in request.model.lower():
+            prompt = _determine_gemma2_prompt(request)
+            if prompt:
+                kwargs["prompt_name"] = prompt
+
         def _run_inference():
             with model.lock, model.tokenizer_lock:
-                return model.encode(processed_inputs)
+                return model.encode(processed_inputs, **kwargs)
 
         vectors = await anyio.to_thread.run_sync(_run_inference)
 

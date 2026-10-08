@@ -19,6 +19,7 @@ from collections import Counter
 REQUIRED_KEYS = {"id", "query", "document", "label", "type"}
 VALID_TYPES = {"positive", "near_miss", "unanswerable"}
 
+
 def validate_dataset(file_path: Path, verbose: bool = False) -> tuple[bool, dict]:
     if not file_path.exists():
         print(f"❌ Error: File not found: {file_path}")
@@ -80,19 +81,27 @@ def validate_dataset(file_path: Path, verbose: bool = False) -> tuple[bool, dict
 
         # 5. Type and label consistency
         if item_type not in VALID_TYPES:
-            errors.append(f"Item {item_id}: Invalid type '{item_type}'. Must be one of {VALID_TYPES}")
+            errors.append(
+                f"Item {item_id}: Invalid type '{item_type}'. Must be one of {VALID_TYPES}"
+            )
         else:
             type_counts[item_type] += 1
             if item_type == "positive" and label != 1:
-                errors.append(f"Item {item_id}: Positive item must have label=1 (got {label})")
+                errors.append(
+                    f"Item {item_id}: Positive item must have label=1 (got {label})"
+                )
             elif item_type in {"near_miss", "unanswerable"} and label != 0:
-                errors.append(f"Item {item_id}: {item_type} item must have label=0 (got {label})")
+                errors.append(
+                    f"Item {item_id}: {item_type} item must have label=0 (got {label})"
+                )
 
         # 6. Near-miss heuristics check
         if item_type == "near_miss":
             # Document length sanity
             if len(document) < 15:
-                errors.append(f"Item {item_id}: Near-miss document is suspiciously short (<15 chars)")
+                errors.append(
+                    f"Item {item_id}: Near-miss document is suspiciously short (<15 chars)"
+                )
 
     is_valid = len(errors) == 0
 
@@ -124,7 +133,9 @@ def validate_dataset(file_path: Path, verbose: bool = False) -> tuple[bool, dict
     return is_valid, stats
 
 
-def generate_visual_inspection_markdown(file_path: Path, output_md: Path, sample_per_group: int = 3):
+def generate_visual_inspection_markdown(
+    file_path: Path, output_md: Path, sample_per_group: int = 3
+):
     """Generates a structured Markdown report grouped by domain and type for human visual inspection."""
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -146,21 +157,40 @@ def generate_visual_inspection_markdown(file_path: Path, output_md: Path, sample
 
         # Anomaly checks for visual review
         if len(doc) < 25:
-            anomalies.append((item, f"短文警告: 文書長が {len(doc)} 文字と極端に短いです"))
+            anomalies.append(
+                (item, f"短文警告: 文書長が {len(doc)} 文字と極端に短いです")
+            )
         elif len(doc) > 400:
             anomalies.append((item, f"長文警告: 文書長が {len(doc)} 文字と長めです"))
 
         if item_type == "near_miss":
             # Better Japanese keyword extraction (extract alphanumeric words, katakana blocks, kanji sequences)
             import re
-            keywords = re.findall(r'[a-zA-Z0-9_\-\.]{3,}|[\u30A1-\u30FA]{3,}|[\u4E00-\u9FFF]{2,}', query)
+
+            keywords = re.findall(
+                r"[a-zA-Z0-9_\-\.]{3,}|[\u30A1-\u30FA]{3,}|[\u4E00-\u9FFF]{2,}", query
+            )
             # Remove very generic query terms
-            stop_terms = {"何ですか", "ですか", "の違い", "において", "について", "方法", "場合", "理由"}
+            stop_terms = {
+                "何ですか",
+                "ですか",
+                "の違い",
+                "において",
+                "について",
+                "方法",
+                "場合",
+                "理由",
+            }
             filtered_kws = [k for k in keywords if k not in stop_terms]
             if filtered_kws:
                 match_count = sum(1 for k in filtered_kws if k in doc)
                 if match_count == 0:
-                    anomalies.append((item, f"キーワード不一致疑惑: クエリ主要語（{', '.join(filtered_kws[:3])}）が文書内に見当たりません"))
+                    anomalies.append(
+                        (
+                            item,
+                            f"キーワード不一致疑惑: クエリ主要語（{', '.join(filtered_kws[:3])}）が文書内に見当たりません",
+                        )
+                    )
 
     lines = [
         f"# データセット目視確認・点検レポート ({file_path.name})",
@@ -180,11 +210,17 @@ def generate_visual_inspection_markdown(file_path: Path, output_md: Path, sample
     ]
 
     if anomalies:
-        lines.append(f"## ⚠️ 自動アノマリー（要重点確認サンプル）: 計 {len(anomalies)} 件")
-        lines.append("以下のサンプルは自動ヒューリスティクスにより注意フラグが立っています。特に念入りに目視確認してください：")
+        lines.append(
+            f"## ⚠️ 自動アノマリー（要重点確認サンプル）: 計 {len(anomalies)} 件"
+        )
+        lines.append(
+            "以下のサンプルは自動ヒューリスティクスにより注意フラグが立っています。特に念入りに目視確認してください："
+        )
         lines.append("")
         for idx, (item, reason) in enumerate(anomalies[:20], 1):
-            lines.append(f"### 要注意 {idx}: `[{item.get('id')}]` ({item.get('domain')} / {item.get('type')})")
+            lines.append(
+                f"### 要注意 {idx}: `[{item.get('id')}]` ({item.get('domain')} / {item.get('type')})"
+            )
             lines.append(f"- **理由**: 🔴 **{reason}**")
             lines.append(f"- **質問**: {item.get('query')}")
             lines.append(f"- **文書**:\n  > {item.get('document')}")
@@ -203,7 +239,9 @@ def generate_visual_inspection_markdown(file_path: Path, output_md: Path, sample
         for item_type in ["positive", "near_miss", "unanswerable"]:
             items = type_dict.get(item_type, [])
             sample_items = items[:sample_per_group]
-            lines.append(f"#### カテゴリ: `{item_type}` (全 {len(items)} 件中 {len(sample_items)} 件抜粋)")
+            lines.append(
+                f"#### カテゴリ: `{item_type}` (全 {len(items)} 件中 {len(sample_items)} 件抜粋)"
+            )
             lines.append("")
             for idx, item in enumerate(sample_items, 1):
                 lines.append(f"##### サンプル {idx} `[{item.get('id')}]`")
@@ -223,12 +261,24 @@ def generate_visual_inspection_markdown(file_path: Path, output_md: Path, sample
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Validate evaluation dataset.")
     parser.add_argument("file", type=Path, help="Path to JSON dataset")
-    parser.add_argument("--inspect-md", type=Path, default=None, help="Generate visual inspection Markdown sheet")
-    parser.add_argument("--samples", type=int, default=5, help="Number of samples per type for inspection")
+    parser.add_argument(
+        "--inspect-md",
+        type=Path,
+        default=None,
+        help="Generate visual inspection Markdown sheet",
+    )
+    parser.add_argument(
+        "--samples",
+        type=int,
+        default=5,
+        help="Number of samples per type for inspection",
+    )
     args = parser.parse_args()
 
     valid, _ = validate_dataset(args.file, verbose=True)
     if valid and args.inspect_md:
-        generate_visual_inspection_markdown(args.file, args.inspect_md, sample_per_group=args.samples)
+        generate_visual_inspection_markdown(
+            args.file, args.inspect_md, sample_per_group=args.samples
+        )
     if not valid:
         sys.exit(1)

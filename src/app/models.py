@@ -44,8 +44,8 @@ class LogitGateModelWrapper:
         self.device = (
             device if torch.cuda.is_available() and device == "cuda" else "cpu"
         )
-        self.lock = threading.Lock()
-        self.tokenizer_lock = threading.Lock()
+        self.lock = threading.RLock()
+        self.tokenizer_lock = threading.RLock()
 
         # Load Tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(
@@ -81,6 +81,125 @@ class LogitGateModelWrapper:
 # --- Multimodal Model Wrapper ---
 
 
+class EmbeddingGemma2Model:
+    supports_multimodal: bool = True
+
+    def __init__(
+        self,
+        model_name: str = "google/embeddinggemma-2",
+        device: str | None = None,
+        dtype: torch.dtype | None = None,
+    ):
+        self.device = (
+            device
+            if device and torch.cuda.is_available() and device.startswith("cuda")
+            else "cpu"
+        )
+        self.lock = threading.RLock()
+        self.tokenizer_lock = threading.RLock()
+        self.max_seq_length = 8192
+
+        if dtype == torch.float16:
+            logging.warning(
+                "float16 is not supported safely for EmbeddingGemma2. Falling back to bfloat16 or float32."
+            )
+            dtype = torch.bfloat16 if self.device.startswith("cuda") else torch.float32
+
+        self.dtype = dtype
+
+        # Load with SentenceTransformer since it's the standard for embeddings.
+        from sentence_transformers import SentenceTransformer
+
+        model_kwargs = {"torch_dtype": self.dtype} if self.dtype else {}
+        # As per instructions, load without audio
+
+        # In sentence-transformers, model_kwargs can be passed to the AutoModel underlying.
+        self.model = SentenceTransformer(
+            model_name,
+            device=self.device,
+            model_kwargs=model_kwargs,
+            config_kwargs={"audio_config": None},
+            trust_remote_code=True,
+        )
+        self.model.max_seq_length = self.max_seq_length
+        self.tokenizer = self.model.tokenizer
+
+    def encode(
+        self, texts: list[str], prompt_name: str | None = None, **kwargs
+    ) -> list[list[float]]:
+        return self.encode_multimodal(
+            [(t, None) for t in texts], prompt_name=prompt_name
+        )
+
+    def encode_multimodal(
+        self,
+        items: list[tuple[Optional[str], Optional[Image.Image]]],
+        prompt_name: str | None = None,
+    ) -> list[list[float]]:
+        processed_inputs = []
+        for text, img in items:
+            if text is not None and img is not None:
+                # Add <|image|> token as per instructions
+                processed_inputs.append({"text": f"{text} <|image|>", "image": img})
+            elif img is not None:
+                processed_inputs.append({"image": img})
+            elif text is not None:
+                processed_inputs.append(text)
+            else:
+                processed_inputs.append("")
+
+        with self.tokenizer_lock:
+            pass  # Just for consistency, tokenization happens inside encode
+
+        with self.lock:
+            target_dtype = self.dtype if self.dtype is not None else get_torch_dtype()
+            device_type = "cuda" if "cuda" in self.device else "cpu"
+            autocast_enabled = target_dtype is not None and (
+                device_type == "cuda"
+                or (device_type == "cpu" and target_dtype == torch.bfloat16)
+            )
+            autocast_ctx = (
+                torch.autocast(
+                    device_type=device_type,
+                    dtype=target_dtype,
+                    enabled=autocast_enabled,
+                )
+                if target_dtype is not None and autocast_enabled
+                else nullcontext()
+            )
+
+            with autocast_ctx:
+                # SentenceTransformer encode supports dicts for multimodal inputs?
+                # The instructions say:
+                # `(text, None)` -> `text`
+                # `(None, image)` -> `{"image": image}`
+                # `(text, image)` -> `{"text": f"{text} <|image|>", "image": image}`
+                # This is exactly what sentence-transformers expects for multimodal inputs usually or we pass it directly to AutoModel.
+                # Actually, embeddinggemma-2 in sentence-transformers probably expects this list of inputs directly to `encode`.
+
+                # Check if prompt_name should be applied.
+                # "画像を含む入力にはプロンプトを付与しないこと。"
+                # We can handle this by passing `prompt_name` only to text-only items if SentenceTransformer doesn't support item-level prompt_name,
+                # or just let SentenceTransformer handle it if we pass prompt_name?
+                # Actually, if we pass prompt_name to `encode`, it applies it to all items.
+                # Since items with images shouldn't have prompts, maybe we shouldn't pass `prompt_name` if there are images.
+
+                has_image = any(
+                    isinstance(x, dict) and "image" in x for x in processed_inputs
+                )
+
+                final_prompt = None if has_image else prompt_name
+
+                embeddings = self.model.encode(
+                    processed_inputs,
+                    prompt_name=final_prompt,
+                    normalize_embeddings=True,
+                    convert_to_tensor=True,
+                )
+
+                return embeddings.cpu().tolist()
+
+
 class VisualizedBGEEmbeddingModel:
     supports_multimodal: bool = True
 
@@ -93,8 +212,8 @@ class VisualizedBGEEmbeddingModel:
         self.device = (
             device if torch.cuda.is_available() and device == "cuda" else "cpu"
         )
-        self.lock = threading.Lock()
-        self.tokenizer_lock = threading.Lock()
+        self.lock = threading.RLock()
+        self.tokenizer_lock = threading.RLock()
 
         import os
 
@@ -199,10 +318,7 @@ class VisualizedBGEEmbeddingModel:
                 device_type = "cuda" if "cuda" in self.device else "cpu"
                 autocast_enabled = target_dtype is not None and (
                     device_type == "cuda"
-                    or (
-                        device_type == "cpu"
-                        and target_dtype in {torch.bfloat16, torch.float32}
-                    )
+                    or (device_type == "cpu" and target_dtype == torch.bfloat16)
                 )
                 autocast_ctx = (
                     torch.autocast(
@@ -210,7 +326,7 @@ class VisualizedBGEEmbeddingModel:
                         dtype=target_dtype,
                         enabled=autocast_enabled,
                     )
-                    if target_dtype is not None
+                    if target_dtype is not None and autocast_enabled
                     else nullcontext()
                 )
 
@@ -264,7 +380,13 @@ def get_model(model_name: str, device: str | None = None):
             {"torch_dtype": dtype} if dtype in {torch.float16, torch.bfloat16} else {}
         )
 
-        if model_name in {"bge-visualized-m3", "BAAI/bge-visualized-m3"}:
+        if model_name == "google/embeddinggemma-2":
+            model = EmbeddingGemma2Model(
+                model_name=model_name,
+                device=device,
+                dtype=dtype,
+            )
+        elif model_name in {"bge-visualized-m3", "BAAI/bge-visualized-m3"}:
             model = VisualizedBGEEmbeddingModel(
                 model_name="BAAI/bge-m3",
                 weights_path="Visualized_m3.pth",

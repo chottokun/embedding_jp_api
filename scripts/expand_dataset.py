@@ -37,7 +37,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 2. AWS IAM AssumeRole
     {
         "id": "pos_aws_assume",
@@ -60,7 +59,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 3. Nginx 502 Bad Gateway
     {
         "id": "pos_nginx_502",
@@ -83,7 +81,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 4. SSH Permission denied (publickey)
     {
         "id": "pos_ssh_perm",
@@ -106,7 +103,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 5. PostgreSQL too many connections
     {
         "id": "pos_pg_conn",
@@ -129,7 +125,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 6. Docker build cache
     {
         "id": "pos_docker_cache",
@@ -152,7 +147,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # --- Hardware & Technical Identifiers (6 triplets) ---
     # 7. NVIDIA H100 PCIe vs SXM5
     {
@@ -176,7 +170,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 8. Dell PowerEdge R750 vs R740
     {
         "id": "pos_dell_r750",
@@ -199,7 +192,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 9. Cisco Catalyst 9300 Uplink
     {
         "id": "pos_cisco_9300",
@@ -222,7 +214,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 10. DDR5-5600 vs DDR4-3200
     {
         "id": "pos_ddr5_spec",
@@ -245,7 +236,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 11. Wi-Fi 6E frequency
     {
         "id": "pos_wifi6e_freq",
@@ -268,7 +258,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 12. USB4 vs Thunderbolt 4
     {
         "id": "pos_usb4_tb4",
@@ -291,7 +280,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # --- Corporate HR & Governance (3 triplets) ---
     # 13. 慶弔休暇
     {
@@ -315,7 +303,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 14. 副業許可
     {
         "id": "pos_corp_sidejob",
@@ -338,7 +325,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 15. 在宅勤務手当
     {
         "id": "pos_corp_remote",
@@ -361,7 +347,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # --- Legal & Security (3 triplets) ---
     # 16. 個人情報漏洩報告
     {
@@ -385,7 +370,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 17. NDA 秘密保持期間
     {
         "id": "pos_legal_nda",
@@ -408,7 +392,6 @@ NEW_ITEMS = [
         "label": 0,
         "type": "unanswerable",
     },
-
     # 18. パスワードポリシー & MFA
     {
         "id": "pos_sec_mfa",
@@ -433,6 +416,7 @@ NEW_ITEMS = [
     },
 ]
 
+
 def main():
     with open(DATASET_PATH, "r", encoding="utf-8") as f:
         existing = json.load(f)
@@ -451,6 +435,7 @@ def main():
     with open(DATASET_PATH, "w", encoding="utf-8") as f:
         json.dump(expanded, f, ensure_ascii=False, indent=2)
     print(f"Saved expanded dataset to {DATASET_PATH}")
+
 
 if __name__ == "__main__":
     main()
