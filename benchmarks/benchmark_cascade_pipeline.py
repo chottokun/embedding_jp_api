@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import torch
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -221,8 +222,18 @@ def main():
         f"Dataset loaded: {len(data)} items, {len(queries_list)} unique queries, {len(corpus_docs)} corpus docs."
     )
 
-    device = "cpu"
-    # Note: Using cpu since current environment is built for cpu
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Cascade Benchmark")
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda" if torch.cuda.is_available() else "cpu",
+        help="Device to use for benchmark (cuda or cpu)",
+    )
+    args = parser.parse_args()
+    device = args.device
+    print(f"Using device: {device} (CUDA available: {torch.cuda.is_available()})")
 
     # 1. Evaluate Stage 1 Models
     stage1_configs = [
@@ -246,20 +257,20 @@ def main():
         stage1_results[label] = stats
         topk_rankings[label] = (topk, lat)
 
-    # 2. Evaluate Stage 2 Cascades for Key Combinations:
-    # A. ruri-v3-310m -> ruri-v3-reranker-310m
-    # B. ruri-v3-310m -> Logit Gate (Qwen3.5-0.8B)
-    # C. EmbeddingGemma-2 (256d) -> ruri-v3-reranker-310m
-    # D. EmbeddingGemma-2 (256d) -> Logit Gate (Qwen3.5-0.8B)
-    # E. EmbeddingGemma-2 (768d) -> ruri-v3-reranker-310m
-    # F. ruri-v3-30m -> ruri-v3-reranker-310m
+    # 2. Evaluate Stage 2 Cascades for All Combinations (8 total):
+    # A. ruri-v3-310m -> Cross-Encoder / Logit Gate
+    # B. ruri-v3-30m -> Cross-Encoder / Logit Gate (User requested!)
+    # C. EmbeddingGemma-2 (768d) -> Cross-Encoder / Logit Gate
+    # D. EmbeddingGemma-2 (256d) -> Cross-Encoder / Logit Gate
     cascade_combinations = [
         ("ruri-v3-310m (Full)", "Cross-Encoder", 5),
         ("ruri-v3-310m (Full)", "Logit Gate", 5),
+        ("ruri-v3-30m (Full)", "Cross-Encoder", 5),
+        ("ruri-v3-30m (Full)", "Logit Gate", 5),
+        ("EmbeddingGemma-2 (768d)", "Cross-Encoder", 5),
+        ("EmbeddingGemma-2 (768d)", "Logit Gate", 5),
         ("EmbeddingGemma-2 (256d MRL)", "Cross-Encoder", 5),
         ("EmbeddingGemma-2 (256d MRL)", "Logit Gate", 5),
-        ("EmbeddingGemma-2 (768d)", "Cross-Encoder", 5),
-        ("ruri-v3-30m (Full)", "Cross-Encoder", 5),
     ]
 
     cascade_results = {}
