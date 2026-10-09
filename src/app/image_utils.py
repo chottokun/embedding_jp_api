@@ -3,14 +3,16 @@ import io
 import socket
 import ipaddress
 from urllib.parse import urlparse
-from typing import Optional, Tuple
 import anyio
 import httpcore
 import httpx
 from PIL import Image
 
-Image.MAX_IMAGE_PIXELS = 20_000_000  # Decompression bomb guard (20 megapixels)
+MAX_IMAGE_PIXELS = 20_000_000  # Decompression bomb guard (20 megapixels)
+Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
 MAX_FILE_SIZE = 15 * 1024 * 1024  # Max 15MB
+MAX_REDIRECTS = 3
+DOWNLOAD_TIMEOUT = 10.0
 
 
 def _decode_and_convert_image(data: bytes | bytearray) -> Image.Image:
@@ -23,7 +25,7 @@ def _decode_and_convert_image(data: bytes | bytearray) -> Image.Image:
     return image.convert("RGB")
 
 
-async def resolve_safe_url_async(url: str) -> Tuple[bool, Optional[str]]:
+async def resolve_safe_url_async(url: str) -> tuple[bool, str | None]:
     """
     SSRF protection: Validates URL against private/loopback/link-local addresses
     using non-blocking async DNS resolution and returns (is_safe, resolved_ip).
@@ -49,7 +51,7 @@ async def resolve_safe_url_async(url: str) -> Tuple[bool, Optional[str]]:
         if first_ip:
             return True, first_ip
         return False, None
-    except Exception:
+    except (socket.gaierror, ValueError, TypeError):
         return False, None
 
 
@@ -77,8 +79,8 @@ class SafeNetworkBackend(httpcore.AsyncNetworkBackend):
         self,
         host: str,
         port: int,
-        timeout: Optional[float] = None,
-        local_address: Optional[str] = None,
+        timeout: float | None = None,
+        local_address: str | None = None,
         socket_options=None,
     ):
         return await self._backend.connect_tcp(
@@ -92,7 +94,7 @@ class SafeNetworkBackend(httpcore.AsyncNetworkBackend):
     async def connect_unix_socket(
         self,
         path: str,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
         socket_options=None,
     ):
         return await self._backend.connect_unix_socket(
@@ -121,8 +123,7 @@ async def load_image_from_source(source: str, client: httpx.AsyncClient) -> Imag
 
     # Stream download with safe redirect validation to prevent SSRF redirect bypass
     current_url = source
-    max_redirects = 3
-    for _ in range(max_redirects + 1):
+    for _ in range(MAX_REDIRECTS + 1):
         is_safe, safe_ip = await resolve_safe_url_async(current_url)
         if not is_safe or not safe_ip:
             raise ValueError(f"セキュリティ上の理由で拒否されたURLです: {current_url}")
@@ -160,7 +161,7 @@ async def load_image_from_source(source: str, client: httpx.AsyncClient) -> Imag
 
         async with client_ctx as safe_client:
             async with safe_client.stream(
-                "GET", current_url, timeout=10.0, follow_redirects=False
+                "GET", current_url, timeout=DOWNLOAD_TIMEOUT, follow_redirects=False
             ) as resp:
                 if resp.is_redirect:
                     location = resp.headers.get("Location")
