@@ -1,29 +1,50 @@
 import time
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from prometheus_client import Counter, Histogram
+from prometheus_client import REGISTRY, Counter, Histogram
 
-REQUESTS_TOTAL = Counter(
+
+def _get_or_create_counter(
+    name: str, documentation: str, labelnames: list[str]
+) -> Counter:
+    collector = REGISTRY._names_to_collectors.get(name)
+    if isinstance(collector, Counter):
+        return collector
+    return Counter(name, documentation, labelnames)
+
+
+def _get_or_create_histogram(
+    name: str, documentation: str, labelnames: list[str], buckets=None
+) -> Histogram:
+    collector = REGISTRY._names_to_collectors.get(name)
+    if isinstance(collector, Histogram):
+        return collector
+    if buckets is not None:
+        return Histogram(name, documentation, labelnames, buckets=buckets)
+    return Histogram(name, documentation, labelnames)
+
+
+REQUESTS_TOTAL = _get_or_create_counter(
     "http_requests_total",
     "Total number of HTTP requests",
     ["method", "endpoint", "http_status"],
 )
-REQUEST_LATENCY = Histogram(
+REQUEST_LATENCY = _get_or_create_histogram(
     "http_request_duration_seconds",
     "HTTP request latency in seconds",
     ["method", "endpoint"],
 )
-INFERENCE_LATENCY = Histogram(
+INFERENCE_LATENCY = _get_or_create_histogram(
     "inference_duration_seconds",
     "Inference latency in seconds",
     ["endpoint"],
 )
-PROMPT_TOKENS_COUNT = Counter(
+PROMPT_TOKENS_COUNT = _get_or_create_counter(
     "http_prompt_tokens_total",
     "Total number of prompt tokens processed",
     ["model"],
 )
-BATCH_SIZE_HISTOGRAM = Histogram(
+BATCH_SIZE_HISTOGRAM = _get_or_create_histogram(
     "http_request_batch_size",
     "Distribution of batch sizes (number of inputs per request)",
     ["endpoint"],
