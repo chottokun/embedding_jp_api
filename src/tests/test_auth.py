@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-import numpy as np
 import pytest
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
@@ -11,27 +10,14 @@ from app.main import app, verify_api_key
 client = TestClient(app)
 
 
-def test_auth_no_key_configured():
+def test_auth_no_key_configured(dummy_embedding_model):
     """Access should be granted when no API_KEY is set."""
     with patch("app.main.API_KEY", None):
-        # We don't need to mock models for 401/403,
-        # but for 200 we might need to mock get_model if it gets that far.
-        with patch("app.main.get_model") as mock_get_model:
-            mock_model = mock_get_model.return_value
-            mock_model.tokenizer.num_special_tokens_to_add.return_value = 2
-            mock_model.max_seq_length = 8192
-            # Mocking encode and tokenizer as well to avoid errors during inference
-            mock_model.tokenizer.side_effect = lambda text, **kwargs: {
-                "input_ids": [[1]]
-            }
-
-            mock_model.encode.return_value = np.array([[0.1]])
-
-            response = client.post(
-                "/v1/embeddings",
-                json={"input": "test", "model": "cl-nagoya/ruri-v3-30m"},
-            )
-            assert response.status_code == 200
+        response = client.post(
+            "/v1/embeddings",
+            json={"input": "test", "model": "cl-nagoya/ruri-v3-30m"},
+        )
+        assert response.status_code == 200
 
 
 def test_auth_key_configured_missing_in_request():
@@ -56,50 +42,30 @@ def test_auth_key_configured_wrong_key():
         assert response.json()["detail"] == "Invalid or missing API Key"
 
 
-def test_auth_key_configured_correct_key():
+def test_auth_key_configured_correct_key(dummy_embedding_model):
     """Access should be granted when API_KEY is set and correct key is provided."""
     with patch("app.main.API_KEY", "secret-key"):
-        with patch("app.main.get_model") as mock_get_model:
-            mock_model = mock_get_model.return_value
-            mock_model.tokenizer.num_special_tokens_to_add.return_value = 2
-            mock_model.max_seq_length = 8192
-            mock_model.tokenizer.side_effect = lambda text, **kwargs: {
-                "input_ids": [[1]]
-            }
+        response = client.post(
+            "/v1/embeddings",
+            json={"input": "test", "model": "cl-nagoya/ruri-v3-30m"},
+            headers={"Authorization": "Bearer secret-key"},
+        )
+        assert response.status_code == 200
 
-            mock_model.encode.return_value = np.array([[0.1]])
 
+def test_api_key_timing_attack_protection(dummy_embedding_model):
+    """Verify that secrets.compare_digest is called to protect against timing attacks."""
+    with patch("app.main.API_KEY", "secret-key"):
+        with patch(
+            "app.main.secrets.compare_digest", return_value=True
+        ) as mock_compare:
             response = client.post(
                 "/v1/embeddings",
                 json={"input": "test", "model": "cl-nagoya/ruri-v3-30m"},
                 headers={"Authorization": "Bearer secret-key"},
             )
             assert response.status_code == 200
-
-
-def test_api_key_timing_attack_protection():
-    """Verify that secrets.compare_digest is called to protect against timing attacks."""
-    with patch("app.main.API_KEY", "secret-key"):
-        with patch(
-            "app.main.secrets.compare_digest", return_value=True
-        ) as mock_compare:
-            with patch("app.main.get_model") as mock_get_model:
-                mock_model = mock_get_model.return_value
-                mock_model.tokenizer.num_special_tokens_to_add.return_value = 2
-                mock_model.max_seq_length = 8192
-                mock_model.tokenizer.side_effect = lambda text, **kwargs: {
-                    "input_ids": [[1]]
-                }
-
-                mock_model.encode.return_value = np.array([[0.1]])
-
-                response = client.post(
-                    "/v1/embeddings",
-                    json={"input": "test", "model": "cl-nagoya/ruri-v3-30m"},
-                    headers={"Authorization": "Bearer secret-key"},
-                )
-                assert response.status_code == 200
-                mock_compare.assert_called_once_with("secret-key", "secret-key")
+            mock_compare.assert_called_once_with("secret-key", "secret-key")
 
 
 # --- Direct unit tests for verify_api_key (from PR #71) ---

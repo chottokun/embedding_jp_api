@@ -3,10 +3,9 @@ from app.main import app, get_embedding_service, get_rerank_service
 from app.services import MockEmbeddingService, MockRerankService
 
 client = TestClient(app)
-AUTH_HEADERS = {"Authorization": "Bearer test_api_key_secret"}
 
 
-def test_mock_embedding_service_fast():
+def test_mock_embedding_service_fast(valid_auth_headers):
     # Override service dependencies with mock implementations
     app.dependency_overrides[get_embedding_service] = lambda: MockEmbeddingService(
         vector_dim=1024
@@ -15,7 +14,7 @@ def test_mock_embedding_service_fast():
         response = client.post(
             "/v1/embeddings",
             json={"model": "bge-visualized-m3", "input": "Fast Mock Unit Test"},
-            headers=AUTH_HEADERS,
+            headers=valid_auth_headers,
         )
         assert response.status_code == 200
         res = response.json()
@@ -27,7 +26,7 @@ def test_mock_embedding_service_fast():
         app.dependency_overrides.clear()
 
 
-def test_mock_rerank_service_fast():
+def test_mock_rerank_service_fast(valid_auth_headers):
     app.dependency_overrides[get_rerank_service] = lambda: MockRerankService()
     try:
         response = client.post(
@@ -38,7 +37,7 @@ def test_mock_rerank_service_fast():
                 "documents": ["Doc A", "Doc B"],
                 "return_documents": True,
             },
-            headers=AUTH_HEADERS,
+            headers=valid_auth_headers,
         )
         assert response.status_code == 200
         res = response.json()
