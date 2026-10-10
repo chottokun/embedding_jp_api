@@ -10,6 +10,7 @@ from fastapi import HTTPException
 
 from .base import BaseEmbeddingService, get_validated_model
 from ..image_utils import load_image_from_source
+from ..media_utils import load_audio_from_source, load_video_frames_from_source
 from ..schemas import (
     EmbeddingRequest,
     EmbeddingResponse,
@@ -18,9 +19,36 @@ from ..schemas import (
     FlatMultimodalItem,
     ContentPartText,
     ContentPartImage,
+    ContentPartAudio,
+    ContentPartVideo,
     ImageUrl,
+    InputAudio,
+    VideoUrl,
 )
-from ..config import EMBEDDING_MODELS, RURI_PREFIX_MAP
+from ..config import (
+    EMBEDDING_MODELS,
+    RURI_PREFIX_MAP,
+)
+
+
+class ParsedMediaItem:
+    """Container for parsed text, image, audio, and video inputs."""
+
+    def __init__(
+        self,
+        text: Optional[str] = None,
+        image: Optional[Image.Image] = None,
+        audio: Any = None,
+        video: Any = None,
+    ):
+        self.text = text
+        self.image = image
+        self.audio = audio
+        self.video = video
+
+    def __iter__(self):
+        # 2-element tuple unpack for backward compatibility with (text, img)
+        return iter((self.text, self.image))
 
 
 def _determine_ruri_prefix(request: EmbeddingRequest) -> str:
@@ -60,8 +88,19 @@ def _normalize_raw_inputs(input_data: Any) -> list:
         if not input_data:
             return []
         if all(
-            isinstance(x, (ContentPartText, ContentPartImage))
-            or (isinstance(x, dict) and x.get("type") in {"text", "image_url"})
+            isinstance(
+                x,
+                (
+                    ContentPartText,
+                    ContentPartImage,
+                    ContentPartAudio,
+                    ContentPartVideo,
+                ),
+            )
+            or (
+                isinstance(x, dict)
+                and x.get("type") in {"text", "image_url", "input_audio", "video_url"}
+            )
             for x in input_data
         ):
             return [input_data]
@@ -69,15 +108,16 @@ def _normalize_raw_inputs(input_data: Any) -> list:
     return [input_data]
 
 
-async def parse_input_item(
-    item: Any, client: httpx.AsyncClient
-) -> Tuple[Optional[str], Optional[Image.Image]]:
+async def parse_input_item(item: Any, client: httpx.AsyncClient) -> ParsedMediaItem:
     if isinstance(item, str):
-        return item, None
+        return ParsedMediaItem(text=item)
 
     if isinstance(item, FlatMultimodalItem):
         text = item.text
         img = None
+        audio = None
+        video = None
+
         if item.image_url:
             url_val = (
                 item.image_url.url
@@ -85,11 +125,56 @@ async def parse_input_item(
                 else item.image_url
             )
             img = await load_image_from_source(url_val, client)
-        return text, img
+
+        audio_src = item.input_audio or item.audio_url
+        if audio_src:
+            if isinstance(audio_src, InputAudio):
+                audio_str = f"data:audio/{audio_src.format};base64,{audio_src.data}"
+            else:
+                audio_str = str(audio_src)
+            audio = await load_audio_from_source(audio_str, client)
+
+        if item.video_url:
+            video_src = (
+                item.video_url.url
+                if isinstance(item.video_url, VideoUrl)
+                else str(item.video_url)
+            )
+            video = await load_video_frames_from_source(video_src, client)
+
+        return ParsedMediaItem(text=text, image=img, audio=audio, video=video)
+
+    if isinstance(item, dict):
+        text = item.get("text")
+        img = None
+        audio = None
+        video = None
+
+        if item.get("image_url"):
+            val = item["image_url"]
+            url_str = val.get("url") if isinstance(val, dict) else str(val)
+            img = await load_image_from_source(url_str, client)
+
+        audio_src = item.get("input_audio") or item.get("audio_url")
+        if audio_src:
+            if isinstance(audio_src, dict):
+                audio_str = f"data:audio/{audio_src.get('format', 'wav')};base64,{audio_src.get('data', '')}"
+            else:
+                audio_str = str(audio_src)
+            audio = await load_audio_from_source(audio_str, client)
+
+        if item.get("video_url"):
+            val = item["video_url"]
+            url_str = val.get("url") if isinstance(val, dict) else str(val)
+            video = await load_video_frames_from_source(url_str, client)
+
+        return ParsedMediaItem(text=text, image=img, audio=audio, video=video)
 
     if isinstance(item, list):
         text_parts = []
         img = None
+        audio = None
+        video = None
         for part in item:
             if isinstance(part, ContentPartText) or (
                 isinstance(part, dict) and part.get("type") == "text"
@@ -118,8 +203,39 @@ async def parse_input_item(
                     )
                 )
                 img = await load_image_from_source(image_url_str, client)
+            elif isinstance(part, ContentPartAudio) or (
+                isinstance(part, dict) and part.get("type") == "input_audio"
+            ):
+                audio_val = (
+                    part.input_audio
+                    if isinstance(part, ContentPartAudio)
+                    else part.get("input_audio")
+                )
+                if isinstance(audio_val, InputAudio):
+                    audio_str = f"data:audio/{audio_val.format};base64,{audio_val.data}"
+                elif isinstance(audio_val, dict):
+                    audio_str = f"data:audio/{audio_val.get('format', 'wav')};base64,{audio_val.get('data', '')}"
+                else:
+                    audio_str = str(audio_val)
+                audio = await load_audio_from_source(audio_str, client)
+            elif isinstance(part, ContentPartVideo) or (
+                isinstance(part, dict) and part.get("type") == "video_url"
+            ):
+                video_val = (
+                    part.video_url
+                    if isinstance(part, ContentPartVideo)
+                    else part.get("video_url")
+                )
+                if isinstance(video_val, VideoUrl):
+                    video_str = video_val.url
+                elif isinstance(video_val, dict):
+                    video_str = video_val.get("url", "")
+                else:
+                    video_str = str(video_val)
+                video = await load_video_frames_from_source(video_str, client)
+
         text = "\n".join(text_parts) if text_parts else None
-        return text, img
+        return ParsedMediaItem(text=text, image=img, audio=audio, video=video)
 
     raise ValueError("不正な入力形式です。")
 
@@ -210,14 +326,16 @@ class EmbeddingService(BaseEmbeddingService):
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
-        has_image = any(img is not None for _, img in parsed_items)
+        has_image = any(p.image is not None for p in parsed_items)
+        has_audio = any(p.audio is not None for p in parsed_items)
+        has_video = any(p.video is not None for p in parsed_items)
 
         # TEI Proxy check (dynamically read EMBEDDING_TEI_URL from main_mod)
         tei_url = getattr(main_mod, "EMBEDDING_TEI_URL", None)
         proxy_func = getattr(main_mod, "_proxy_to_tei", self.proxy_to_tei_func)
 
-        if tei_url and not has_image and proxy_func:
-            inputs = [text for text, _ in parsed_items if text is not None]
+        if tei_url and not (has_image or has_audio or has_video) and proxy_func:
+            inputs = [item.text for item in parsed_items if item.text is not None]
             prefix = _determine_ruri_prefix(request)
             processed_inputs = _apply_prefix(inputs, prefix)
             data = await proxy_func(
@@ -243,30 +361,79 @@ class EmbeddingService(BaseEmbeddingService):
             "embedding",
             loader=self.model_loader,
         )
-        is_multimodal = getattr(model, "supports_multimodal", False) is True
 
-        if has_image and not is_multimodal:
+        # Guard 1: Audio capability & server flag validation
+        if has_audio:
+            if not getattr(model, "supports_audio", False):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"モデル '{request.model}' は音声入力をサポートしていません。google/embeddinggemma-2 などの対応モデルを指定してください。",
+                )
+            import app.config as config_mod
+
+            active_enable_audio = getattr(
+                main_mod,
+                "ENABLE_AUDIO_EMBEDDING",
+                getattr(config_mod, "ENABLE_AUDIO_EMBEDDING", False),
+            )
+            if not active_enable_audio:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Audio embedding is disabled on this server. ENABLE_AUDIO_EMBEDDING=true を設定してください。",
+                )
+
+        # Guard 2: Video capability & server flag validation
+        if has_video:
+            if not getattr(model, "supports_video", False):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"モデル '{request.model}' は動画入力をサポートしていません。google/embeddinggemma-2 などの対応モデルを指定してください。",
+                )
+            import app.config as config_mod
+
+            active_enable_video = getattr(
+                main_mod,
+                "ENABLE_VIDEO_EMBEDDING",
+                getattr(config_mod, "ENABLE_VIDEO_EMBEDDING", False),
+            )
+            if not active_enable_video:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Video embedding is disabled on this server. ENABLE_VIDEO_EMBEDDING=true を設定してください。",
+                )
+
+        # Guard 3: Image capability validation
+        if has_image and not getattr(model, "supports_multimodal", False):
             raise HTTPException(
                 status_code=400,
                 detail=f"モデル '{request.model}' は画像入力をサポートしていません。bge-visualized-m3 などのマルチモーダル対応モデルを指定してください。",
             )
 
+        is_multimodal = (
+            has_image
+            or has_audio
+            or has_video
+            or getattr(model, "supports_multimodal", False) is True
+        )
+
         if is_multimodal:
             prefix = _determine_ruri_prefix(request)
             processed_items = []
-            for text, img in parsed_items:
+            for item in parsed_items:
                 clean_text = (
-                    text.strip() if isinstance(text, str) and text.strip() else None
+                    item.text.strip()
+                    if isinstance(item.text, str) and item.text.strip()
+                    else None
                 )
                 if clean_text:
                     clean_text = _apply_prefix([clean_text], prefix)[0]
-                processed_items.append((clean_text, img))
+                processed_items.append((clean_text, item.image, item.audio, item.video))
 
             # Gemma 2 explicit prompt handling
             kwargs = {}
             if "embeddinggemma-2" in request.model.lower():
                 prompt = _determine_gemma2_prompt(request)
-                if prompt and not has_image:
+                if prompt and not (has_image or has_audio or has_video):
                     kwargs["prompt_name"] = prompt
 
             def run_mm_inference():

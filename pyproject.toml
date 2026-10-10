@@ -28,6 +28,9 @@ dependencies = [
     "einops>=0.7.0",
     "flagembedding>=1.2.0",
     "prometheus-client>=0.26.0",
+    "torchaudio>=2.11.0",
+    "av>=18.1.0",
+    "soundfile>=0.14.0",
 ]
 
 [project.optional-dependencies]
