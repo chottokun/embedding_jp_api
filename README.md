@@ -70,35 +70,49 @@ response = client.embeddings.create(
 
 `POST /v1/embeddings`
 
-`bge-visualized-m3` モデルを指定することで、画像単体、またはテキスト＋画像の複合入力に対するベクトル埋め込みを生成できます。
+`bge-visualized-m3`（画像＋テキスト）および `google/embeddinggemma-2`（画像、音声、動画、テキストの全モーダル複合）を指定することで、多様なメディアに対するベクトル埋め込みを生成できます。
+
+> [!NOTE]
+> 音声および動画の埋め込みはオプショナル機能です。利用時はサーバー環境変数 `ENABLE_AUDIO_EMBEDDING=true`、`ENABLE_VIDEO_EMBEDDING=true` を有効化してください（無効時に要求された場合は HTTP 400 で安全に拒絶されます）。
 
 #### 入力フォーマット
 
 1. **フラット形式 (Flat Item)**:
    ```json
    {
-     "model": "bge-visualized-m3",
+     "model": "google/embeddinggemma-2",
      "input": {
-       "text": "青い服を着た人物",
-       "image_url": "data:image/png;base64,iVBORw0KG..."
+       "text": "音声を聴いて内容を分類してください。",
+       "input_audio": "data:audio/wav;base64,UklGRi..."
      }
    }
    ```
 2. **OpenAI Chat互換 コンテンツパーツ配列 (Content Parts)**:
    ```json
    {
-     "model": "bge-visualized-m3",
+     "model": "google/embeddinggemma-2",
      "input": [
-       {"type": "text", "text": "赤い車"},
-       {"type": "image_url", "image_url": {"url": "https://example.com/car.png"}}
+       {"type": "text", "text": "マルチメディア総合検索"},
+       {"type": "image_url", "image_url": "data:image/png;base64,iVBORw0KG..."},
+       {"type": "input_audio", "input_audio": "data:audio/wav;base64,UklGRi..."},
+       {"type": "video_url", "video_url": "data:video/mp4;base64,AAAAHGZ0eXA..."}
      ]
    }
    ```
 
+#### メディアサポート一覧
+
+| メディア種別 | 対応モデル | フォーマット | 制限事項・前処理 |
+| :--- | :--- | :--- | :--- |
+| **テキスト** | 全モデル | UTF-8 文字列 | Ruri自動プレフィックス / Gemma-2 指示プロンプト |
+| **画像** | `bge-visualized-m3`, `google/embeddinggemma-2` | PNG, JPEG, WebP, GIF | 最大 2,000万画素 (DoS防御) |
+| **音声** | `google/embeddinggemma-2` | WAV, MP3, FLAC, OGG | 16kHz モノラル自動リサンプリング、最大30秒 |
+| **動画** | `google/embeddinggemma-2` | MP4, WebM, AVI | 代表フレーム均等抽出（最大16フレーム） |
+
 #### セキュリティ仕様
 - **SSRF防御**: リダイレクト追従時を含め、プライベートIP（127.0.0.1, 10.x, 192.168.x）およびクラウドメタデータエンドポイント（169.254.169.254）へのアクセスはブロックされ、HTTP 400 を返却します。
 - **DoS防御**: 画像デコード爆弾防御（`MAX_IMAGE_PIXELS = 20,000,000`）およびファイルサイズ制限（15MB）を適用。
-- **モデル不一致ガード**: 画像入力をテキスト専用モデル（Ruri-v3等）に送信した場合は、モデル破壊や500エラーを防ぐため HTTP 400 を返却します。
+- **機能フラグ・モデル不一致ガード**: 未対応モデルへのメディア投入や、無効化された機能へのアクセスは HTTP 400 で即座に安全拒絕されます。
 
 ---
 
@@ -388,6 +402,10 @@ APIサーバーの動作は以下の環境変数で調整可能です。これ�
 | `OFFLINE_MODE` | `false` | `true`に設定すると、Hugging Face Hubへのアクセスを行いません。事前にモデルをダウンロードしておく必要があります。 |
 | `MAX_CONCURRENT_INFERENCES` | `4` | 推論処理（Embeddings/Rerank）の最大同時実行セマフォ数。GPU/CPU飽和・CUDA OOMを防御。 |
 | `INFERENCE_SEMAPHORE_TIMEOUT_SECONDS` | `30.0` | セマフォ取得待ちタイムアウト秒数。超過時は 503 Service Unavailable を返却。 |
+| `ENABLE_AUDIO_EMBEDDING` | `false` | オプショナル音声埋め込み機能の有効化フラグ（`google/embeddinggemma-2` 対応）。 |
+| `ENABLE_VIDEO_EMBEDDING` | `false` | オプショナル動画埋め込み機能の有効化フラグ（`google/embeddinggemma-2` 対応）。 |
+| `MAX_AUDIO_DURATION_SEC` | `30.0` | 音声の最大秒数（超過時は後方を切り詰め）。 |
+| `MAX_VIDEO_FRAMES` | `16` | 動画から均等サンプリングする最大フレーム数。 |
 | `API_KEYS` | (空) | クライアント個別APIキー設定（カンマ区切りまたは JSON形式 `{キー: 分間レート}`）。 |
 | `RATE_LIMIT_PER_MINUTE` | `120` | APIキー/IP単位のデフォルト分間リクエスト上限。 |
 | `LOGIT_GATE_ENABLED` | `true` | Logit Gate リランカー機能の有効/無効フラグ。 |
@@ -450,16 +468,41 @@ cp .env.example .env
 
 ## 7. Docker Composeによる管理
 
-より詳細な管理（ポート変更やワーカー数調整）を行う場合は、`docker-compose.yml` を直接利用または `run.sh` と環境変数を組み合わせて使用します。
+本番運用およびマイクロサービス連携では、`docker compose` を直接利用してコンテナライフサイクル（ヘルスチェック、自動再起動、リソース制限）を管理できます。
+
+### 7.1. コンテナのビルドと起動
 
 ```bash
-# ポート8080、ワーカー数4で起動する例
-APP_PORT=8080 GUNICORN_WORKERS=4 ./run.sh run cpu
+# CPU環境で起動する場合
+docker compose build api-cpu
+docker compose up -d api-cpu
+
+# GPU環境で起動する場合 (NVIDIA Container Toolkit が必要)
+docker compose build api-gpu
+docker compose up -d api-gpu
 ```
 
-### サービス名
-- **`api-cpu`**: CPU専用イメージ
-- **`api-gpu`**: NVIDIA GPU対応イメージ
+### 7.2. 稼働状況とヘルスチェックの確認
+
+コンテナ起動後、Docker の内蔵ヘルスチェック（`/healthz` 疎通確認）が実行され、自動的に `healthy` ステータスへ遷移します。
+
+```bash
+# 状態確認（STATUS が "Up ... (healthy)" になることを確認）
+docker compose ps
+
+# ログの確認
+docker compose logs -f api-cpu
+
+# エンドポイント疎通確認
+curl -s http://127.0.0.1:8000/healthz   # => {"status":"ok"}
+curl -s http://127.0.0.1:8000/readyz   # => {"status":"ready", ...}
+```
+
+### 7.3. コンテナの停止
+
+```bash
+docker compose down
+```
 
 ## 8. テストと負荷・ストレステストの実行
 
