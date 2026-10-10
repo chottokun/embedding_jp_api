@@ -149,8 +149,43 @@ def _process_audio(data: bytes) -> Tuple["torch.Tensor", int]:
         )
 
     try:
-        # Load audio from bytes
-        waveform, sample_rate = torchaudio.load(io.BytesIO(data))
+        # Try torchaudio.load first (respecting mocks in unit tests)
+        try:
+            waveform, sample_rate = torchaudio.load(io.BytesIO(data))
+        except (ImportError, RuntimeError, Exception):
+            # Fallback 1: soundfile
+            try:
+                import soundfile as sf
+
+                audio_arr, sample_rate = sf.read(io.BytesIO(data), dtype="float32")
+                tensor = torch.from_numpy(audio_arr)
+                if tensor.ndim == 1:
+                    waveform = tensor.unsqueeze(0)
+                else:
+                    waveform = tensor.transpose(0, 1)
+            except Exception:
+                # Fallback 2: PyAV
+                import av
+
+                with av.open(io.BytesIO(data)) as container:
+                    if not container.streams.audio:
+                        raise ValueError("No audio streams found in container.")
+                    stream = container.streams.audio[0]
+                    sample_rate = stream.rate or 16000
+                    chunks = []
+                    for frame in container.decode(stream):
+                        arr = frame.to_ndarray()
+                        chunks.append(torch.from_numpy(arr))
+                    if not chunks:
+                        raise ValueError("No audio frames decoded.")
+                    raw_tensor = torch.cat(chunks, dim=-1).to(torch.float32)
+                    if raw_tensor.ndim == 1:
+                        waveform = raw_tensor.unsqueeze(0)
+                    else:
+                        waveform = raw_tensor
+                    # Normalize float if integer PCM
+                    if waveform.abs().max() > 1.0:
+                        waveform = waveform / 32768.0
 
         # Convert to mono if necessary
         if waveform.shape[0] > 1:

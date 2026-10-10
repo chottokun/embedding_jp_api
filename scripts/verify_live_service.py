@@ -135,15 +135,23 @@ def run_live_tests():
     # 8a: Unsupported model guard (Ruri cannot accept audio)
     r = httpx.post(
         f"{BASE_URL}/v1/embeddings",
-        json={"model": "cl-nagoya/ruri-v3-30m", "input": {"text": "hello", "input_audio": dummy_audio}},
+        json={
+            "model": "cl-nagoya/ruri-v3-30m",
+            "input": {"text": "hello", "input_audio": dummy_audio},
+        },
     )
-    assert r.status_code == 400, f"Expected 400 for audio with Ruri, got {r.status_code}"
+    assert r.status_code == 400, (
+        f"Expected 400 for audio with Ruri, got {r.status_code}"
+    )
     print("  ✓ Unsupported model audio rejected with 400 Bad Request")
 
     # 8b: Server flag disabled guard (EmbeddingGemma audio rejected when ENABLE_AUDIO_EMBEDDING=false)
     r = httpx.post(
         f"{BASE_URL}/v1/embeddings",
-        json={"model": "google/embeddinggemma-2", "input": {"text": "hello", "input_audio": dummy_audio}},
+        json={
+            "model": "google/embeddinggemma-2",
+            "input": {"text": "hello", "input_audio": dummy_audio},
+        },
     )
     assert r.status_code == 400, f"Expected 400 for disabled audio, got {r.status_code}"
     print("  ✓ Disabled audio feature rejected with 400 Bad Request")
