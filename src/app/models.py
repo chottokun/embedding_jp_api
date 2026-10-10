@@ -323,7 +323,12 @@ class VisualizedBGEEmbeddingModel:
 
         results: list[list[float] | None] = [None] * len(items)
 
-        for i, (text, image) in enumerate(items):
+        for i, item in enumerate(items):
+            if isinstance(item, tuple):
+                text = item[0] if len(item) > 0 else None
+                image = item[1] if len(item) > 1 else None
+            else:
+                text, image = item
             if text is not None and image is not None:
                 mm_idx.append(i)
                 mm_texts.append(text)
