@@ -46,7 +46,7 @@ sources:
 ## 2. 【高難度・大規模実測】540件ベンチマーク結果 (GPU: NVIDIA RTX 3060)
 
 各ドメイン90件（Positive 30, Near-Miss 30, Unanswerable 30）× 6ドメイン = **計540件** の完全実測値です。
-全サンプルについて [scripts/validate_eval_dataset.py](file:///home/nobuhiko/project/embedding_jp_api/scripts/validate_eval_dataset.py) による自動整合性検証および [docs/infrastructure/dataset_visual_inspection_v2_540.md](file:///home/nobuhiko/project/embedding_jp_api/docs/infrastructure/dataset_visual_inspection_v2_540.md) での **人間・エージェントによる目視確認（アノマリー警告 0 件）** を完了しています。
+全サンプルについて [scripts/validate_eval_dataset.py](../../scripts/validate_eval_dataset.py) による自動整合性検証および [docs/infrastructure/dataset_visual_inspection_v2_540.md](./dataset_visual_inspection_v2_540.md) での **人間・エージェントによる目視確認（アノマリー警告 0 件）** を完了しています。
 
 ### 2.1. 総合パフォーマンス比較表 (N=540 GPU 完全実測)
 
