@@ -14,10 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Upgraded `accelerate` package to `1.15.0` to resolve path traversal and denial of service vulnerabilities in checkpoint weight maps, achieving clean `uv audit` scans.
 
 ### Fixed
+- **VisualizedBGEEmbeddingModel Tuple Unpacking Compatibility (`src/app/models.py`)**:
+  - `encode_multimodal` において入力アイテムが音声・動画拡張に伴う 4要素タプルの場合でも安全に `text` と `image` を取り出せるようアンパック処理を修正。
 - **Logit Gate Model Pre-Download Support (`src/app/download_models.py`)**:
   - Integrated `logit_gate_models` (`Qwen/Qwen2.5-1.5B-Instruct`) into `load_model_ids()` so that `./run.sh download` and air-gapped `--verify-offline` Dry-Run verification download and test all models properly.
 - **CI Gitleaks History Depth**:
   - Configured `fetch-depth: 0` in GitHub Actions checkout step to allow `gitleaks` secret detection to inspect the full commit history correctly.
+
+### Added
+- **GPU 実機 Locust 負荷テスト自動化スイート & 検証レポート (`scripts/run_gpu_locust_suite.py`, `docs/infrastructure/benchmark_gpu_locust_load_test.md`)**:
+  - NVIDIA GeForce RTX 3060 12GB 上で主要4モデル（Ruri-310m, EmbeddingGemma-2, Ruri-Reranker-310m, BGE-Visualized-M3）を同時展開し、10〜60同時ユーザー負荷における全12種エンドポイントの実測データ（1,630リクエスト、エラー率 0.00%）を記録。
 
 ### Changed
 - **PyTorch Source Constraint Relaxation (`pyproject.toml`)**:

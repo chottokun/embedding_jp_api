@@ -20,3 +20,4 @@ Docker / Docker Compose による GPU・CPU コンテナデプロイ、完全オ
 * [二段カスケード詳細比較ベンチマーク (EmbeddingGemma-2 vs ruri-v3 × Reranker / Logit Gate)](./benchmark_cascade_ruri_vs_embeddinggemma.md) - 540件高難度データセットによる全カスケード構成の実機測定と批判的・建設的分析
 * [EmbeddingGemma-2 テキスト 540件高難度ベンチマーク](./benchmark_540_embeddinggemma_results.md) - MRL 4段階次元削減と推論レイテンシの実測
 * [EmbeddingGemma-2 マルチモーダル 60件評価ベンチマーク](./benchmark_multimodal_embeddinggemma_results.md) - 4大ビジネスドメイン実画像を用いたText-to-Image / Image-to-Text実測
+* [GPU実機 (RTX 3060) Locust 負荷テスト検証レポート](./benchmark_gpu_locust_load_test.md) - 4モデル同時稼働・10〜60同時ユーザー・12種エンドポイント（テキスト・マルチモーダル・リランカー）での実測データ
