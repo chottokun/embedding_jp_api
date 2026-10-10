@@ -415,11 +415,62 @@ APIサーバーの動作は以下の環境変数で調整可能です。これ�
 | `LOGIT_GATE_BATCH_SIZE` | `8` | Logit Gate 推論時のドキュメントミニバッチサイズ。 |
 | `LOGIT_GATE_MAX_DOC_CHARS` | `1500` | Logit Gate 推論時のドキュメント最大文字数（DoS防御切り詰め）。 |
 | `LOGIT_GATE_BASELINE_MARGIN` | `0.0` | 判定バイアス補正用ベースラインマージン。 |
+| `MAX_INPUT_ITEMS` | `256` | 1リクエストあたりの最大入力件数（DoS防御・メモリ保護）。 |
+| `TORCH_DTYPE` | `(空)` | 推論精度。`bfloat16`, `float16`, または空文字（デフォルト: `float32`）。Ampere以降のGPUでは `bfloat16` 推奨。 |
+| `PRELOAD_MODELS` | `(空)` | サーバー起動時にオンメモリ常駐させるモデル名（カンマ区切り）。初回推論のコールドスタートを排除。 |
 
 ### 5.1. .env ファイルでの設定
-プロジェクト直下に `.env` ファイルを作成して設定を記述できます。
+プロジェクト直下に `.env` ファイルを作成して設定を記述できます（詳細は `.env.example` を参照）。
 ```bash
-GUNICORN_WORKERS=4
+GUNICORN_WORKERS=2
+MAX_CONCURRENT_INFERENCES=8
+```
+
+### 5.2. ハードウェア（VRAM容量）別 推奨設定プロファイル例
+
+利用する GPU の VRAM 容量やサーバー用途に応じて、同時実行数・バッチサイズ・常駐モデルをチューニングできます。
+
+| チューニング項目 | 12GB GPU (RTX 3060 / 4060 Ti)<br>標準バランス | 24GB GPU (RTX 3090 / 4090 / A10G)<br>高スループット・常駐型 | 40GB+ GPU (A100 / L40S / H100)<br>大規模並行・データセンター |
+| :--- | :---: | :---: | :---: |
+| **`MAX_CONCURRENT_INFERENCES`** | `8` | `16` | `32`〜`64` |
+| **`INFERENCE_SEMAPHORE_TIMEOUT_SECONDS`** | `60.0` | `60.0` | `120.0` |
+| **`MAX_INPUT_ITEMS`** (一括件数) | `256` | `512` | `1024` |
+| **`LOGIT_GATE_BATCH_SIZE`** | `8` | `32` | `64` |
+| **`TORCH_DTYPE`** | `bfloat16` | `bfloat16` | `bfloat16` |
+| **`LOGIT_GATE_DEFAULT_MODEL`** | `Qwen3.5-0.8B-v2` (軽量) | `Qwen2.5-1.5B-Instruct` (標準) | `Qwen2.5-1.5B-Instruct` (標準) |
+| **`PRELOAD_MODELS`** | 主要3モデル常駐 | 全モデル常駐 | 全モデル常駐 |
+
+#### ① 12GB GPU プロファイル（標準・メモリ保護優先）
+```env
+MAX_CONCURRENT_INFERENCES=8
+INFERENCE_SEMAPHORE_TIMEOUT_SECONDS=60.0
+MAX_INPUT_ITEMS=256
+LOGIT_GATE_BATCH_SIZE=8
+TORCH_DTYPE=bfloat16
+LOGIT_GATE_DEFAULT_MODEL=Takenoko12345678/Qwen3.5-0.8B-Japanese-SFT-v2
+PRELOAD_MODELS=cl-nagoya/ruri-v3-310m,google/embeddinggemma-2,cl-nagoya/ruri-v3-reranker-310m
+```
+
+#### ② 24GB GPU プロファイル（高スループット・全モデル常駐）
+```env
+MAX_CONCURRENT_INFERENCES=16
+INFERENCE_SEMAPHORE_TIMEOUT_SECONDS=60.0
+MAX_INPUT_ITEMS=512
+LOGIT_GATE_BATCH_SIZE=32
+TORCH_DTYPE=bfloat16
+LOGIT_GATE_DEFAULT_MODEL=Qwen/Qwen2.5-1.5B-Instruct
+PRELOAD_MODELS=cl-nagoya/ruri-v3-310m,google/embeddinggemma-2,cl-nagoya/ruri-v3-reranker-310m,bge-visualized-m3,Qwen/Qwen2.5-1.5B-Instruct
+```
+
+#### ③ 40GB+ GPU プロファイル（超高並行・バッチ最大化）
+```env
+MAX_CONCURRENT_INFERENCES=32
+INFERENCE_SEMAPHORE_TIMEOUT_SECONDS=120.0
+MAX_INPUT_ITEMS=1024
+LOGIT_GATE_BATCH_SIZE=64
+TORCH_DTYPE=bfloat16
+LOGIT_GATE_DEFAULT_MODEL=Qwen/Qwen2.5-1.5B-Instruct
+PRELOAD_MODELS=cl-nagoya/ruri-v3-310m,google/embeddinggemma-2,cl-nagoya/ruri-v3-reranker-310m,bge-visualized-m3,Qwen/Qwen2.5-1.5B-Instruct
 ```
 
 ---
