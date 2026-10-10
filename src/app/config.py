@@ -92,6 +92,12 @@ MAX_INPUT_LENGTH = int(os.getenv("MAX_INPUT_LENGTH", "65536"))
 # Clients should batch requests if they need to process more items.
 MAX_INPUT_ITEMS = int(os.getenv("MAX_INPUT_ITEMS", "256"))
 
+# --- Multimodal Audio/Video Configuration ---
+ENABLE_AUDIO_EMBEDDING = os.getenv("ENABLE_AUDIO_EMBEDDING", "false").lower() == "true"
+ENABLE_VIDEO_EMBEDDING = os.getenv("ENABLE_VIDEO_EMBEDDING", "false").lower() == "true"
+MAX_AUDIO_DURATION_SEC = int(os.getenv("MAX_AUDIO_DURATION_SEC", "120"))
+MAX_VIDEO_FRAMES = int(os.getenv("MAX_VIDEO_FRAMES", "16"))
+
 # API Key for authentication. If not set, authentication is disabled.
 API_KEY = os.getenv("API_KEY")
 
@@ -164,3 +170,5 @@ else:
     logging.info(
         "Offline mode is disabled. Hugging Face Hub access is enabled if needed."
     )
+# --- Media Configuration ---
+MAX_AUDIO_DURATION_SEC = int(os.getenv("MAX_AUDIO_DURATION_SEC", "300"))

@@ -38,11 +38,14 @@ class ImageUrl(BaseModel):
 
 
 class FlatMultimodalItem(BaseModel):
-    """Schema for a flat multimodal item containing optional text and image URL.
+    """Schema for a flat multimodal item containing optional text, image, audio, or video URL.
 
     Attributes:
         text (Optional[MultimodalText]): The text part of the multimodal item.
         image_url (Optional[Union[ImageUrl, ImageSourceString]]): The image part of the multimodal item.
+        input_audio (Optional[Union["InputAudio", str]]): The audio part of the multimodal item.
+        audio_url (Optional[str]): Alternative name for audio part of the multimodal item.
+        video_url (Optional[Union["VideoUrl", str]]): The video part of the multimodal item.
     """
 
     text: Optional[MultimodalText] = Field(
@@ -54,6 +57,56 @@ class FlatMultimodalItem(BaseModel):
         None,
         description="The image part of the multimodal item.",
         examples=["data:image/jpeg;base64,..."],
+    )
+    input_audio: Optional[Union["InputAudio", str]] = Field(
+        None,
+        description="The audio part of the multimodal item.",
+        examples=["data:audio/mp3;base64,..."],
+    )
+    audio_url: Optional[str] = Field(
+        None,
+        description="Alternative field for audio part of the multimodal item.",
+        examples=["data:audio/mp3;base64,..."],
+    )
+    video_url: Optional[Union["VideoUrl", str]] = Field(
+        None,
+        description="The video part of the multimodal item.",
+        examples=["data:video/mp4;base64,..."],
+    )
+
+
+class InputAudio(BaseModel):
+    """Schema for an input audio part in a multimodal request.
+
+    Attributes:
+        data (str): The audio data.
+        format (Literal["wav", "mp3", "ogg", "flac"]): The format of the audio data.
+    """
+
+    data: str = Field(
+        description="The base64 encoded audio data.",
+        examples=["UklGR..."],
+    )
+    format: Literal["wav", "mp3", "ogg", "flac"] = Field(
+        description="The format of the audio data.",
+        examples=["mp3"],
+    )
+
+
+class VideoUrl(BaseModel):
+    """Schema representing a video URL and its sampling rate.
+
+    Attributes:
+        url (str): The URL or Base64 encoded string of the video.
+        sample_fps (Optional[float]): The sampling rate for video frames. Defaults to 1.0.
+    """
+
+    url: str = Field(
+        description="The URL or Base64 encoded string of the video.",
+        examples=["https://example.com/video.mp4"],
+    )
+    sample_fps: Optional[float] = Field(
+        1.0, description="The sampling rate for video frames.", examples=[1.0]
     )
 
 
@@ -90,7 +143,45 @@ class ContentPartImage(BaseModel):
     )
 
 
-ContentPart = Union[ContentPartText, ContentPartImage]
+class ContentPartAudio(BaseModel):
+    """Schema for an audio content part in a multimodal request.
+
+    Attributes:
+        type (Literal["input_audio"]): The type of the content part, must be 'input_audio'.
+        input_audio (Union[InputAudio, str]): The audio content.
+    """
+
+    type: Literal["input_audio"] = Field(
+        "input_audio",
+        description="The type of the content part, must be 'input_audio'.",
+        examples=["input_audio"],
+    )
+    input_audio: Union[InputAudio, str] = Field(
+        description="The audio content.", examples=["data:audio/mp3;base64,..."]
+    )
+
+
+class ContentPartVideo(BaseModel):
+    """Schema for a video content part in a multimodal request.
+
+    Attributes:
+        type (Literal["video_url"]): The type of the content part, must be 'video_url'.
+        video_url (Union[VideoUrl, str]): The video content.
+    """
+
+    type: Literal["video_url"] = Field(
+        "video_url",
+        description="The type of the content part, must be 'video_url'.",
+        examples=["video_url"],
+    )
+    video_url: Union[VideoUrl, str] = Field(
+        description="The video content.", examples=["https://example.com/video.mp4"]
+    )
+
+
+ContentPart = Union[
+    ContentPartText, ContentPartImage, ContentPartAudio, ContentPartVideo
+]
 
 SingleInputItem = Union[
     LimitedString,

@@ -36,6 +36,9 @@ def get_torch_dtype() -> Optional[torch.dtype]:
 
 
 class LogitGateModelWrapper:
+    supports_audio: bool = False
+    supports_video: bool = False
+
     def __init__(
         self, model_name: str, device: str = "cuda", dtype: Optional[torch.dtype] = None
     ):
@@ -84,12 +87,26 @@ class LogitGateModelWrapper:
 class EmbeddingGemma2Model:
     supports_multimodal: bool = True
 
+    @property
+    def supports_audio(self) -> bool:
+        from .config import ENABLE_AUDIO_EMBEDDING
+
+        return ENABLE_AUDIO_EMBEDDING
+
+    @property
+    def supports_video(self) -> bool:
+        from .config import ENABLE_VIDEO_EMBEDDING
+
+        return ENABLE_VIDEO_EMBEDDING
+
     def __init__(
         self,
         model_name: str = "google/embeddinggemma-2",
         device: str | None = None,
         dtype: torch.dtype | None = None,
     ):
+        from .config import ENABLE_AUDIO_EMBEDDING
+
         self.device = (
             device
             if device and torch.cuda.is_available() and device.startswith("cuda")
@@ -111,14 +128,14 @@ class EmbeddingGemma2Model:
         from sentence_transformers import SentenceTransformer
 
         model_kwargs = {"torch_dtype": self.dtype} if self.dtype else {}
-        # As per instructions, load without audio
+        config_kwargs = {} if ENABLE_AUDIO_EMBEDDING else {"audio_config": None}
 
         # In sentence-transformers, model_kwargs can be passed to the AutoModel underlying.
         self.model = SentenceTransformer(
             model_name,
             device=self.device,
             model_kwargs=model_kwargs,
-            config_kwargs={"audio_config": None},
+            config_kwargs=config_kwargs,
             trust_remote_code=True,
         )
         self.model.max_seq_length = self.max_seq_length
@@ -133,20 +150,45 @@ class EmbeddingGemma2Model:
 
     def encode_multimodal(
         self,
-        items: list[tuple[Optional[str], Optional[Image.Image]]],
+        items: list[Any],
         prompt_name: str | None = None,
     ) -> list[list[float]]:
         processed_inputs = []
-        for text, img in items:
-            if text is not None and img is not None:
-                # Add <|image|> token as per instructions
-                processed_inputs.append({"text": f"{text} <|image|>", "image": img})
-            elif img is not None:
-                processed_inputs.append({"image": img})
-            elif text is not None:
-                processed_inputs.append(text)
+        for it in items:
+            if isinstance(it, dict):
+                processed_inputs.append(it)
+            elif isinstance(it, tuple):
+                text = it[0] if len(it) > 0 else None
+                img = it[1] if len(it) > 1 else None
+                audio = it[2] if len(it) > 2 else None
+                video = it[3] if len(it) > 3 else None
+
+                item_dict = {}
+                if text is not None and str(text).strip():
+                    item_dict["text"] = str(text).strip()
+                if img is not None:
+                    item_dict["image"] = img
+                if audio is not None:
+                    item_dict["audio"] = audio
+                if video is not None:
+                    item_dict["video"] = video
+
+                if not item_dict:
+                    processed_inputs.append("")
+                elif len(item_dict) == 1 and "text" in item_dict:
+                    processed_inputs.append(item_dict["text"])
+                else:
+                    if (
+                        "text" in item_dict
+                        and "image" in item_dict
+                        and "<|image|>" not in item_dict["text"]
+                    ):
+                        item_dict["text"] = f"{item_dict['text']} <|image|>"
+                    processed_inputs.append(item_dict)
+            elif isinstance(it, str):
+                processed_inputs.append(it)
             else:
-                processed_inputs.append("")
+                processed_inputs.append(it)
 
         with self.tokenizer_lock:
             pass  # Just for consistency, tokenization happens inside encode
@@ -169,26 +211,13 @@ class EmbeddingGemma2Model:
             )
 
             with autocast_ctx:
-                # SentenceTransformer encode supports dicts for multimodal inputs?
-                # The instructions say:
-                # `(text, None)` -> `text`
-                # `(None, image)` -> `{"image": image}`
-                # `(text, image)` -> `{"text": f"{text} <|image|>", "image": image}`
-                # This is exactly what sentence-transformers expects for multimodal inputs usually or we pass it directly to AutoModel.
-                # Actually, embeddinggemma-2 in sentence-transformers probably expects this list of inputs directly to `encode`.
-
-                # Check if prompt_name should be applied.
-                # "画像を含む入力にはプロンプトを付与しないこと。"
-                # We can handle this by passing `prompt_name` only to text-only items if SentenceTransformer doesn't support item-level prompt_name,
-                # or just let SentenceTransformer handle it if we pass prompt_name?
-                # Actually, if we pass prompt_name to `encode`, it applies it to all items.
-                # Since items with images shouldn't have prompts, maybe we shouldn't pass `prompt_name` if there are images.
-
-                has_image = any(
-                    isinstance(x, dict) and "image" in x for x in processed_inputs
+                has_media = any(
+                    isinstance(x, dict)
+                    and any(k in x for k in ("image", "audio", "video"))
+                    for x in processed_inputs
                 )
 
-                final_prompt = None if has_image else prompt_name
+                final_prompt = None if has_media else prompt_name
 
                 embeddings = self.model.encode(
                     processed_inputs,
@@ -202,6 +231,8 @@ class EmbeddingGemma2Model:
 
 class VisualizedBGEEmbeddingModel:
     supports_multimodal: bool = True
+    supports_audio: bool = False
+    supports_video: bool = False
 
     def __init__(
         self,

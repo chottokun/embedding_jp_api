@@ -123,14 +123,33 @@ def run_live_tests():
     print("  ✓ GET /metrics -> 200 OK (Prometheus metrics verified)")
 
     # 7. Payload Limit Validation
-    print("\n[7/7] Testing Payload Size Limit (413 Payload Too Large)...")
+    print("\n[7/8] Testing Payload Size Limit (413 Payload Too Large)...")
     large_payload = b"x" * (11 * 1024 * 1024)  # 11MB (limit is 10MB)
     r = httpx.post(f"{BASE_URL}/v1/embeddings", content=large_payload, timeout=10.0)
     assert r.status_code == 413, f"Expected 413, got {r.status_code}"
     print("  ✓ Large payload rejected with 413 Payload Too Large")
 
+    # 8. Multimodal Capability Guard Verification
+    print("\n[8/8] Testing Multimodal Audio/Video Capability Guards...")
+    dummy_audio = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="
+    # 8a: Unsupported model guard (Ruri cannot accept audio)
+    r = httpx.post(
+        f"{BASE_URL}/v1/embeddings",
+        json={"model": "cl-nagoya/ruri-v3-30m", "input": {"text": "hello", "input_audio": dummy_audio}},
+    )
+    assert r.status_code == 400, f"Expected 400 for audio with Ruri, got {r.status_code}"
+    print("  ✓ Unsupported model audio rejected with 400 Bad Request")
+
+    # 8b: Server flag disabled guard (EmbeddingGemma audio rejected when ENABLE_AUDIO_EMBEDDING=false)
+    r = httpx.post(
+        f"{BASE_URL}/v1/embeddings",
+        json={"model": "google/embeddinggemma-2", "input": {"text": "hello", "input_audio": dummy_audio}},
+    )
+    assert r.status_code == 400, f"Expected 400 for disabled audio, got {r.status_code}"
+    print("  ✓ Disabled audio feature rejected with 400 Bad Request")
+
     print("\n" + "=" * 60)
-    print("🎉 All 7 Live Service Verification Tests PASSED Perfectly!")
+    print("🎉 All 8 Live Service Verification Tests PASSED Perfectly!")
     print("=" * 60)
 
 
