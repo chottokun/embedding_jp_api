@@ -21,7 +21,7 @@ COPY pyproject.toml uv.lock README.md ./
 # Create virtualenv using uv managed Python 3.11 and install dependencies with CUDA torch
 RUN uv python install 3.11 && \
     uv sync --no-dev --no-install-project --python 3.11 && \
-    uv pip install --python /app/.venv/bin/python torch torchvision --index-url https://download.pytorch.org/whl/cu121
+    uv pip install --python /app/.venv/bin/python torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
 # Stage 2: Final Image
 FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
@@ -29,6 +29,7 @@ FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     APP_PORT=8000 \
+    PYTHONPATH="/app/src:/app" \
     OMP_NUM_THREADS=1 \
     MKL_NUM_THREADS=1 \
     TOKENIZERS_PARALLELISM=false \

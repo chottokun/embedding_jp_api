@@ -169,7 +169,23 @@ class EmbeddingGemma2Model:
                 if img is not None:
                     item_dict["image"] = img
                 if audio is not None:
-                    item_dict["audio"] = audio
+                    # Transformers audio processor expects numpy.ndarray or str path/base64
+                    if isinstance(audio, tuple):
+                        audio_val = audio[0]
+                    else:
+                        audio_val = audio
+
+                    if hasattr(audio_val, "cpu") and hasattr(audio_val, "numpy"):
+                        import numpy as np
+
+                        audio_np = audio_val.squeeze().cpu().numpy().astype(np.float32)
+                    elif hasattr(audio_val, "__array__"):
+                        import numpy as np
+
+                        audio_np = np.asarray(audio_val, dtype=np.float32).squeeze()
+                    else:
+                        audio_np = audio_val
+                    item_dict["audio"] = audio_np
                 if video is not None:
                     item_dict["video"] = video
 
@@ -178,12 +194,22 @@ class EmbeddingGemma2Model:
                 elif len(item_dict) == 1 and "text" in item_dict:
                     processed_inputs.append(item_dict["text"])
                 else:
-                    if (
-                        "text" in item_dict
-                        and "image" in item_dict
-                        and "<|image|>" not in item_dict["text"]
-                    ):
-                        item_dict["text"] = f"{item_dict['text']} <|image|>"
+                    if "text" in item_dict:
+                        if (
+                            "image" in item_dict
+                            and "<|image|>" not in item_dict["text"]
+                        ):
+                            item_dict["text"] = f"{item_dict['text']} <|image|>"
+                        if (
+                            "video" in item_dict
+                            and "<|video|>" not in item_dict["text"]
+                        ):
+                            item_dict["text"] = f"{item_dict['text']} <|video|>"
+                        if (
+                            "audio" in item_dict
+                            and "<|audio|>" not in item_dict["text"]
+                        ):
+                            item_dict["text"] = f"{item_dict['text']} <|audio|>"
                     processed_inputs.append(item_dict)
             elif isinstance(it, str):
                 processed_inputs.append(it)
