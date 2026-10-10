@@ -21,8 +21,8 @@ jobs:
         version: "latest"
         enable-cache: true
 
-    - name: Set up Python 3.11
-      run: uv python install 3.11
+    - name: Set up Python 3.12
+      run: uv python install 3.12
 
     - name: Install dependencies
       run: uv sync --all-extras --all-groups
@@ -31,10 +31,10 @@ jobs:
       run: uv run ruff check .
 
     - name: Run Format Check
-      run: uv run ruff format --check src
+      run: uv run ruff format --check .
 
     - name: Run Tests
-      run: uv run pytest -v -m "not integration"
+      run: uv run pytest -v -m "not integration and not gpu"
 
     - name: Dependency Audit
       run: uv audit
@@ -43,4 +43,32 @@ jobs:
       uses: gitleaks/gitleaks-action@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker-build-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build standard Dockerfile
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+        tags: embedding_jp_api:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build CPU Dockerfile
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.cpu
+        push: false
+        tags: embedding_jp_api:test-cpu
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 

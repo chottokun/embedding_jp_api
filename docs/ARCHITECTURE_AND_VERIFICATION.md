@@ -221,6 +221,38 @@ uv run python test_e2e_live.py 8000
 - [x] ループバック/プライベートIPへのSSRF遮断（HTTP 400）
 - [x] 30並行同時リクエストの100%成功
 
+### 6.3. 実バイナリ マルチモーダル E2E 検証 ([`scripts/verify_real_multimodal_e2e.py`](../scripts/verify_real_multimodal_e2e.py))
+
+実機環境（`google/embeddinggemma-2`）に対し、生成した実バイナリメディアを投入して推論検証を実施。
+
+- **実音声 (Audio)**: 16kHz PCM モノラル WAV 音声（Base64 21,414文字）
+- **実動画 (Video)**: H.264 コーデック MP4 動画（Base64 2,334文字）
+- **実画像 (Image)**: 64×64 RGB PNG 画像（Base64 226文字）
+
+```text
+======================================================================
+🚀 Real Data Multimodal E2E Verification Results
+======================================================================
+✓ [1/4] Audio + Text -> 200 OK (Latency: 8096ms初回ロード込, 768d, L2 Norm: 0.9984)
+✓ [2/4] Video + Text -> 200 OK (Latency: 329.6ms, 768d, L2 Norm: 1.0015)
+✓ [3/4] Full Multimodal (Text+Image+Audio+Video) -> 200 OK (Latency: 425.1ms, 768d)
+✓ [4/4] MRL 256d Audio -> 200 OK (Latency: 97.1ms, 256d, L2 Norm: 1.0000)
+======================================================================
+🎉 All Real Data Multimodal E2E Tests PASSED Perfectly!
+======================================================================
+```
+
+### 6.4. Docker Compose 本番コンテナ起動・ヘルスチェック検証
+
+```bash
+docker compose build api-cpu
+docker compose up -d api-cpu
+```
+- **起動プロセス**: Gunicorn 25.3.0 + UvicornWorker 2ワーカー構成で正常ブート。
+- **ヘルスチェック遷移**: `starting` ➔ `healthy`（`/healthz` ポーリング成功）。
+- **エンドポイント疎通**: `/healthz` (200 OK), `/readyz` (200 OK), `/v1/models` (200 OK)。
+- **クリーンアップ**: `docker compose down` により安全かつ正常にリソース解放。
+
 ---
 
 ## 7. エラーハンドリングと運用トラブルシューティング
