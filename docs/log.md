@@ -12,11 +12,11 @@
 * **Comprehensive Benchmarks & Pareto Optimal Routing**:
   * **テキスト 540件評価**: MRL 256d で 768d 比 96.7% の分離マージンを維持し、インデックス容量 67% 削減を実証（`docs/infrastructure/benchmark_540_embeddinggemma_results.md`）。
   * **マルチモーダル 60画像評価**: ビジネスチャート・図面・ダイアグラム・UI 画面の Text-to-Image / Image-to-Text 双方で高精度検索を実証（`docs/infrastructure/benchmark_multimodal_embeddinggemma_results.md`）。
-  * **二段カスケード批判的検証**: 公式プロンプト適用下での再測定により、`EmbeddingGemma-2 (256d) + Logit Gate` が従来の最高標準 `ruri-310m + Cross-Encoder` と完全同等の正解率（141/180件 78.33%）を達成することを客観的に立証（`docs/infrastructure/benchmark_cascade_ruri_vs_embeddinggemma.md`）。
-  * **動的ハイブリッドカスケード実証**: 1,200件実証データセットを整備し、Cross-Encoder 判定でスコア差 $\Delta < 0.05$ の難問のみ Logit Gate へエスカレーションする動的ルーティングにより、単体モデル（CE 87.5%, Gate 75.0%）を凌駕する最高正解率 88.00% / 72.8ms のパレート最適解を実証。
+  * **二段カスケード批判的検証**: 公式プロンプト適用下での再測定により、`EmbeddingGemma-2 (256d) + Logit Gate` が従来の `ruri-310m + Cross-Encoder` と同等の正解率（141/180件 78.33%）を達成することを確認（`docs/infrastructure/benchmark_cascade_ruri_vs_embeddinggemma.md`）。
+  * **動的ハイブリッドカスケード実証**: 1,200件実証データセットを整備し、Cross-Encoder 判定でスコア差 $\Delta < 0.05$ の難問のみ Logit Gate へエスカレーションする動的ルーティングにより、単体モデル（CE 87.5%, Gate 75.0%）を上回る正解率 88.00% / 72.8ms の結果を確認。
 
 ## 2026-09-25
-* **Feature & High-Precision Reranking**: `plan/logit.md` に基づく **Logit Gate 機能およびハイブリッド再ランキング（ASCII Matcher ＋ 単一フォワードパス ロジット判定）** を完全実装。
+* **Feature & High-Precision Reranking**: `plan/logit.md` に基づく **Logit Gate 機能およびハイブリッド再ランキング（ASCII Matcher ＋ 単一フォワードパス ロジット判定）** を実装。
   * **Dynamic Dispatch**: `POST /v1/rerank` において `model` 指定（`Qwen/Qwen2.5-1.5B-Instruct` 等）に応じた自動ルーティングを実装。
   * **Logit-Space Score Fusion**: $\Delta z_{\text{final}} = \Delta z + (\beta \cdot \text{Containment})$ および $\sigma(\Delta z_{\text{final}})$ による確率スケール保護とニアミス救出を実現。
   * **Entropy & Explainability**: 正規化二値シャノンエントロピー $H_{\text{binary}}$ を算出して判定の迷い・不確実性を可視化。
@@ -25,7 +25,7 @@
 
 ## 2026-09-14
 * **Security & CI Remediation**: `accelerate` パッケージの脆弱性（CVE-2026-69112）を `uv lock --upgrade-package accelerate` によりパッチ版 `1.15.0` へアップデートし、`uv audit`（検出ゼロ）を達成。また GitHub Actions の Gitleaks アクション向けに `actions/checkout` へ `fetch-depth: 0` を適用し、CI セキュリティパイプラインおよび実データテスト（`scratch/verify_real_data.py`）をすべてグリーン（合格）に同期しました（PR #92 マージ完了）。
-* **Code Health**: `scratch/` および `scripts/` の全コードに `ruff format` を適用し、リポジトリ全体のフォーマット整合性を完全担保しました。
+* **Code Health**: `scratch/` および `scripts/` の全コードに `ruff format` を適用し、リポジトリ全体のフォーマット整合性を適用しました。
 
 ## 2026-09-12
 * **Performance & Comprehensive Benchmarks**: 全5モデル（ruri-30m, ruri-310m, bge-m3, bge-visualized-m3, ruri-reranker-310m）の実機ベンチマーク、バッチスケーリング（1〜64）、コンテキスト長スケーリング（32〜2048トークン）、マルチモーダル解像度別（64px〜1080p）推論レイテンシ、およびセマフォ制御下での高並行負荷テスト（50リクエスト/10並行、成功率100.0%、スループット 3.42 req/sec）の実測値を `docs/infrastructure/benchmarks.md` に更新・記録しました。
