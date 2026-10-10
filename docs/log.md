@@ -1,5 +1,9 @@
 # Knowledge Update Log
 
+## 2026-10-10
+* **Bug Fix & Model Compatibility**: 音声・動画マルチモーダル拡張に伴い 4要素タプルが渡された際、`VisualizedBGEEmbeddingModel.encode_multimodal`（`src/app/models.py`）で発生していたタプルアンパック不整合を修正。要素数に柔軟に対応できるよう安全な取り出し処理へ改修しました。
+* **GPU Locust Load Testing & Benchmark**: NVIDIA GeForce RTX 3060 12GB 実機において、主要4モデル（Ruri-310m, EmbeddingGemma-2, Ruri-Reranker-310m, BGE-Visualized-M3）を同時展開し、10〜60同時ユーザー・全12種エンドポイント（テキスト、画像、音声、動画、リランク、ヘルスプローブ）での段階的負荷テストを実施。1,630リクエストでエラー率 0.00% を確認し、実測結果を `docs/infrastructure/benchmark_gpu_locust_load_test.md` に記録しました。
+
 ## 2026-10-08
 * **Feature & Multimodal Support**: Google DeepMind のマルチモーダル埋め込みモデル `google/embeddinggemma-2` を完全実装・統合。
   * **Multimodal Architecture**: テキスト＋画像複合入力対応（270M Text + 170M Vision）、`<|image|>` 自動挿入、8,192 トークン強制クリップ、bfloat16/float32 安全フォールバック。

@@ -550,7 +550,11 @@ uv run locust -f scripts/locustfile.py --host http://localhost:8000
 
 # ヘッドレスモードでの実行（30秒間、20同時ユーザー）
 uv run locust -f scripts/locustfile.py --headless -u 20 -r 5 --run-time 30s --host http://localhost:8000
+
+# GPU 自動マルチ階層負荷テスト（10, 30, 60 ユーザー）
+uv run python scripts/run_gpu_locust_suite.py
 ```
+詳細な測定データは [docs/infrastructure/benchmark_gpu_locust_load_test.md](docs/infrastructure/benchmark_gpu_locust_load_test.md) を参照してください。
 
 ### 8.7. Logit Gate 精度・負荷ベンチマーク (`benchmarks/`)
 $N=108$ 評価データセット（社内規程・IT障害・Cloud/DevOps・型番・人事法務）に対する正解率・遮断率測定、および 5〜50件バッチ時の推論レイテンシ・VRAMリークを検証します。
