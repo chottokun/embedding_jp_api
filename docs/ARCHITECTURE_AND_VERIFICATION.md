@@ -107,10 +107,10 @@ sequenceDiagram
 
 1. **AnyIO スレッドプールオフロード (`anyio.to_thread.run_sync`)**:
    - PyTorch の推論や画像デコードなどの CPU/GPU バウンドな重いブロッキング処理を、FastAPI のメインイベントループからワーカースレッドプールへと委譲。
-   - これにより、100並行の重い推論が走っている最中でも、他のリクエスト受付や `/health` 死活監視が一切停止しません。
+   - これにより、並行推論が走っている最中でも、他のリクエスト受付や `/health` 死活監視がブロックされにくくなります。
 2. **トークナイザ二重保護 (`model.tokenizer_lock` & `model.lock`)**:
    - Hugging Face / transformers の Rust 製 FastTokenizer は、マルチスレッド環境で内部可変参照が競合すると `Already borrowed` パニックを起こします。
-   - トークナイズ単体時だけでなく、推論実行中（`model.encode`）にも `tokenizer_lock` を保持し続けることで競合を完全根絶。
+   - トークナイズ単体時だけでなく、推論実行中（`model.encode`）にも `tokenizer_lock` を適切に保持することで競合を回避。
 3. **`TOKENIZERS_PARALLELISM=false` の強制**:
    - Gunicorn でプロセスを複数起動する際のフォーク時デッドロックを防止。
 
@@ -120,10 +120,10 @@ sequenceDiagram
 
 | 対策項目 | 実装箇所 | 詳細説明 |
 | :--- | :--- | :--- |
-| **SSRF多層防御** | [`src/app/image_utils.py`](../src/app/image_utils.py) | 非同期DNS解決により `127.0.0.1`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.169.254`（AWSメタデータ等）へのアクセスを即時遮断。<br>**リダイレクト（301/302）発生時も各ホストを逐次再検証**し、リダイレクトを用いた内部侵入を完全阻止。 |
-| **Decompression Bomb 防御** | [`src/app/image_utils.py`](../src/app/image_utils.py) | `Image.MAX_IMAGE_PIXELS = 20_000_000`（20メガピクセル）制限を設定。数キロバイトの画像から展開時にギガバイト規模のメモリを消費させる攻撃を無力化。 |
+| **SSRF多層防御** | [`src/app/image_utils.py`](../src/app/image_utils.py) | 非同期DNS解決により `127.0.0.1`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.169.254`（AWSメタデータ等）へのアクセスを即時遮断。<br>**リダイレクト（301/302）発生時も各ホストを逐次再検証**し、リダイレクトを用いた内部アクセスを遮断。 |
+| **Decompression Bomb 防御** | [`src/app/image_utils.py`](../src/app/image_utils.py) | `Image.MAX_IMAGE_PIXELS = 20_000_000`（20メガピクセル）制限を設定。展開時の過度なメモリ消費を防止。 |
 | **ストリームサイズ制限** | [`src/app/image_utils.py`](../src/app/image_utils.py) | 画像ダウンロード時に 15MB（`MAX_FILE_SIZE`）を超えた時点でストリームを切断しメモリ枯渇を防止。 |
-| **PII 自動マスク** | [`src/app/main.py`](../src/app/main.py) | 500エラー発生時、例外メッセージやスタックトレースに含まれるメールアドレス等を `[REDACTED]` でマスクしてログ出力。外部には詳細スタックトレースを一切非公開。 |
+| **PII 自動マスク** | [`src/app/main.py`](../src/app/main.py) | 500エラー発生時、例外メッセージやスタックトレースに含まれるメールアドレス等を `[REDACTED]` でマスクしてログ出力。外部には詳細スタックトレースを非公開。 |
 | **セキュリティヘッダー** | [`src/app/main.py`](../src/app/main.py) | 全レスポンスに `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Strict-Transport-Security`, `Content-Security-Policy` を常時付与。 |
 | **タイミング攻撃耐性認証** | [`src/app/main.py`](../src/app/main.py) | `secrets.compare_digest` による固定時間比較で API Key 照合を実施。 |
 
@@ -137,7 +137,7 @@ sequenceDiagram
 - **マルチステージビルド**: ビルドツール（`git`, `uv`）をランタイムイメージから分離し、最終イメージを軽量化。
 - **`.dockerignore`**: ローカルキャッシュ（`.cache`, `.venv`, `__pycache__`）の転送を遮断し、ビルドコンテキスト転送を 1.5MB 以下に最小化。
 - **`COPY --chown` によるレイヤー最適化**: 従来数十秒かかっていた `RUN chown -R` レイヤーを廃止し、`COPY --chown=appuser:appuser` を使用することで、ビルド時間を大幅短縮しレイヤー容量を半減。
-- **非rootユーザー運用**: コンテナ内を `appuser` (UID: 1000) で実行し、特権昇格リスクを排除。
+- **非rootユーザー運用**: コンテナ内を `appuser` (UID: 1000) で実行し、特権昇格リスクを低減。
 - **コンテナ内 `HEALTHCHECK`**:
   ```dockerfile
   HEALTHCHECK --interval=10s --timeout=5s --start-period=20s --retries=3 \
@@ -183,7 +183,7 @@ spec:
 
 ---
 
-## 6. 徹底検証レポート (Load & Stress Testing Benchmarks)
+## 6. 負荷・ストレステスト検証レポート (Load & Stress Testing Benchmarks)
 
 ### 6.1. 本番コンテナ 100並行同時接続ストレステスト
 
@@ -204,7 +204,7 @@ spec:
 • Latency (P95)       : 17,755.3 ms
 • Latency (P99)       : 18,590.1 ms
 =================================================================
-✅ 判定: 100% 成功（クラッシュ・デッドロック・500エラー ゼロを実証）
+✅ 判定: 全件成功（クラッシュ・デッドロック・500エラーなし）
 =================================================================
 ```
 
@@ -219,7 +219,7 @@ uv run python test_e2e_live.py 8000
 - [x] 日本語テキスト埋め込み正常性（次元数・トークン計算）
 - [x] テキスト専用モデルへの画像入力拒否（HTTP 400）
 - [x] ループバック/プライベートIPへのSSRF遮断（HTTP 400）
-- [x] 30並行同時リクエストの100%成功
+- [x] 30並行同時リクエストの全件成功
 
 ### 6.3. 実バイナリ マルチモーダル E2E 検証 ([`scripts/verify_real_multimodal_e2e.py`](../scripts/verify_real_multimodal_e2e.py))
 
@@ -238,7 +238,7 @@ uv run python test_e2e_live.py 8000
 ✓ [3/4] Full Multimodal (Text+Image+Audio+Video) -> 200 OK (Latency: 425.1ms, 768d)
 ✓ [4/4] MRL 256d Audio -> 200 OK (Latency: 97.1ms, 256d, L2 Norm: 1.0000)
 ======================================================================
-🎉 All Real Data Multimodal E2E Tests PASSED Perfectly!
+All Real Data Multimodal E2E Tests PASSED
 ======================================================================
 ```
 

@@ -14,7 +14,7 @@ description: 日本語テキスト埋め込み・マルチモーダル埋め込�
 
 * [Architecture](./architecture/README.md) - システム全体構造、スレッドセーフモデル、マルチモーダル推論アーキテクチャ
 * [Domain](./domain/README.md) - 対応モデル仕様（Ruri-v3, BGE）、API スキーマ定義、プレフィックス仕様
-* [Infrastructure](./infrastructure/README.md) - Docker / GPU・CPU Compose 構成、オフライン完全稼働（エアギャップ）、実機ベンチマークデータ
+* [Infrastructure](./infrastructure/README.md) - Docker / GPU・CPU Compose 構成、オフライン運用（エアギャップ対応）、実機ベンチマークデータ
 
 ## 更新履歴
 

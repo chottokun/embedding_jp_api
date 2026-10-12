@@ -38,6 +38,105 @@ def test_rate_limit_enforced_and_retry_after():
         rate_limiter.default_limit = orig_limit
 
 
+def test_rate_limiter_is_allowed_new_client():
+    limiter = rate_limiter.__class__(default_limit=5, window=60)
+    client_id = "new_client"
+    assert client_id not in limiter.requests
+    allowed = limiter.is_allowed(client_id)
+    assert allowed is True
+    assert client_id in limiter.requests
+    assert len(limiter.requests[client_id]) == 1
+
+
+def test_rate_limiter_eviction_of_old_timestamps():
+    limiter = rate_limiter.__class__(default_limit=2, window=60)
+    client_id = "evict_client"
+
+    with patch("time.time", return_value=1000.0):
+        assert limiter.is_allowed(client_id) is True  # req 1 at t=1000
+    with patch("time.time", return_value=1010.0):
+        assert limiter.is_allowed(client_id) is True  # req 2 at t=1010
+    with patch("time.time", return_value=1020.0):
+        assert limiter.is_allowed(client_id) is False  # limit 2 reached
+
+    # Advance time beyond window for 1st request (1000 + 60 = 1060)
+    with patch("time.time", return_value=1060.1):
+        # 1000.0 is evicted (1060.1 - 1000.0 = 60.1 >= window)
+        # 1010.0 is kept (1060.1 - 1010.0 = 50.1 < window)
+        assert limiter.is_allowed(client_id) is True
+        assert len(limiter.requests[client_id]) == 2
+        assert limiter.requests[client_id] == [1010.0, 1060.1]
+
+
+def test_rate_limiter_custom_limit_override():
+    limiter = rate_limiter.__class__(default_limit=10, window=60)
+    client_id = "custom_limit_client"
+
+    # Override limit with lower limit (limit=2)
+    with patch("time.time", return_value=1000.0):
+        assert limiter.is_allowed(client_id, limit=2) is True
+        assert limiter.is_allowed(client_id, limit=2) is True
+        assert limiter.is_allowed(client_id, limit=2) is False
+
+    # Override limit with higher limit (limit=5)
+    with patch("time.time", return_value=1005.0):
+        assert limiter.is_allowed(client_id, limit=5) is True
+        assert limiter.is_allowed(client_id, limit=5) is True
+        assert limiter.is_allowed(client_id, limit=5) is True
+        assert limiter.is_allowed(client_id, limit=5) is False
+
+    # Limit = 0 should block immediately
+    zero_limit_client = "zero_limit_client"
+    with patch("time.time", return_value=1000.0):
+        assert limiter.is_allowed(zero_limit_client, limit=0) is False
+
+
+def test_rate_limiter_max_allowed_boundary():
+    limiter = rate_limiter.__class__(default_limit=3, window=60)
+    client_id = "boundary_client"
+
+    with patch("time.time", return_value=1000.0):
+        assert limiter.is_allowed(client_id) is True  # len 1
+        assert limiter.is_allowed(client_id) is True  # len 2
+        assert limiter.is_allowed(client_id) is True  # len 3
+        assert limiter.is_allowed(client_id) is False  # len 3 >= 3 max_allowed
+
+
+def test_rate_limiter_get_retry_after():
+    limiter = rate_limiter.__class__(default_limit=2, window=60)
+
+    # Unseen client
+    with patch("time.time", return_value=1000.0):
+        assert limiter.get_retry_after("unknown_client") == 0
+
+    # Client with empty request list
+    limiter.requests["empty_client"] = []
+    with patch("time.time", return_value=1000.0):
+        assert limiter.get_retry_after("empty_client") == 0
+
+    # Client with requests
+    client_id = "retry_client"
+    with patch("time.time", return_value=1000.0):
+        limiter.is_allowed(client_id)  # oldest at 1000.0
+
+    with patch("time.time", return_value=1020.0):
+        # window (60) - (1020 - 1000) = 40
+        assert limiter.get_retry_after(client_id) == 40
+
+    with patch("time.time", return_value=1059.5):
+        # 60 - (1059.5 - 1000) = 0.5 -> int conversion or max(1, ...)
+        assert limiter.get_retry_after(client_id) == 1
+
+
+def test_rate_limiter_client_isolation():
+    limiter = rate_limiter.__class__(default_limit=1, window=60)
+    with patch("time.time", return_value=1000.0):
+        assert limiter.is_allowed("client_a") is True
+        assert limiter.is_allowed("client_a") is False
+        # client_b should still be allowed
+        assert limiter.is_allowed("client_b") is True
+
+
 def test_get_retry_after_unknown_and_empty_client():
     """Verify get_retry_after returns 0 for unknown client or empty request history."""
     rate_limiter.requests.clear()
