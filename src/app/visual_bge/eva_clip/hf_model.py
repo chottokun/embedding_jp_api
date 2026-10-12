@@ -101,8 +101,7 @@ class HFTextEncoder(nn.Module):
             else:
                 create_func, model_args = (AutoModel.from_pretrained, model_name_or_path) if pretrained else (
                     AutoModel.from_config, self.config)
-            # TODO: do all model configs have this attribute? PretrainedConfig does so yes??
-            if hasattr(self.config, "is_encoder_decoder") and self.config.is_encoder_decoder:
+            if getattr(self.config, "is_encoder_decoder", False):
                 self.transformer = create_func(model_args)
                 self.transformer = self.transformer.encoder
             else:
