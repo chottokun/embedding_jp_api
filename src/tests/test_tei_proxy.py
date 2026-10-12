@@ -148,7 +148,7 @@ async def test_proxy_to_tei_error_truncation():
 
     with patch("httpx.AsyncClient", MockAsyncClient):
         with pytest.raises(HTTPException) as exc_info:
-            await _proxy_to_tei("http://tei-url", "/path", {"data": "test"})
+            await _proxy_to_tei("http://tei-url", "/v1/embeddings", {"data": "test"})
 
         assert exc_info.value.status_code == 500
         expected_truncated_text = "A" * 200 + "..."
@@ -171,7 +171,7 @@ async def test_proxy_to_tei_error_truncation():
 
     with patch("httpx.AsyncClient", MockAsyncClientShort):
         with pytest.raises(HTTPException) as exc_info:
-            await _proxy_to_tei("http://tei-url", "/path", {"data": "test"})
+            await _proxy_to_tei("http://tei-url", "/v1/embeddings", {"data": "test"})
 
         assert exc_info.value.status_code == 500
         assert "Short error" in exc_info.value.detail
@@ -195,10 +195,10 @@ async def test_tei_proxy_uses_pooled_client():
         mock_client_instance = mock_client_class.return_value.__aenter__.return_value
         mock_client_instance.post = AsyncMock(return_value=mock_response)
 
-        res = await _proxy_to_tei("http://tei-url", "/path", {"test": "data"})
+        res = await _proxy_to_tei("http://tei-url", "/v1/embeddings", {"test": "data"})
         assert res == {"success": True}
         mock_client_instance.post.assert_called_once_with(
-            "http://tei-url/path", json={"test": "data"}
+            "http://tei-url/v1/embeddings", json={"test": "data"}
         )
 
     # 2. Test when app.state.tei_client IS initialized
@@ -207,13 +207,32 @@ async def test_tei_proxy_uses_pooled_client():
     app.state.tei_client = mock_pooled_client
 
     with patch("httpx.AsyncClient") as mock_client_class:
-        res = await _proxy_to_tei("http://tei-url", "/path", {"test": "data"})
+        res = await _proxy_to_tei("http://tei-url", "/v1/embeddings", {"test": "data"})
         assert res == {"success": True}
         mock_client_class.assert_not_called()
         mock_pooled_client.post.assert_called_once_with(
-            "http://tei-url/path", json={"test": "data"}
+            "http://tei-url/v1/embeddings", json={"test": "data"}
         )
 
     # Clean up
     if hasattr(app.state, "tei_client"):
         delattr(app.state, "tei_client")
+
+
+@pytest.mark.anyio
+async def test_tei_proxy_disallows_unauthorized_paths():
+    """Verify that _proxy_to_tei rejects paths not in ALLOWED_TEI_PATHS with HTTP 400."""
+    unauthorized_paths = [
+        "/admin",
+        "/../secret",
+        "http://evil.com",
+        "/v1/embeddings/../../etc/passwd",
+        "/health",
+        "/metrics",
+    ]
+
+    for invalid_path in unauthorized_paths:
+        with pytest.raises(HTTPException) as exc_info:
+            await _proxy_to_tei("http://tei-url", invalid_path, {"test": "data"})
+        assert exc_info.value.status_code == 400
+        assert "Invalid proxy path target" in exc_info.value.detail
