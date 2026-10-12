@@ -1,7 +1,5 @@
 import asyncio
 import base64
-import math
-import struct
 from typing import Any, List, Tuple, Optional, Union
 import anyio
 import httpx
@@ -274,23 +272,58 @@ def _tokenize_and_truncate_embeddings(
     return processed_inputs, usage
 
 
+def _format_embeddings_batch(
+    vectors: Any, dimensions: Optional[int], encoding_format: str
+) -> List[Union[List[float], str]]:
+    import numpy as np
+
+    if isinstance(vectors, (list, tuple)) and len(vectors) == 0:
+        return []
+
+    try:
+        import torch
+
+        if isinstance(vectors, torch.Tensor):
+            arr = vectors.detach().cpu().numpy()
+        elif isinstance(vectors, np.ndarray):
+            arr = vectors
+        elif hasattr(vectors, "tolist") and callable(getattr(vectors, "tolist")):
+            arr = np.asarray(vectors.tolist())
+        else:
+            arr = np.asarray(vectors)
+    except ImportError:
+        if isinstance(vectors, np.ndarray):
+            arr = vectors
+        elif hasattr(vectors, "tolist") and callable(getattr(vectors, "tolist")):
+            arr = np.asarray(vectors.tolist())
+        else:
+            arr = np.asarray(vectors)
+
+    if arr.size == 0:
+        return []
+
+    if arr.ndim == 1:
+        arr = arr[np.newaxis, :]
+
+    # Matryoshka dimensionality reduction & L2 re-normalization
+    if dimensions is not None and 0 < dimensions < arr.shape[1]:
+        arr = arr[:, :dimensions]
+        arr_f64 = arr.astype(np.float64)
+        norms = np.linalg.norm(arr_f64, axis=1, keepdims=True)
+        norms[norms == 0] = 1.0
+        arr = arr_f64 / norms
+
+    if encoding_format == "base64":
+        arr_f32 = arr.astype("<f4", copy=False)
+        return [base64.b64encode(row.tobytes()).decode("utf-8") for row in arr_f32]
+    else:
+        return arr.tolist()
+
+
 def _format_embedding(
     vector: List[float], dimensions: Optional[int], encoding_format: str
 ) -> Union[List[float], str]:
-    # Matryoshka dimensionality reduction
-    if dimensions is not None and dimensions > 0 and dimensions < len(vector):
-        vector = vector[:dimensions]
-        # L2 re-normalization
-        norm = math.sqrt(sum(x * x for x in vector))
-        if norm > 0:
-            vector = [x / norm for x in vector]
-
-    if encoding_format == "base64":
-        # Pack list of floats as float32 little-endian binary (<f) and base64 encode
-        packed = struct.pack(f"<{len(vector)}f", *vector)
-        return base64.b64encode(packed).decode("utf-8")
-
-    return vector
+    return _format_embeddings_batch([vector], dimensions, encoding_format)[0]
 
 
 class EmbeddingService(BaseEmbeddingService):
@@ -353,14 +386,15 @@ class EmbeddingService(BaseEmbeddingService):
                 {"input": processed_inputs, "model": request.model},
             )
             # Apply dimensions and encoding_format post-processing to TEI response
-            processed_data = []
-            for item in data.get("data", []):
-                raw_emb = item["embedding"]
-                idx = item["index"]
-                formatted_emb = _format_embedding(
-                    raw_emb, request.dimensions, request.encoding_format
-                )
-                processed_data.append(EmbeddingData(embedding=formatted_emb, index=idx))
+            tei_items = data.get("data", [])
+            raw_embs = [item["embedding"] for item in tei_items]
+            formatted_embs = _format_embeddings_batch(
+                raw_embs, request.dimensions, request.encoding_format
+            )
+            processed_data = [
+                EmbeddingData(embedding=formatted_emb, index=item["index"])
+                for formatted_emb, item in zip(formatted_embs, tei_items)
+            ]
             data["data"] = [d.model_dump() for d in processed_data]
             return EmbeddingResponse(**data)
 
@@ -449,14 +483,12 @@ class EmbeddingService(BaseEmbeddingService):
                 return model.encode_multimodal(processed_items, **kwargs)
 
             embeddings = await anyio.to_thread.run_sync(run_mm_inference)
+            formatted_embs = _format_embeddings_batch(
+                embeddings, request.dimensions, request.encoding_format
+            )
             response_data = [
-                EmbeddingData(
-                    embedding=_format_embedding(
-                        emb, request.dimensions, request.encoding_format
-                    ),
-                    index=i,
-                )
-                for i, emb in enumerate(embeddings)
+                EmbeddingData(embedding=emb, index=i)
+                for i, emb in enumerate(formatted_embs)
             ]
             usage = Usage(prompt_tokens=0, total_tokens=0)
             return EmbeddingResponse(
@@ -483,14 +515,12 @@ class EmbeddingService(BaseEmbeddingService):
 
         vectors = await anyio.to_thread.run_sync(_run_inference)
 
+        formatted_embs = _format_embeddings_batch(
+            vectors, request.dimensions, request.encoding_format
+        )
         response_data = [
-            EmbeddingData(
-                embedding=_format_embedding(
-                    vector, request.dimensions, request.encoding_format
-                ),
-                index=i,
-            )
-            for i, vector in enumerate(vectors.tolist())
+            EmbeddingData(embedding=emb, index=i)
+            for i, emb in enumerate(formatted_embs)
         ]
 
         return EmbeddingResponse(data=response_data, model=request.model, usage=usage)
