@@ -1,7 +1,5 @@
 import asyncio
 import base64
-import math
-import struct
 from typing import Any, List, Tuple, Optional, Union
 import anyio
 import httpx
