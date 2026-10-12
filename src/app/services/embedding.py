@@ -306,71 +306,24 @@ class EmbeddingService(BaseEmbeddingService):
         self.proxy_to_tei_func = proxy_to_tei_func
         self.model_loader = model_loader
 
-    async def create_embeddings(self, request: EmbeddingRequest) -> EmbeddingResponse:
-        import app.main as main_mod
+    def _validate_modalities_and_capabilities(
+        self,
+        model: Any,
+        request: EmbeddingRequest,
+        has_image: bool,
+        has_audio: bool,
+        has_video: bool,
+        main_mod: Any,
+    ) -> None:
+        """Validate input modalities against model capabilities and server configurations."""
+        import app.config as config_mod
 
-        if request.model not in EMBEDDING_MODELS:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Model '{request.model}' not found for embeddings.",
-            )
-
-        raw_items = _normalize_raw_inputs(request.input)
-
-        try:
-            async with httpx.AsyncClient() as client:
-                tasks = [parse_input_item(item, client) for item in raw_items]
-                parsed_items: List[
-                    Tuple[Optional[str], Optional[Image.Image]]
-                ] = await asyncio.gather(*tasks)
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
-
-        has_image = any(p.image is not None for p in parsed_items)
-        has_audio = any(p.audio is not None for p in parsed_items)
-        has_video = any(p.video is not None for p in parsed_items)
-
-        # TEI Proxy check (dynamically read EMBEDDING_TEI_URL from main_mod)
-        tei_url = getattr(main_mod, "EMBEDDING_TEI_URL", None)
-        proxy_func = getattr(main_mod, "_proxy_to_tei", self.proxy_to_tei_func)
-
-        if tei_url and not (has_image or has_audio or has_video) and proxy_func:
-            inputs = [item.text for item in parsed_items if item.text is not None]
-            prefix = _determine_ruri_prefix(request)
-            processed_inputs = _apply_prefix(inputs, prefix)
-            data = await proxy_func(
-                tei_url,
-                "/v1/embeddings",
-                {"input": processed_inputs, "model": request.model},
-            )
-            # Apply dimensions and encoding_format post-processing to TEI response
-            processed_data = []
-            for item in data.get("data", []):
-                raw_emb = item["embedding"]
-                idx = item["index"]
-                formatted_emb = _format_embedding(
-                    raw_emb, request.dimensions, request.encoding_format
-                )
-                processed_data.append(EmbeddingData(embedding=formatted_emb, index=idx))
-            data["data"] = [d.model_dump() for d in processed_data]
-            return EmbeddingResponse(**data)
-
-        model = get_validated_model(
-            request.model,
-            EMBEDDING_MODELS,
-            "embedding",
-            loader=self.model_loader,
-        )
-
-        # Guard 1: Audio capability & server flag validation
         if has_audio:
             if not getattr(model, "supports_audio", False):
                 raise HTTPException(
                     status_code=400,
                     detail=f"モデル '{request.model}' は音声入力をサポートしていません。google/embeddinggemma-2 などの対応モデルを指定してください。",
                 )
-            import app.config as config_mod
-
             active_enable_audio = getattr(
                 main_mod,
                 "ENABLE_AUDIO_EMBEDDING",
@@ -382,15 +335,12 @@ class EmbeddingService(BaseEmbeddingService):
                     detail="Audio embedding is disabled on this server. ENABLE_AUDIO_EMBEDDING=true を設定してください。",
                 )
 
-        # Guard 2: Video capability & server flag validation
         if has_video:
             if not getattr(model, "supports_video", False):
                 raise HTTPException(
                     status_code=400,
                     detail=f"モデル '{request.model}' は動画入力をサポートしていません。google/embeddinggemma-2 などの対応モデルを指定してください。",
                 )
-            import app.config as config_mod
-
             active_enable_video = getattr(
                 main_mod,
                 "ENABLE_VIDEO_EMBEDDING",
@@ -402,58 +352,92 @@ class EmbeddingService(BaseEmbeddingService):
                     detail="Video embedding is disabled on this server. ENABLE_VIDEO_EMBEDDING=true を設定してください。",
                 )
 
-        # Guard 3: Image capability validation
         if has_image and not getattr(model, "supports_multimodal", False):
             raise HTTPException(
                 status_code=400,
                 detail=f"モデル '{request.model}' は画像入力をサポートしていません。bge-visualized-m3 などのマルチモーダル対応モデルを指定してください。",
             )
 
-        is_multimodal = (
-            has_image
-            or has_audio
-            or has_video
-            or getattr(model, "supports_multimodal", False) is True
+    async def _process_tei_proxy(
+        self,
+        request: EmbeddingRequest,
+        parsed_items: List[ParsedMediaItem],
+        tei_url: str,
+        proxy_func: Any,
+    ) -> EmbeddingResponse:
+        """Forward embedding request to TEI proxy and format response."""
+        inputs = [item.text for item in parsed_items if item.text is not None]
+        prefix = _determine_ruri_prefix(request)
+        processed_inputs = _apply_prefix(inputs, prefix)
+        data = await proxy_func(
+            tei_url,
+            "/v1/embeddings",
+            {"input": processed_inputs, "model": request.model},
+        )
+        processed_data = []
+        for item in data.get("data", []):
+            raw_emb = item["embedding"]
+            idx = item["index"]
+            formatted_emb = _format_embedding(
+                raw_emb, request.dimensions, request.encoding_format
+            )
+            processed_data.append(EmbeddingData(embedding=formatted_emb, index=idx))
+        data["data"] = [d.model_dump() for d in processed_data]
+        return EmbeddingResponse(**data)
+
+    async def _process_multimodal_embeddings(
+        self,
+        model: Any,
+        request: EmbeddingRequest,
+        parsed_items: List[ParsedMediaItem],
+        has_image: bool,
+        has_audio: bool,
+        has_video: bool,
+    ) -> EmbeddingResponse:
+        """Process multimodal embedding request."""
+        prefix = _determine_ruri_prefix(request)
+        processed_items = []
+        for item in parsed_items:
+            clean_text = (
+                item.text.strip()
+                if isinstance(item.text, str) and item.text.strip()
+                else None
+            )
+            if clean_text:
+                clean_text = _apply_prefix([clean_text], prefix)[0]
+            processed_items.append((clean_text, item.image, item.audio, item.video))
+
+        kwargs = {}
+        if "embeddinggemma-2" in request.model.lower():
+            prompt = _determine_gemma2_prompt(request)
+            if prompt and not (has_image or has_audio or has_video):
+                kwargs["prompt_name"] = prompt
+
+        def run_mm_inference():
+            return model.encode_multimodal(processed_items, **kwargs)
+
+        embeddings = await anyio.to_thread.run_sync(run_mm_inference)
+        response_data = [
+            EmbeddingData(
+                embedding=_format_embedding(
+                    emb, request.dimensions, request.encoding_format
+                ),
+                index=i,
+            )
+            for i, emb in enumerate(embeddings)
+        ]
+        usage = Usage(prompt_tokens=0, total_tokens=0)
+        return EmbeddingResponse(
+            data=response_data, model=request.model, usage=usage
         )
 
-        if is_multimodal:
-            prefix = _determine_ruri_prefix(request)
-            processed_items = []
-            for item in parsed_items:
-                clean_text = (
-                    item.text.strip()
-                    if isinstance(item.text, str) and item.text.strip()
-                    else None
-                )
-                if clean_text:
-                    clean_text = _apply_prefix([clean_text], prefix)[0]
-                processed_items.append((clean_text, item.image, item.audio, item.video))
-
-            # Gemma 2 explicit prompt handling
-            kwargs = {}
-            if "embeddinggemma-2" in request.model.lower():
-                prompt = _determine_gemma2_prompt(request)
-                if prompt and not (has_image or has_audio or has_video):
-                    kwargs["prompt_name"] = prompt
-
-            def run_mm_inference():
-                return model.encode_multimodal(processed_items, **kwargs)
-
-            embeddings = await anyio.to_thread.run_sync(run_mm_inference)
-            response_data = [
-                EmbeddingData(
-                    embedding=_format_embedding(
-                        emb, request.dimensions, request.encoding_format
-                    ),
-                    index=i,
-                )
-                for i, emb in enumerate(embeddings)
-            ]
-            usage = Usage(prompt_tokens=0, total_tokens=0)
-            return EmbeddingResponse(
-                data=response_data, model=request.model, usage=usage
-            )
-
+    async def _process_text_embeddings(
+        self,
+        model: Any,
+        request: EmbeddingRequest,
+        parsed_items: List[ParsedMediaItem],
+    ) -> EmbeddingResponse:
+        """Process standard text embedding request."""
         inputs = [text if text is not None else "" for text, _ in parsed_items]
         prefix = _determine_ruri_prefix(request)
         processed_inputs = _apply_prefix(inputs, prefix)
@@ -485,3 +469,59 @@ class EmbeddingService(BaseEmbeddingService):
         ]
 
         return EmbeddingResponse(data=response_data, model=request.model, usage=usage)
+
+    async def create_embeddings(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        import app.main as main_mod
+
+        if request.model not in EMBEDDING_MODELS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Model '{request.model}' not found for embeddings.",
+            )
+
+        raw_items = _normalize_raw_inputs(request.input)
+
+        try:
+            async with httpx.AsyncClient() as client:
+                tasks = [parse_input_item(item, client) for item in raw_items]
+                parsed_items: List[ParsedMediaItem] = await asyncio.gather(*tasks)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+        has_image = any(p.image is not None for p in parsed_items)
+        has_audio = any(p.audio is not None for p in parsed_items)
+        has_video = any(p.video is not None for p in parsed_items)
+
+        # TEI Proxy check (dynamically read EMBEDDING_TEI_URL from main_mod)
+        tei_url = getattr(main_mod, "EMBEDDING_TEI_URL", None)
+        proxy_func = getattr(main_mod, "_proxy_to_tei", self.proxy_to_tei_func)
+
+        if tei_url and not (has_image or has_audio or has_video) and proxy_func:
+            return await self._process_tei_proxy(
+                request, parsed_items, tei_url, proxy_func
+            )
+
+        model = get_validated_model(
+            request.model,
+            EMBEDDING_MODELS,
+            "embedding",
+            loader=self.model_loader,
+        )
+
+        self._validate_modalities_and_capabilities(
+            model, request, has_image, has_audio, has_video, main_mod
+        )
+
+        is_multimodal = (
+            has_image
+            or has_audio
+            or has_video
+            or getattr(model, "supports_multimodal", False) is True
+        )
+
+        if is_multimodal:
+            return await self._process_multimodal_embeddings(
+                model, request, parsed_items, has_image, has_audio, has_video
+            )
+
+        return await self._process_text_embeddings(model, request, parsed_items)
