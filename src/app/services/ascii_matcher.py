@@ -90,14 +90,21 @@ def extract_ascii_identifiers(
     return identifiers
 
 
-def calculate_containment(token: str, doc_lower: str, doc_3grams: set[str]) -> float:
+def calculate_containment(
+    token: str,
+    doc_lower: str,
+    doc_3grams: set[str],
+    token_3grams: set[str] | None = None,
+) -> float:
     """
     Calculates the 3-gram containment ratio of a token in a document.
     """
     if len(token) < 3:
         return 1.0 if token in doc_lower else 0.0
 
-    token_3grams = {token[i : i + 3] for i in range(len(token) - 2)}
+    if token_3grams is None:
+        token_3grams = {token[i : i + 3] for i in range(len(token) - 2)}
+
     if not token_3grams:
         return 0.0
 
@@ -113,7 +120,12 @@ class AsciiMatcher:
     def extract_identifiers(self, query: str) -> list[str]:
         return extract_ascii_identifiers(query, self.min_token_len, self.stop_words)
 
-    def score_document(self, query_tokens: list[str], document: str) -> float:
+    def score_document(
+        self,
+        query_tokens: list[str],
+        document: str,
+        prepared_tokens: list[tuple[str, set[str] | None]] | None = None,
+    ) -> float:
         """Return average containment ratio (0.0 to 1.0) of query tokens in document."""
         if not query_tokens:
             return 0.0
@@ -122,8 +134,14 @@ class AsciiMatcher:
         doc_3grams = {doc_lower[i : i + 3] for i in range(len(doc_lower) - 2)}
 
         total_score = 0.0
-        for token in query_tokens:
-            total_score += calculate_containment(token, doc_lower, doc_3grams)
+        if prepared_tokens is not None:
+            for token, tok_3grams in prepared_tokens:
+                total_score += calculate_containment(
+                    token, doc_lower, doc_3grams, tok_3grams
+                )
+        else:
+            for token in query_tokens:
+                total_score += calculate_containment(token, doc_lower, doc_3grams)
 
         return total_score / len(query_tokens)
 
@@ -133,4 +151,17 @@ class AsciiMatcher:
         if not query_tokens:
             return [0.0] * len(documents)
 
-        return [self.score_document(query_tokens, doc) for doc in documents]
+        prepared_tokens = [
+            (
+                token,
+                {token[i : i + 3] for i in range(len(token) - 2)}
+                if len(token) >= 3
+                else None,
+            )
+            for token in query_tokens
+        ]
+
+        return [
+            self.score_document(query_tokens, doc, prepared_tokens=prepared_tokens)
+            for doc in documents
+        ]
