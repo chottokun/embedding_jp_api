@@ -12,9 +12,19 @@ from app.services import (
 )
 from app.services.base import get_validated_model
 
+ALLOWED_TEI_PATHS = {"/v1/embeddings", "/rerank", "/predict", "/embed"}
+
 
 async def _proxy_to_tei(tei_url: str, path: str, json_data: dict) -> Any:
     """Helper to send an async POST request to TEI and return the JSON response."""
+    if path not in ALLOWED_TEI_PATHS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid proxy path target: '{path}' is not an allowed endpoint.",
+        )
+
+    target_url = f"{tei_url.rstrip('/')}{path}"
+
     try:
         # Avoid importing app globally to prevent circular imports
         from app.main import app
@@ -24,10 +34,10 @@ async def _proxy_to_tei(tei_url: str, path: str, json_data: dict) -> Any:
             shared_client is not None
             and getattr(shared_client, "is_closed", False) is not True
         ):
-            response = await shared_client.post(f"{tei_url}{path}", json=json_data)
+            response = await shared_client.post(target_url, json=json_data)
         else:
             async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(f"{tei_url}{path}", json=json_data)
+                response = await client.post(target_url, json=json_data)
 
         if response.status_code != 200:
             error_msg = response.text
