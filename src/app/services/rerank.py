@@ -133,18 +133,22 @@ class RerankService(BaseRerankService):
                 request.query, request.documents
             )
 
+            th = (
+                request.threshold
+                if request.threshold is not None
+                else LOGIT_GATE_THRESHOLD
+            )
             results = []
             for i in range(len(request.documents)):
                 delta_z_base = gate_results[i]["logit_margin"]
                 containment = containment_scores[i]
                 delta_z_final = delta_z_base + (beta * containment)
                 score = _sigmoid(delta_z_final)
-                th = (
-                    request.threshold
-                    if request.threshold is not None
-                    else LOGIT_GATE_THRESHOLD
-                )
                 passed = score >= th
+
+                if request.drop_failed and not passed:
+                    continue
+
                 entropy = _binary_entropy(score)
 
                 result_item = {
@@ -158,9 +162,6 @@ class RerankService(BaseRerankService):
                 if request.return_documents:
                     result_item["text"] = request.documents[i]
                 results.append(result_item)
-
-            if request.drop_failed:
-                results = [r for r in results if r["passed"]]
 
             response_data = _sort_and_format_rerank_results(results, request.top_n)
             usage = _calculate_rerank_tokens(model, request.query, request.documents)
