@@ -308,19 +308,18 @@ class VisualizedBGEEmbeddingModel:
     def encode_text(self, texts: list[str]) -> list[list[float]]:
         return self.encode_multimodal([(t, None) for t in texts])
 
-    def encode_multimodal(
-        self, items: list[tuple[Optional[str], Optional[Image.Image]]]
-    ) -> list[list[float]]:
-        text_only_idx = []
-        text_only_texts = []
-
-        image_only_idx = []
-        image_only_images = []
-
-        mm_idx = []
-        mm_texts = []
-        mm_images = []
-
+    def _partition_items(
+        self, items: list[Any]
+    ) -> tuple[dict[str, Any], list[list[float] | None]]:
+        """
+        Partitions input items into text-only, image-only, and multimodal batches.
+        Returns a partition dictionary and pre-initialized results list.
+        """
+        partition = {
+            "text_only": {"idx": [], "texts": []},
+            "image_only": {"idx": [], "images": []},
+            "multimodal": {"idx": [], "texts": [], "images": []},
+        }
         results: list[list[float] | None] = [None] * len(items)
 
         for i, item in enumerate(items):
@@ -329,51 +328,71 @@ class VisualizedBGEEmbeddingModel:
                 image = item[1] if len(item) > 1 else None
             else:
                 text, image = item
+
             if text is not None and image is not None:
-                mm_idx.append(i)
-                mm_texts.append(text)
-                mm_images.append(image)
+                partition["multimodal"]["idx"].append(i)
+                partition["multimodal"]["texts"].append(text)
+                partition["multimodal"]["images"].append(image)
             elif image is not None:
-                image_only_idx.append(i)
-                image_only_images.append(image)
+                partition["image_only"]["idx"].append(i)
+                partition["image_only"]["images"].append(image)
             elif text is not None:
-                text_only_idx.append(i)
-                text_only_texts.append(text)
+                partition["text_only"]["idx"].append(i)
+                partition["text_only"]["texts"].append(text)
             else:
                 results[i] = []
 
-        def preprocess_images(imgs):
-            preprocessed = []
-            for img in imgs:
-                if isinstance(img, str):
-                    pil_img = Image.open(img).convert("RGB")
-                elif isinstance(img, Image.Image):
-                    pil_img = img.convert("RGB")
-                else:
-                    pil_img = Image.open(img).convert("RGB")
-                preprocessed.append(self.model.preprocess_val(pil_img).unsqueeze(0))
-            if preprocessed:
-                return torch.cat(preprocessed, dim=0)
+        return partition, results
+
+    def _preprocess_images(self, images: list[Any]) -> torch.Tensor | None:
+        """
+        Preprocesses a batch of image inputs (PIL Image or file path) into a PyTorch tensor.
+        """
+        if not images:
             return None
 
-        preprocessed_image_only = (
-            preprocess_images(image_only_images) if image_only_images else None
-        )
-        preprocessed_mm = preprocess_images(mm_images) if mm_images else None
+        preprocessed = []
+        for img in images:
+            if isinstance(img, str):
+                pil_img = Image.open(img).convert("RGB")
+            elif isinstance(img, Image.Image):
+                pil_img = img.convert("RGB")
+            else:
+                pil_img = Image.open(img).convert("RGB")
+            preprocessed.append(self.model.preprocess_val(pil_img).unsqueeze(0))
 
-        text_only_tok = None
-        mm_tok = None
+        return torch.cat(preprocessed, dim=0) if preprocessed else None
 
+    def _tokenize_inputs(self, partition: dict[str, Any]) -> dict[str, Any]:
+        """
+        Tokenizes text inputs for text-only and multimodal batches under tokenizer_lock.
+        """
+        tokens = {"text_only": None, "multimodal": None}
         with self.tokenizer_lock:
-            if text_only_texts:
-                text_only_tok = self.model.tokenizer(
-                    text_only_texts, return_tensors="pt", padding=True
+            if partition["text_only"]["texts"]:
+                tokens["text_only"] = self.model.tokenizer(
+                    partition["text_only"]["texts"],
+                    return_tensors="pt",
+                    padding=True,
                 )
-            if mm_texts:
-                mm_tok = self.model.tokenizer(
-                    mm_texts, return_tensors="pt", padding=True
+            if partition["multimodal"]["texts"]:
+                tokens["multimodal"] = self.model.tokenizer(
+                    partition["multimodal"]["texts"],
+                    return_tensors="pt",
+                    padding=True,
                 )
+        return tokens
 
+    def _run_inference(
+        self,
+        partition: dict[str, Any],
+        preprocessed_images: dict[str, torch.Tensor | None],
+        tokens: dict[str, Any],
+        results: list[list[float] | None],
+    ) -> None:
+        """
+        Executes model forward passes under model lock and autocast context, populating results.
+        """
         with self.lock:
             with torch.no_grad():
                 target_dtype = get_torch_dtype()
@@ -393,27 +412,47 @@ class VisualizedBGEEmbeddingModel:
                 )
 
                 with autocast_ctx:
-                    if text_only_tok is not None:
-                        text_out = self.model.encode_text(text_only_tok.to(self.device))
-                        text_out = text_out.cpu().tolist()
-                        for i, idx in enumerate(text_only_idx):
-                            results[idx] = text_out[i]
+                    # Text-only batch
+                    if tokens["text_only"] is not None:
+                        text_out = self.model.encode_text(
+                            tokens["text_only"].to(self.device)
+                        ).cpu().tolist()
+                        for idx, emb in zip(partition["text_only"]["idx"], text_out):
+                            results[idx] = emb
 
-                    if preprocessed_image_only is not None:
+                    # Image-only batch
+                    img_tensor = preprocessed_images["image_only"]
+                    if img_tensor is not None:
                         img_out = self.model.encode_image(
-                            preprocessed_image_only.to(self.device)
-                        )
-                        img_out = img_out.cpu().tolist()
-                        for i, idx in enumerate(image_only_idx):
-                            results[idx] = img_out[i]
+                            img_tensor.to(self.device)
+                        ).cpu().tolist()
+                        for idx, emb in zip(partition["image_only"]["idx"], img_out):
+                            results[idx] = emb
 
-                    if mm_tok is not None and preprocessed_mm is not None:
+                    # Multimodal batch
+                    mm_tok = tokens["multimodal"]
+                    mm_img_tensor = preprocessed_images["multimodal"]
+                    if mm_tok is not None and mm_img_tensor is not None:
                         mm_out = self.model.encode_mm(
-                            preprocessed_mm.to(self.device), mm_tok.to(self.device)
-                        )
-                        mm_out = mm_out.cpu().tolist()
-                        for i, idx in enumerate(mm_idx):
-                            results[idx] = mm_out[i]
+                            mm_img_tensor.to(self.device),
+                            mm_tok.to(self.device),
+                        ).cpu().tolist()
+                        for idx, emb in zip(partition["multimodal"]["idx"], mm_out):
+                            results[idx] = emb
+
+    def encode_multimodal(
+        self, items: list[tuple[Optional[str], Optional[Image.Image]]]
+    ) -> list[list[float]]:
+        partition, results = self._partition_items(items)
+
+        preprocessed_images = {
+            "image_only": self._preprocess_images(partition["image_only"]["images"]),
+            "multimodal": self._preprocess_images(partition["multimodal"]["images"]),
+        }
+
+        tokens = self._tokenize_inputs(partition)
+
+        self._run_inference(partition, preprocessed_images, tokens, results)
 
         return [r if r is not None else [] for r in results]
 

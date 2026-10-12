@@ -156,3 +156,51 @@ def test_get_model_load_failure(mock_st):
     assert "Failed to load" in str(excinfo.value)
     # Ensure it's not in cache if it failed to load
     assert model_name not in _model_cache
+
+
+@patch("app.models.VisualizedBGEEmbeddingModel.__init__", return_value=None)
+def test_visualized_bge_encode_multimodal(mock_init):
+    """Test VisualizedBGEEmbeddingModel.encode_multimodal helper methods and partition logic."""
+    from app.models import VisualizedBGEEmbeddingModel
+    from PIL import Image
+    import torch
+
+    model_obj = VisualizedBGEEmbeddingModel.__new__(VisualizedBGEEmbeddingModel)
+    model_obj.device = "cpu"
+    model_obj.lock = threading.RLock()
+    model_obj.tokenizer_lock = threading.RLock()
+
+    mock_model = MagicMock()
+    model_obj.model = mock_model
+
+    # Mock preprocess_val
+    mock_model.preprocess_val.return_value = torch.zeros((3, 224, 224))
+
+    # Mock tokenizer
+    def fake_tokenizer(texts, return_tensors=None, padding=None):
+        tok = MagicMock()
+        tok.to.return_value = tok
+        return tok
+
+    mock_model.tokenizer = fake_tokenizer
+
+    # Mock encode outputs
+    mock_model.encode_text.return_value = torch.tensor([[0.1, 0.2]])
+    mock_model.encode_image.return_value = torch.tensor([[0.3, 0.4]])
+    mock_model.encode_mm.return_value = torch.tensor([[0.5, 0.6]])
+
+    img = Image.new("RGB", (10, 10))
+    items = [
+        ("Hello text", None),          # idx 0: text only
+        (None, img),                   # idx 1: image only
+        ("Multimodal text", img),      # idx 2: multimodal
+        (None, None),                  # idx 3: empty item
+    ]
+
+    results = model_obj.encode_multimodal(items)
+
+    assert len(results) == 4
+    assert pytest.approx(results[0], rel=1e-5) == [0.1, 0.2]
+    assert pytest.approx(results[1], rel=1e-5) == [0.3, 0.4]
+    assert pytest.approx(results[2], rel=1e-5) == [0.5, 0.6]
+    assert results[3] == []
