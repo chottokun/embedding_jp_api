@@ -90,14 +90,20 @@ def extract_ascii_identifiers(
     return identifiers
 
 
-def calculate_containment(token: str, doc_lower: str, doc_3grams: set[str]) -> float:
+def calculate_containment(
+    token: str,
+    doc_lower: str,
+    doc_3grams: set[str],
+    token_3grams: set[str] | None = None,
+) -> float:
     """
     Calculates the 3-gram containment ratio of a token in a document.
     """
     if len(token) < 3:
         return 1.0 if token in doc_lower else 0.0
 
-    token_3grams = {token[i : i + 3] for i in range(len(token) - 2)}
+    if token_3grams is None:
+        token_3grams = {token[i : i + 3] for i in range(len(token) - 2)}
     if not token_3grams:
         return 0.0
 
@@ -113,7 +119,12 @@ class AsciiMatcher:
     def extract_identifiers(self, query: str) -> list[str]:
         return extract_ascii_identifiers(query, self.min_token_len, self.stop_words)
 
-    def score_document(self, query_tokens: list[str], document: str) -> float:
+    def score_document(
+        self,
+        query_tokens: list[str],
+        document: str,
+        token_3grams_list: list[set[str]] | None = None,
+    ) -> float:
         """Return average containment ratio (0.0 to 1.0) of query tokens in document."""
         if not query_tokens:
             return 0.0
@@ -122,15 +133,31 @@ class AsciiMatcher:
         doc_3grams = {doc_lower[i : i + 3] for i in range(len(doc_lower) - 2)}
 
         total_score = 0.0
-        for token in query_tokens:
-            total_score += calculate_containment(token, doc_lower, doc_3grams)
+        if token_3grams_list is not None:
+            for token, t_3grams in zip(query_tokens, token_3grams_list):
+                total_score += calculate_containment(
+                    token, doc_lower, doc_3grams, t_3grams
+                )
+        else:
+            for token in query_tokens:
+                total_score += calculate_containment(token, doc_lower, doc_3grams)
 
         return total_score / len(query_tokens)
 
     def score_documents(self, query: str, documents: list[str]) -> list[float]:
-        """Extract query tokens once, and calculate containment scores for all documents."""
+        """Extract query tokens once, precompute query token 3-grams, and calculate containment scores for all documents."""
         query_tokens = self.extract_identifiers(query)
         if not query_tokens:
             return [0.0] * len(documents)
 
-        return [self.score_document(query_tokens, doc) for doc in documents]
+        token_3grams_list = [
+            {token[i : i + 3] for i in range(len(token) - 2)}
+            if len(token) >= 3
+            else set()
+            for token in query_tokens
+        ]
+
+        return [
+            self.score_document(query_tokens, doc, token_3grams_list)
+            for doc in documents
+        ]

@@ -326,9 +326,18 @@ class EmbeddingService(BaseEmbeddingService):
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
-        has_image = any(p.image is not None for p in parsed_items)
-        has_audio = any(p.audio is not None for p in parsed_items)
-        has_video = any(p.video is not None for p in parsed_items)
+        has_image = False
+        has_audio = False
+        has_video = False
+        for p in parsed_items:
+            if p.image is not None:
+                has_image = True
+            if p.audio is not None:
+                has_audio = True
+            if p.video is not None:
+                has_video = True
+            if has_image and has_audio and has_video:
+                break
 
         # TEI Proxy check (dynamically read EMBEDDING_TEI_URL from main_mod)
         tei_url = getattr(main_mod, "EMBEDDING_TEI_URL", None)
