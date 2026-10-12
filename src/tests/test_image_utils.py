@@ -19,7 +19,9 @@ from app.image_utils import (
 )
 
 
-def generate_sample_image_bytes(format="PNG", size=(50, 50), color=(255, 0, 0)) -> bytes:
+def generate_sample_image_bytes(
+    format="PNG", size=(50, 50), color=(255, 0, 0)
+) -> bytes:
     """Helper to generate valid image bytes."""
     img = Image.new("RGB", size, color)
     buf = io.BytesIO()
@@ -41,9 +43,7 @@ async def _async_iter(items):
 @pytest.mark.anyio
 async def test_resolve_safe_url_async_valid_public_ip():
     """Test public URL resolution returns safe=True and resolved IP."""
-    addr_info = [
-        (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))
-    ]
+    addr_info = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
     with patch("socket.getaddrinfo", return_value=addr_info):
         is_safe, ip = await resolve_safe_url_async("https://example.com/image.png")
         assert is_safe is True
@@ -147,7 +147,9 @@ async def test_safe_network_backend():
 
 def test_decode_and_convert_image_valid():
     """Test _decode_and_convert_image decodes valid image bytes to RGB PIL Image."""
-    png_bytes = generate_sample_image_bytes(format="PNG", size=(20, 20), color=(0, 255, 0))
+    png_bytes = generate_sample_image_bytes(
+        format="PNG", size=(20, 20), color=(0, 255, 0)
+    )
     image = _decode_and_convert_image(png_bytes)
     assert isinstance(image, Image.Image)
     assert image.mode == "RGB"
@@ -188,7 +190,9 @@ async def test_load_image_from_source_base64_exceeds_size():
     data_url = f"data:image/png;base64,{b64_str}"
 
     async with httpx.AsyncClient() as client:
-        with pytest.raises(ValueError, match="画像サイズが上限\\(15MB\\)を超えています"):
+        with pytest.raises(
+            ValueError, match="画像サイズが上限\\(15MB\\)を超えています"
+        ):
             await load_image_from_source(data_url, client)
 
 
@@ -264,7 +268,9 @@ async def test_load_image_from_source_url_success_real_async_client():
     ):
         with patch("httpx.AsyncClient.stream", return_value=mock_stream_ctx):
             real_client = httpx.AsyncClient()
-            img = await load_image_from_source("https://example.com/test.png", real_client)
+            img = await load_image_from_source(
+                "https://example.com/test.png", real_client
+            )
             assert isinstance(img, Image.Image)
             assert img.size == (25, 25)
 
@@ -286,11 +292,16 @@ async def test_load_image_from_source_url_exceeds_max_file_size():
     mock_client = MagicMock()
     mock_client.stream.return_value = mock_stream_ctx
 
-    with patch(
-        "app.image_utils.resolve_safe_url_async",
-        return_value=(True, "93.184.216.34"),
-    ), patch("app.image_utils.MAX_FILE_SIZE", 15):
-        with pytest.raises(ValueError, match="画像サイズが上限\\(15MB\\)を超えています"):
+    with (
+        patch(
+            "app.image_utils.resolve_safe_url_async",
+            return_value=(True, "93.184.216.34"),
+        ),
+        patch("app.image_utils.MAX_FILE_SIZE", 15),
+    ):
+        with pytest.raises(
+            ValueError, match="画像サイズが上限\\(15MB\\)を超えています"
+        ):
             await load_image_from_source("https://example.com/large.png", mock_client)
 
 
@@ -324,7 +335,9 @@ async def test_load_image_from_source_url_redirect_success():
         "app.image_utils.resolve_safe_url_async",
         return_value=(True, "93.184.216.34"),
     ):
-        img = await load_image_from_source("https://example.com/initial.png", mock_client)
+        img = await load_image_from_source(
+            "https://example.com/initial.png", mock_client
+        )
         assert isinstance(img, Image.Image)
         assert img.size == (15, 15)
         assert mock_client.stream.call_count == 2
@@ -350,7 +363,9 @@ async def test_load_image_from_source_url_redirect_missing_location():
         with pytest.raises(
             ValueError, match="リダイレクト先Locationヘッダーが指定されていません"
         ):
-            await load_image_from_source("https://example.com/bad-redirect.png", mock_client)
+            await load_image_from_source(
+                "https://example.com/bad-redirect.png", mock_client
+            )
 
 
 @pytest.mark.anyio
@@ -371,9 +386,7 @@ async def test_load_image_from_source_url_max_redirects_exceeded():
         "app.image_utils.resolve_safe_url_async",
         return_value=(True, "93.184.216.34"),
     ):
-        with pytest.raises(
-            ValueError, match="リダイレクト回数が上限を超えました"
-        ):
+        with pytest.raises(ValueError, match="リダイレクト回数が上限を超えました"):
             await load_image_from_source("https://example.com/loop.png", mock_client)
 
     # MAX_REDIRECTS + 1 = 4 calls total
