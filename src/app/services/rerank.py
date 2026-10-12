@@ -6,6 +6,7 @@ from .base import BaseRerankService, get_validated_model
 from ..schemas import RerankRequest, RerankResponse, RerankData, Usage
 from ..config import (
     RERANK_MODELS,
+    RERANK_TEI_URL,
     LOGIT_GATE_MODELS,
     LOGIT_GATE_ASCII_MIN_TOKEN_LEN,
     LOGIT_GATE_ASCII_BOOST_WEIGHT,
@@ -82,7 +83,7 @@ class RerankService(BaseRerankService):
                 detail=f"Model '{request.model}' not found for reranks.",
             )
 
-        tei_url = getattr(main_mod, "RERANK_TEI_URL", None)
+        tei_url = getattr(main_mod, "RERANK_TEI_URL", RERANK_TEI_URL)
         proxy_func = getattr(main_mod, "_proxy_to_tei", self.proxy_to_tei_func)
 
         if tei_url and proxy_func:
