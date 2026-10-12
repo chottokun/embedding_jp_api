@@ -25,7 +25,7 @@
 - **O(N) 検索の影響**: キーの数が膨大でない限り（通常数十〜数百程度）、`for`ループと `secrets.compare_digest` による線形検索 O(N) でもパフォーマンスに致命的な影響は与えません。ハッシュマップ（O(1)）での検索はタイミング攻撃のリスクがあるため避けます。
 
 ### 後方互換性とテスト
-- 既存の `src/tests/test_auth.py` で定義されているすべてのテストケース（タイミング攻撃の検証、未設定時のパススルー、複数キーの検証など）がパスするよう、振る舞いを完全に維持します。
+- 既存の `src/tests/test_auth.py` で定義されているすべてのテストケース（タイミング攻撃の検証、未設定時のパススルー、複数キーの検証など）がパスするよう、振る舞いを維持します。
 
 ## 4. FastAPI Dependency Injection パターン
 
@@ -49,7 +49,7 @@ async def unload_models(...):
 
 ## 5. PoC (Proof of Concept) コード例
 
-以下は `src/app/dependencies/auth.py` の完全な設計プロトタイプです。
+以下は `src/app/dependencies/auth.py` の設計プロトタイプです。
 
 ```python
 import secrets

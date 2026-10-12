@@ -1,6 +1,6 @@
 ---
 type: Concept
-title: 完全オフライン（エアギャップ）運用ガイド
+title: オフライン（エアギャップ）運用ガイド
 description: モデルの事前ダウンロード、HF_HUB_OFFLINE 検証、.env / config.toml による外部通信遮断
 status: stable
 generated:
@@ -20,7 +20,7 @@ sources:
     title: Environment Variable Example Template
 ---
 
-# 完全オフライン（エアギャップ）運用ガイド
+# オフライン（エアギャップ）運用ガイド
 
 ## 1. 概要
 
@@ -51,7 +51,7 @@ API_KEY=your-secure-api-key
 PORT=8000
 ```
 
-`OFFLINE_MODE=true` を指定すると、サーバー起動時に以下の環境変数が自動的に設定され、Hugging Face Hub への外部アクセスが完全に遮断されます。
+`OFFLINE_MODE=true` を指定すると、サーバー起動時に以下の環境変数が自動的に設定され、Hugging Face Hub への外部アクセスが遮断されます。
 - `HF_HUB_OFFLINE=1`
 - `TRANSFORMERS_OFFLINE=1`
 - `HF_DATASETS_OFFLINE=1`
