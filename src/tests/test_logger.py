@@ -30,3 +30,34 @@ def test_x_request_id_passed():
         assert response.status_code == 200
         assert response.headers["X-Request-ID"] == test_id
         mock_logger.assert_called_once()
+
+
+def test_json_formatter_redacts_exception_pii():
+    import json
+    import logging
+    import sys
+    from app.middleware.logging import JsonFormatter
+
+    formatter = JsonFormatter()
+
+    try:
+        raise ValueError("Error with sensitive email user@example.com")
+    except ValueError:
+        exc_info = sys.exc_info()
+
+    record = logging.LogRecord(
+        name="test_logger",
+        level=logging.ERROR,
+        pathname="test.py",
+        lineno=10,
+        msg="An error occurred",
+        args=(),
+        exc_info=exc_info,
+    )
+
+    formatted_json = formatter.format(record)
+    log_data = json.loads(formatted_json)
+
+    assert "exception" in log_data
+    assert "user@example.com" not in log_data["exception"]
+    assert "[REDACTED]" in log_data["exception"]
