@@ -2,8 +2,6 @@ from typing import Any
 import httpx
 from fastapi import HTTPException
 
-ALLOWED_TEI_PATHS = {"/v1/embeddings", "/rerank", "/predict", "/embed"}
-
 from app.config import EMBEDDING_MODELS, RERANK_MODELS
 from app.models import get_model
 from app.services import (
@@ -13,6 +11,8 @@ from app.services import (
     RerankService,
 )
 from app.services.base import get_validated_model
+
+ALLOWED_TEI_PATHS = {"/v1/embeddings", "/rerank", "/predict", "/embed"}
 
 
 async def _proxy_to_tei(tei_url: str, path: str, json_data: dict) -> Any:
