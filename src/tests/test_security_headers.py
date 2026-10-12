@@ -49,6 +49,12 @@ def test_security_headers_on_500_exception():
     assert headers.get("X-Content-Type-Options") == "nosniff"
     assert headers.get("X-Frame-Options") == "DENY"
     assert headers.get("X-XSS-Protection") == "1; mode=block"
-    assert headers.get("Strict-Transport-Security") == "max-age=31536000; includeSubDomains"
+    assert (
+        headers.get("Strict-Transport-Security")
+        == "max-age=31536000; includeSubDomains"
+    )
     assert headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
-    assert headers.get("Content-Security-Policy") == "default-src 'self'; frame-ancestors 'none';"
+    assert (
+        headers.get("Content-Security-Policy")
+        == "default-src 'self'; frame-ancestors 'none';"
+    )

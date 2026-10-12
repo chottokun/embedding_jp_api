@@ -351,9 +351,9 @@ class VisualizedBGEEmbeddingModel:
                     pil_img = img.convert("RGB")
                 else:
                     pil_img = Image.open(img).convert("RGB")
-                preprocessed.append(self.model.preprocess_val(pil_img).unsqueeze(0))
+                preprocessed.append(self.model.preprocess_val(pil_img))
             if preprocessed:
-                return torch.cat(preprocessed, dim=0)
+                return torch.stack(preprocessed, dim=0)
             return None
 
         preprocessed_image_only = (

@@ -44,7 +44,7 @@ class JsonFormatter(logging.Formatter):
             log_data["latency"] = record.latency
 
         if record.exc_info:
-            log_data["exception"] = self.formatException(record.exc_info)
+            log_data["exception"] = redact_pii(self.formatException(record.exc_info))
 
         return json.dumps(log_data)
 

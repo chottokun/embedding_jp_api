@@ -25,7 +25,6 @@ from .config import (
     PRELOAD_MODELS,
     RATE_LIMIT_PER_MINUTE,
     RERANK_MODELS,
-    RERANK_TEI_URL,
     SHUTDOWN_DRAIN_TIMEOUT_SECONDS,
 )
 from .concurrency import AsyncThreadSemaphore, inference_semaphore
@@ -211,7 +210,6 @@ __all__ = [
     "EMBEDDING_MODELS",
     "RERANK_MODELS",
     "EMBEDDING_TEI_URL",
-    "RERANK_TEI_URL",
     "RATE_LIMIT_PER_MINUTE",
     "MAX_CONCURRENT_INFERENCES",
     "INFERENCE_SEMAPHORE_TIMEOUT_SECONDS",

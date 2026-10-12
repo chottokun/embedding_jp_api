@@ -6,6 +6,7 @@ from .base import BaseRerankService, get_validated_model
 from ..schemas import RerankRequest, RerankResponse, RerankData, Usage
 from ..config import (
     RERANK_MODELS,
+    RERANK_TEI_URL,
     LOGIT_GATE_MODELS,
     LOGIT_GATE_ASCII_MIN_TOKEN_LEN,
     LOGIT_GATE_ASCII_BOOST_WEIGHT,
@@ -82,7 +83,7 @@ class RerankService(BaseRerankService):
                 detail=f"Model '{request.model}' not found for reranks.",
             )
 
-        tei_url = getattr(main_mod, "RERANK_TEI_URL", None)
+        tei_url = getattr(main_mod, "RERANK_TEI_URL", RERANK_TEI_URL)
         proxy_func = getattr(main_mod, "_proxy_to_tei", self.proxy_to_tei_func)
 
         if tei_url and proxy_func:
@@ -133,18 +134,22 @@ class RerankService(BaseRerankService):
                 request.query, request.documents
             )
 
+            th = (
+                request.threshold
+                if request.threshold is not None
+                else LOGIT_GATE_THRESHOLD
+            )
             results = []
             for i in range(len(request.documents)):
                 delta_z_base = gate_results[i]["logit_margin"]
                 containment = containment_scores[i]
                 delta_z_final = delta_z_base + (beta * containment)
                 score = _sigmoid(delta_z_final)
-                th = (
-                    request.threshold
-                    if request.threshold is not None
-                    else LOGIT_GATE_THRESHOLD
-                )
                 passed = score >= th
+
+                if request.drop_failed and not passed:
+                    continue
+
                 entropy = _binary_entropy(score)
 
                 result_item = {
@@ -158,9 +163,6 @@ class RerankService(BaseRerankService):
                 if request.return_documents:
                     result_item["text"] = request.documents[i]
                 results.append(result_item)
-
-            if request.drop_failed:
-                results = [r for r in results if r["passed"]]
 
             response_data = _sort_and_format_rerank_results(results, request.top_n)
             usage = _calculate_rerank_tokens(model, request.query, request.documents)
