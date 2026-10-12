@@ -68,7 +68,7 @@ def test_tei_embeddings_proxy_failure():
 def test_tei_rerank_proxy_success():
     """Verify that when RERANK_TEI_URL is set, rerank request is proxied to TEI."""
     with (
-        patch("app.main.RERANK_TEI_URL", "http://tei-rerank"),
+        patch("app.services.rerank.RERANK_TEI_URL", "http://tei-rerank"),
         patch("app.main.API_KEY", None),
         patch("app.main._proxy_to_tei", new_callable=AsyncMock) as mock_proxy,
     ):
@@ -105,7 +105,7 @@ def test_tei_rerank_proxy_success():
 def test_tei_rerank_proxy_failure():
     """Verify that Rerank proxy failure is handled."""
     with (
-        patch("app.main.RERANK_TEI_URL", "http://tei-rerank"),
+        patch("app.services.rerank.RERANK_TEI_URL", "http://tei-rerank"),
         patch("app.main.API_KEY", None),
         patch("app.main._proxy_to_tei", new_callable=AsyncMock) as mock_proxy,
     ):

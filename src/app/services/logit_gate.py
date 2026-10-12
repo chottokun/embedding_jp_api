@@ -128,14 +128,15 @@ class LogitGateService:
                     outputs = self.model(**inputs)
                     next_token_logits = outputs.logits[:, -1, :]
 
-            for j, logits in enumerate(next_token_logits):
-                pos_logits = logits[self.pos_token_ids]
-                neg_logits = logits[self.neg_token_ids]
+            pos_logits = next_token_logits[:, self.pos_token_ids]
+            neg_logits = next_token_logits[:, self.neg_token_ids]
 
-                z_pos = torch.logsumexp(pos_logits, dim=-1).item()
-                z_neg = torch.logsumexp(neg_logits, dim=-1).item()
+            z_pos = torch.logsumexp(pos_logits, dim=-1)
+            z_neg = torch.logsumexp(neg_logits, dim=-1)
 
-                delta_z = z_pos - z_neg - self.baseline_margin
+            delta_z_list = (z_pos - z_neg - self.baseline_margin).tolist()
+
+            for j, delta_z in enumerate(delta_z_list):
                 p_sufficient = _sigmoid(delta_z)
 
                 results.append(
