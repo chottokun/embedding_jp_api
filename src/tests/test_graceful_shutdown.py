@@ -56,6 +56,25 @@ async def test_lifespan_drains_active_requests():
 
 
 @pytest.mark.anyio
+async def test_lifespan_preload_failure_handled():
+    def failing_loader(model_name: str):
+        raise RuntimeError(f"Failed to load {model_name}")
+
+    try:
+        with (
+            patch("app.main.PRELOAD_MODELS", ["failing-model"]),
+            patch("app.main.get_model", side_effect=failing_loader),
+        ):
+            # Lifespan should not raise exception even if preloading fails
+            async with main_module.lifespan(app):
+                pass
+    finally:
+        main_module.is_shutting_down = False
+        if hasattr(app.state, "tei_client"):
+            delattr(app.state, "tei_client")
+
+
+@pytest.mark.anyio
 async def test_lifespan_preloads_configured_models():
     preloaded = []
 
