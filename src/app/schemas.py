@@ -3,7 +3,7 @@
 from pydantic import BaseModel, Field, ConfigDict, StringConstraints
 from typing import Union, Optional, Annotated, Literal, Any
 
-from .config import MAX_INPUT_LENGTH, MAX_INPUT_ITEMS
+from .config import MAX_INPUT_LENGTH, MAX_INPUT_ITEMS, LOGIT_GATE_MODELS
 
 # --- Security Types ---
 LimitedString = Annotated[
@@ -532,6 +532,188 @@ class UnloadResponse(BaseModel):
     remaining_memory: int = Field(
         description="The amount of memory remaining after unloading in bytes.",
         examples=[1024000],
+    )
+
+
+# --- For /v1/decisions ---
+class DecisionInputContent(BaseModel):
+    """Schema for a content item in a decisions request message."""
+
+    type: str = Field(
+        description="Type of input content, e.g., 'input_text' or 'input_image'.",
+        examples=["input_text"],
+    )
+    text: Optional[LimitedString] = Field(
+        None,
+        description="Text content if type is 'input_text'.",
+        examples=["テストテキスト"],
+    )
+    image_url: Optional[dict[str, str]] = Field(
+        None,
+        description="Image URL configuration if type is 'input_image'.",
+    )
+
+
+class DecisionInputMessage(BaseModel):
+    """Schema for an input message in a decisions request."""
+
+    role: str = Field(
+        "user", description="Role of the message author.", examples=["user"]
+    )
+    content: Annotated[
+        list[DecisionInputContent],
+        Field(
+            min_length=1,
+            max_length=MAX_INPUT_ITEMS,
+            description="List of input content items.",
+        ),
+    ]
+
+
+class LevelDefinition(BaseModel):
+    """Schema for a score level definition."""
+
+    index: int = Field(description="Level index.", examples=[0])
+    description: LimitedString = Field(
+        description="Level description.", examples=["Low priority"]
+    )
+
+
+class Question(BaseModel):
+    """Schema for a question in a decisions request."""
+
+    type: str = Field(
+        description="Question type: 'predicate', 'choice', 'score', etc.",
+        examples=["predicate"],
+    )
+    name: LimitedString = Field(
+        description="Identifier name for the question.", examples=["is_valid"]
+    )
+    instructions: LimitedString = Field(
+        description="Instructions for answering the question.",
+        examples=["Evaluate if condition is met."],
+    )
+    options: Optional[
+        Annotated[
+            list[LimitedString],
+            Field(
+                max_length=MAX_INPUT_ITEMS,
+                description="List of candidate option strings for choice questions.",
+            ),
+        ]
+    ] = Field(
+        None,
+        examples=[["Option A", "Option B"]],
+    )
+    levels: Optional[
+        Annotated[
+            list[LevelDefinition],
+            Field(
+                max_length=MAX_INPUT_ITEMS,
+                description="List of score level definitions for score questions.",
+            ),
+        ]
+    ] = Field(
+        None,
+    )
+
+
+DEFAULT_DECISION_MODEL = (
+    LOGIT_GATE_MODELS[0] if LOGIT_GATE_MODELS else "Qwen/Qwen2.5-1.5B-Instruct"
+)
+
+
+class DecisionsRequest(BaseModel):
+    """Schema for decisions API request."""
+
+    model: str = Field(
+        DEFAULT_DECISION_MODEL,
+        description="Model name for decision processing.",
+        examples=[DEFAULT_DECISION_MODEL],
+    )
+    input: Annotated[
+        list[DecisionInputMessage],
+        Field(
+            min_length=1,
+            max_length=MAX_INPUT_ITEMS,
+            description="Input context messages.",
+        ),
+    ]
+    questions: Annotated[
+        list[Question],
+        Field(
+            min_length=1,
+            max_length=MAX_INPUT_ITEMS,
+            description="Questions to evaluate.",
+        ),
+    ]
+
+
+class BaseAnswer(BaseModel):
+    """Base schema for a decision answer result."""
+
+    name: str = Field(description="Question name identifier.", examples=["is_valid"])
+    type: str = Field(description="Answer type identifier.", examples=["predicate"])
+
+
+class PredicateAnswer(BaseAnswer):
+    """Schema for predicate (boolean probability) answer."""
+
+    type: Literal["predicate"] = Field(
+        "predicate", description="Answer type discriminator."
+    )
+    probability: float = Field(
+        description="Predicted probability for predicate question.",
+        examples=[0.85],
+    )
+
+
+class ChoiceAnswer(BaseAnswer):
+    """Schema for multiple-choice answer."""
+
+    type: Literal["choice"] = Field("choice", description="Answer type discriminator.")
+    choice: str = Field(description="Selected choice option.", examples=["Option A"])
+    probabilities: dict[str, float] = Field(
+        description="Probability distribution across choice options."
+    )
+    confidence: float = Field(
+        description="Confidence level for selected choice.", examples=[0.95]
+    )
+
+
+class ScoreAnswer(BaseAnswer):
+    """Schema for numerical/level score answer."""
+
+    type: Literal["score"] = Field("score", description="Answer type discriminator.")
+    score: float = Field(description="Evaluated numerical score.", examples=[1.5])
+    probabilities: list[float] = Field(
+        description="Probability distribution across score levels."
+    )
+
+
+class RefusalAnswer(BaseAnswer):
+    """Schema for question refusal answer."""
+
+    type: Literal["refusal"] = Field(
+        "refusal", description="Answer type discriminator."
+    )
+    refusal: str = Field(
+        description="Reason for refusing or unable to evaluate question.",
+        examples=["Unsupported question type: unknown_type"],
+    )
+
+
+DecisionAnswer = Annotated[
+    Union[PredicateAnswer, ChoiceAnswer, ScoreAnswer, RefusalAnswer],
+    Field(discriminator="type"),
+]
+
+
+class DecisionsResponse(BaseModel):
+    """Schema for decisions API response."""
+
+    answers: list[DecisionAnswer] = Field(
+        description="List of decision answer results corresponding to requested questions."
     )
 
 

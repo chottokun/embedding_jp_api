@@ -7,8 +7,10 @@ from app.models import get_model
 from app.services import (
     BaseEmbeddingService,
     BaseRerankService,
+    BaseDecisionsService,
     EmbeddingService,
     RerankService,
+    DecisionsService,
 )
 from app.services.base import get_validated_model
 
@@ -93,3 +95,14 @@ def get_rerank_service() -> BaseRerankService:
     except ImportError:
         pass
     return RerankService(proxy_to_tei_func=proxy_func, model_loader=loader)
+
+
+def get_decisions_service() -> BaseDecisionsService:
+    loader = get_model
+    try:
+        import app.main as main_mod
+
+        loader = getattr(main_mod, "get_model", loader)
+    except ImportError:
+        pass
+    return DecisionsService(model_loader=loader)
