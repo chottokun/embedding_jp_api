@@ -1,5 +1,16 @@
 # Knowledge Update Log
 
+## 2026-10-18
+* **Update (PR Triage, Jules Orchestration, Adversarial TDD & Merge)**: GitHub 上のオープン PR 2件（#126, #127）の評価・改修指示・TDD拡充・実働負荷検証および Squash Merge を完了。
+  * **#126 (`refactor: separate concerns in RerankService with characterization tests`)**:
+    * `RerankService.create_rerank` を `_process_tei_proxy`, `_process_logit_gate`, `_process_standard_rerank` に分離するリファクタリングを採用。
+    * 批判的テスト（Adversarial Testing）として、TEI プロキシが範囲外・負数・真偽値のドキュメントインデックスを返した場合の境界値検証と異常系テストを `src/tests/test_rerank_characterization.py` に追加。
+  * **#127 (`Add OpenAI Decisions API compatible /v1/decisions endpoint`)**:
+    * 当初の架空モデル（`gpt-6-luna`）および固定ダミー値実装に対し、`jules-runner` オーケストレーションを通じて Logit Gate モデル（`LOGIT_GATE_MODELS`）と DI アーキテクチャ（`BaseDecisionsService`, `DecisionsService`, `MockDecisionsService`）、推論セマフォ保護、DoS 防止制約への改修を実施。
+    * さらに `AsciiMatcher` 3-gram ブースト統合、リクエスト毎の不要な `calibrate()` 排除、重複 `options` の正規化、空配列 `options=[]`/`levels=[]` の Refusal 応答、セマフォタイムアウト（503）等の Adversarial テストを `src/tests/test_decisions.py` に追加。
+  * **実働・負荷テスト検証**: 全282件の単体テスト（100%パス）、`ruff check` / `ruff format --check` / `uv audit` クリアに加え、Uvicorn 実サーバーによる `/v1/decisions`, `/v1/rerank`, `/v1/embeddings` の E2E 検証および 8ワーカー並行負荷テスト（64リクエスト、エラー率 0.0%、約 151 req/sec）を確認。
+* **Update (Documentation Sync)**: `README.md`, `CHANGELOG.md`, `docs/architecture/services.md`, `docs/domain/schemas.md` を最新実装に同期。
+
 ## 2026-10-12
 * **PR Review, Merge & Code Health**: GitHub 上の未処理 PR 19件（#107〜#125）のレビュー・検証・処理を実施。
   * **採用・マージ (15件)**:

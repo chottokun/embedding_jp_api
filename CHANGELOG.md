@@ -22,10 +22,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configured `fetch-depth: 0` in GitHub Actions checkout step to allow `gitleaks` secret detection to inspect the full commit history correctly.
 
 ### Added
+- **OpenAI Decisions API 互換エンドポイント (`POST /v1/decisions`, PR #127)**:
+  - Logit Gate モデル（`LOGIT_GATE_MODELS`）と `AsciiMatcher` を用いた意思決定評価エンドポイントを追加。
+  - `predicate`（確率判定）、`choice`（選択肢の Softmax 確率分布と確信度）、`score`（レベル別確率分布と期待値スコア）、`refusal`（未対応・不備時の拒否応答）をサポート。
+  - `BaseDecisionsService` / `DecisionsService` / `MockDecisionsService` による DI 構造、推論セマフォ制御、および DoS 防止バリデーションを実装。
 - **GPU 実機 Locust 負荷テスト自動化スイート & 検証レポート (`scripts/run_gpu_locust_suite.py`, `docs/infrastructure/benchmark_gpu_locust_load_test.md`)**:
   - NVIDIA GeForce RTX 3060 12GB 上で主要4モデル（Ruri-310m, EmbeddingGemma-2, Ruri-Reranker-310m, BGE-Visualized-M3）を同時展開し、10〜60同時ユーザー負荷における全12種エンドポイントの実測データ（1,630リクエスト、エラー率 0.00%）を記録。
 
 ### Changed
+- **RerankService の責務分離と境界値防御 (`src/app/services/rerank.py`, PR #126)**:
+  - `create_rerank` の処理を `_process_tei_proxy`, `_process_logit_gate`, `_process_standard_rerank` へ分離し、TEI プロキシ応答時の不正インデックス検証とキャラクタリゼーションテスト（`src/tests/test_rerank_characterization.py`）を追加。
 - **PyTorch Source Constraint Relaxation (`pyproject.toml`)**:
   - Relaxed CPU-exclusive wheel index pinning for `torch` and `torchvision` to allow out-of-the-box CUDA GPU hardware acceleration while preserving CPU fallback.
 - **Code Style Alignment**:
