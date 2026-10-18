@@ -17,6 +17,7 @@ from .ascii_matcher import AsciiMatcher
 
 
 def _calculate_rerank_tokens(model: Any, query: str, documents: List[str]) -> Usage:
+    """Calculates token usage for reranking query and documents batch."""
     with model.tokenizer_lock:
         tokenizer = model.tokenizer
         q_tokens = len(tokenizer.encode(query, add_special_tokens=False))
@@ -48,6 +49,7 @@ def _calculate_rerank_tokens(model: Any, query: str, documents: List[str]) -> Us
 def _sort_and_format_rerank_results(
     results: List[dict], top_n: Optional[int]
 ) -> List[RerankData]:
+    """Sorts rerank results by score descending and returns RerankData list."""
     if top_n is not None:
         sorted_results = heapq.nlargest(
             top_n, results, key=lambda x: (x["score"], -x["document"])
@@ -59,19 +61,18 @@ def _sort_and_format_rerank_results(
 
 
 class RerankService(BaseRerankService):
-    """
-    Default production implementation of BaseRerankService.
-    """
+    """Default production implementation of BaseRerankService."""
 
     def __init__(
         self,
         proxy_to_tei_func: Optional[Any] = None,
         model_loader: Optional[Any] = None,
-    ):
+    ) -> None:
         self.proxy_to_tei_func = proxy_to_tei_func
         self.model_loader = model_loader
 
     async def create_rerank(self, request: RerankRequest) -> RerankResponse:
+        """Processes a rerank request by delegating to TEI proxy, Logit Gate, or standard cross-encoder."""
         import app.main as main_mod
 
         if (
@@ -87,92 +88,109 @@ class RerankService(BaseRerankService):
         proxy_func = getattr(main_mod, "_proxy_to_tei", self.proxy_to_tei_func)
 
         if tei_url and proxy_func:
-            tei_results = await proxy_func(
-                tei_url,
-                "/rerank",
-                {"query": request.query, "texts": request.documents},
-            )
-
-            results = []
-            for item in tei_results:
-                idx = item["index"]
-                score = item["score"]
-                result_item = {"document": idx, "score": float(score)}
-                if request.return_documents:
-                    result_item["text"] = request.documents[idx]
-                results.append(result_item)
-
-            response_data = _sort_and_format_rerank_results(results, request.top_n)
-            usage = Usage(prompt_tokens=0, total_tokens=0)
-            return RerankResponse(
-                query=request.query,
-                data=response_data,
-                model=request.model,
-                usage=usage,
-            )
+            return await self._process_tei_proxy(request, tei_url, proxy_func)
 
         if request.model in LOGIT_GATE_MODELS:
-            model = get_validated_model(
-                request.model,
-                LOGIT_GATE_MODELS,
-                "logit gate",
-                loader=self.model_loader,
-            )
+            return self._process_logit_gate(request)
 
-            gate_service = LogitGateService(model)
-            matcher = AsciiMatcher(min_token_len=LOGIT_GATE_ASCII_MIN_TOKEN_LEN)
-            gate_results = gate_service.predict_margins(
-                request.query, request.documents
-            )
+        return self._process_standard_rerank(request)
 
-            beta = (
-                0.0
-                if request.use_ascii_boost is False
-                else LOGIT_GATE_ASCII_BOOST_WEIGHT
-            )
-            containment_scores = matcher.score_documents(
-                request.query, request.documents
-            )
+    async def _process_tei_proxy(
+        self, request: RerankRequest, tei_url: str, proxy_func: Any
+    ) -> RerankResponse:
+        """Proxies rerank evaluation to Text Embeddings Inference (TEI) server."""
+        tei_results = await proxy_func(
+            tei_url,
+            "/rerank",
+            {"query": request.query, "texts": request.documents},
+        )
 
-            th = (
-                request.threshold
-                if request.threshold is not None
-                else LOGIT_GATE_THRESHOLD
-            )
-            results = []
-            for i in range(len(request.documents)):
-                delta_z_base = gate_results[i]["logit_margin"]
-                containment = containment_scores[i]
-                delta_z_final = delta_z_base + (beta * containment)
-                score = _sigmoid(delta_z_final)
-                passed = score >= th
+        results = []
+        num_docs = len(request.documents)
+        for item in tei_results:
+            idx = item["index"]
+            if (
+                isinstance(idx, bool)
+                or not isinstance(idx, int)
+                or idx < 0
+                or idx >= num_docs
+            ):
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"TEI Proxy returned invalid document index: {idx}",
+                )
+            score = item["score"]
+            result_item = {"document": idx, "score": float(score)}
+            if request.return_documents:
+                result_item["text"] = request.documents[idx]
+            results.append(result_item)
 
-                if request.drop_failed and not passed:
-                    continue
+        response_data = _sort_and_format_rerank_results(results, request.top_n)
+        usage = Usage(prompt_tokens=0, total_tokens=0)
+        return RerankResponse(
+            query=request.query,
+            data=response_data,
+            model=request.model,
+            usage=usage,
+        )
 
-                entropy = _binary_entropy(score)
+    def _process_logit_gate(self, request: RerankRequest) -> RerankResponse:
+        """Processes rerank request using hybrid Logit Gate model and ASCII boost."""
+        model = get_validated_model(
+            request.model,
+            LOGIT_GATE_MODELS,
+            "logit gate",
+            loader=self.model_loader,
+        )
 
-                result_item = {
-                    "document": i,
-                    "score": float(score),
-                    "passed": bool(passed),
-                    "logit_margin": float(delta_z_final),
-                    "containment_score": float(containment),
-                    "entropy": float(entropy),
-                }
-                if request.return_documents:
-                    result_item["text"] = request.documents[i]
-                results.append(result_item)
+        gate_service = LogitGateService(model)
+        matcher = AsciiMatcher(min_token_len=LOGIT_GATE_ASCII_MIN_TOKEN_LEN)
+        gate_results = gate_service.predict_margins(request.query, request.documents)
 
-            response_data = _sort_and_format_rerank_results(results, request.top_n)
-            usage = _calculate_rerank_tokens(model, request.query, request.documents)
-            return RerankResponse(
-                query=request.query,
-                data=response_data,
-                model=request.model,
-                usage=usage,
-            )
+        beta = (
+            0.0 if request.use_ascii_boost is False else LOGIT_GATE_ASCII_BOOST_WEIGHT
+        )
+        containment_scores = matcher.score_documents(request.query, request.documents)
 
+        th = (
+            request.threshold if request.threshold is not None else LOGIT_GATE_THRESHOLD
+        )
+        results = []
+        for i in range(len(request.documents)):
+            delta_z_base = gate_results[i]["logit_margin"]
+            containment = containment_scores[i]
+            delta_z_final = delta_z_base + (beta * containment)
+            score = _sigmoid(delta_z_final)
+            passed = score >= th
+
+            if request.drop_failed and not passed:
+                continue
+
+            entropy = _binary_entropy(score)
+
+            result_item = {
+                "document": i,
+                "score": float(score),
+                "passed": bool(passed),
+                "logit_margin": float(delta_z_final),
+                "containment_score": float(containment),
+                "entropy": float(entropy),
+            }
+            if request.return_documents:
+                result_item["text"] = request.documents[i]
+            results.append(result_item)
+
+        response_data = _sort_and_format_rerank_results(results, request.top_n)
+        usage = _calculate_rerank_tokens(model, request.query, request.documents)
+        return RerankResponse(
+            query=request.query,
+            data=response_data,
+            model=request.model,
+            usage=usage,
+        )
+
+    def _process_standard_rerank(self, request: RerankRequest) -> RerankResponse:
+        """Processes rerank request using standard cross-encoder model."""
         model = get_validated_model(
             request.model,
             RERANK_MODELS,
