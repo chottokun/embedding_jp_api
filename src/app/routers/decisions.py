@@ -1,7 +1,13 @@
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.schemas import DecisionsRequest, DecisionsResponse, ErrorResponse
+from app.config import INFERENCE_SEMAPHORE_TIMEOUT_SECONDS
+from app.concurrency import inference_semaphore
 from app.dependencies.auth import verify_api_key
+from app.dependencies.services import get_decisions_service
+from app.middleware.metrics import BATCH_SIZE_HISTOGRAM
+from app.schemas import DecisionsRequest, DecisionsResponse, ErrorResponse
+from app.services import BaseDecisionsService
 
 router = APIRouter(prefix="/v1", tags=["Decisions"])
 
@@ -11,7 +17,10 @@ router = APIRouter(prefix="/v1", tags=["Decisions"])
     response_model=DecisionsResponse,
     dependencies=[Depends(verify_api_key)],
     summary="Create decision answers for given input context and questions",
-    description="OpenAI Decisions API compatible endpoint returning decision probabilities and choices.",
+    description=(
+        "OpenAI Decisions API compatible endpoint returning decision probabilities, "
+        "choices, and scores using Logit Router."
+    ),
     responses={
         400: {
             "model": ErrorResponse,
@@ -21,63 +30,38 @@ router = APIRouter(prefix="/v1", tags=["Decisions"])
             "model": ErrorResponse,
             "description": "Invalid or missing Bearer API key",
         },
+        413: {
+            "model": ErrorResponse,
+            "description": "Payload exceeds maximum allowed size (10MB)",
+        },
+        429: {
+            "model": ErrorResponse,
+            "description": "Rate limit exceeded (Too Many Requests)",
+        },
+        503: {
+            "model": ErrorResponse,
+            "description": "Server is shutting down or inference queue timeout",
+        },
     },
 )
-async def create_decision(request: DecisionsRequest):
+async def create_decision(
+    request: DecisionsRequest,
+    service: BaseDecisionsService = Depends(get_decisions_service),
+):
     """
     Evaluates questions against input context and produces decision responses.
     """
-    if request.model != "gpt-6-luna":
+    batch_size = len(request.questions)
+    BATCH_SIZE_HISTOGRAM.labels(endpoint="/v1/decisions").observe(batch_size)
+
+    try:
+        async with asyncio.timeout(INFERENCE_SEMAPHORE_TIMEOUT_SECONDS):
+            async with inference_semaphore:
+                response = await service.create_decisions(request)
+    except TimeoutError:
         raise HTTPException(
-            status_code=400,
-            detail="Only 'gpt-6-luna' model is supported in Decisions API.",
+            status_code=503,
+            detail="Inference queue timeout. Server is under high load, please retry shortly.",
         )
 
-    output_answers = []
-
-    for q in request.questions:
-        if q.type == "predicate":
-            output_answers.append(
-                {
-                    "name": q.name,
-                    "type": "predicate",
-                    "probability": 0.85,
-                }
-            )
-        elif q.type == "choice":
-            selected = q.options[0] if q.options else "other"
-            options_list = q.options or [selected]
-            probs = {
-                opt: (1.0 if idx == 0 else 0.0)
-                for idx, opt in enumerate(options_list)
-            }
-            output_answers.append(
-                {
-                    "name": q.name,
-                    "type": "choice",
-                    "choice": selected,
-                    "probabilities": probs,
-                    "confidence": 0.95,
-                }
-            )
-        elif q.type == "score":
-            num_levels = len(q.levels) if q.levels else 1
-            dummy_probs = [1.0 / num_levels] * num_levels
-            output_answers.append(
-                {
-                    "name": q.name,
-                    "type": "score",
-                    "score": 1.5,
-                    "probabilities": dummy_probs,
-                }
-            )
-        else:
-            output_answers.append(
-                {
-                    "name": q.name,
-                    "type": "refusal",
-                    "refusal": f"Unsupported question type: {q.type}",
-                }
-            )
-
-    return {"answers": output_answers}
+    return response

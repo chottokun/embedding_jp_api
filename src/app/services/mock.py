@@ -1,5 +1,5 @@
 from typing import List
-from .base import BaseEmbeddingService, BaseRerankService
+from .base import BaseEmbeddingService, BaseRerankService, BaseDecisionsService
 from ..schemas import (
     EmbeddingRequest,
     EmbeddingResponse,
@@ -8,6 +8,12 @@ from ..schemas import (
     RerankRequest,
     RerankResponse,
     RerankData,
+    DecisionsRequest,
+    DecisionsResponse,
+    PredicateAnswer,
+    ChoiceAnswer,
+    ScoreAnswer,
+    RefusalAnswer,
 )
 
 
@@ -62,3 +68,64 @@ class MockRerankService(BaseRerankService):
         return RerankResponse(
             query=request.query, data=results, model=request.model, usage=usage
         )
+
+
+class MockDecisionsService(BaseDecisionsService):
+    """
+    Mock Decisions Service for fast CI and unit tests without loading actual models.
+    """
+
+    async def create_decisions(self, request: DecisionsRequest) -> DecisionsResponse:
+        output_answers = []
+        for q in request.questions:
+            if q.type == "predicate":
+                output_answers.append(PredicateAnswer(name=q.name, probability=0.85))
+            elif q.type == "choice":
+                if not q.options:
+                    output_answers.append(
+                        RefusalAnswer(
+                            name=q.name,
+                            refusal="Choice question requires non-empty options.",
+                        )
+                    )
+                else:
+                    selected = q.options[0]
+                    probs = {
+                        opt: (1.0 if idx == 0 else 0.0)
+                        for idx, opt in enumerate(q.options)
+                    }
+                    output_answers.append(
+                        ChoiceAnswer(
+                            name=q.name,
+                            choice=selected,
+                            probabilities=probs,
+                            confidence=0.95,
+                        )
+                    )
+            elif q.type == "score":
+                if not q.levels:
+                    output_answers.append(
+                        RefusalAnswer(
+                            name=q.name,
+                            refusal="Score question requires non-empty levels.",
+                        )
+                    )
+                else:
+                    num_levels = len(q.levels)
+                    probs = [1.0 / num_levels] * num_levels
+                    output_answers.append(
+                        ScoreAnswer(
+                            name=q.name,
+                            score=1.5,
+                            probabilities=probs,
+                        )
+                    )
+            else:
+                output_answers.append(
+                    RefusalAnswer(
+                        name=q.name,
+                        refusal=f"Unsupported question type: {q.type}",
+                    )
+                )
+
+        return DecisionsResponse(answers=output_answers)

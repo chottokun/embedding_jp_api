@@ -1,7 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Collection, Optional
 from fastapi import HTTPException
-from ..schemas import EmbeddingRequest, EmbeddingResponse, RerankRequest, RerankResponse
+from ..schemas import (
+    EmbeddingRequest,
+    EmbeddingResponse,
+    RerankRequest,
+    RerankResponse,
+    DecisionsRequest,
+    DecisionsResponse,
+)
 from ..models import get_model
 
 
@@ -45,4 +52,13 @@ class BaseRerankService(ABC):
     @abstractmethod
     async def create_rerank(self, request: RerankRequest) -> RerankResponse:
         """Reranks documents for the provided RerankRequest."""
+        pass
+
+
+class BaseDecisionsService(ABC):
+    """Abstract Base Class for Decisions Services."""
+
+    @abstractmethod
+    async def create_decisions(self, request: DecisionsRequest) -> DecisionsResponse:
+        """Generates decisions for the provided DecisionsRequest."""
         pass
