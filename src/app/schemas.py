@@ -597,7 +597,6 @@ class Question(BaseModel):
         Annotated[
             list[LimitedString],
             Field(
-                min_length=1,
                 max_length=MAX_INPUT_ITEMS,
                 description="List of candidate option strings for choice questions.",
             ),
@@ -610,7 +609,6 @@ class Question(BaseModel):
         Annotated[
             list[LevelDefinition],
             Field(
-                min_length=1,
                 max_length=MAX_INPUT_ITEMS,
                 description="List of score level definitions for score questions.",
             ),
