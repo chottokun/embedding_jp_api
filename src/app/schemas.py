@@ -535,6 +535,146 @@ class UnloadResponse(BaseModel):
     )
 
 
+# --- For /v1/decisions ---
+class DecisionInputContent(BaseModel):
+    """Schema for a content item in a decisions request message."""
+
+    type: str = Field(
+        description="Type of input content, e.g., 'input_text' or 'input_image'.",
+        examples=["input_text"],
+    )
+    text: Optional[str] = Field(
+        None,
+        description="Text content if type is 'input_text'.",
+        examples=["テストテキスト"],
+    )
+    image_url: Optional[dict[str, str]] = Field(
+        None,
+        description="Image URL configuration if type is 'input_image'.",
+    )
+
+
+class DecisionInputMessage(BaseModel):
+    """Schema for an input message in a decisions request."""
+
+    role: str = Field("user", description="Role of the message author.", examples=["user"])
+    content: list[DecisionInputContent] = Field(
+        description="List of input content items."
+    )
+
+
+class LevelDefinition(BaseModel):
+    """Schema for a score level definition."""
+
+    index: int = Field(description="Level index.", examples=[0])
+    description: str = Field(
+        description="Level description.", examples=["Low priority"]
+    )
+
+
+class Question(BaseModel):
+    """Schema for a question in a decisions request."""
+
+    type: str = Field(
+        description="Question type: 'predicate', 'choice', 'score', etc.",
+        examples=["predicate"],
+    )
+    name: str = Field(description="Identifier name for the question.", examples=["is_valid"])
+    instructions: str = Field(
+        description="Instructions for answering the question.",
+        examples=["Evaluate if condition is met."],
+    )
+    options: Optional[list[str]] = Field(
+        None,
+        description="List of candidate option strings for choice questions.",
+        examples=[["Option A", "Option B"]],
+    )
+    levels: Optional[list[LevelDefinition]] = Field(
+        None,
+        description="List of score level definitions for score questions.",
+    )
+
+
+class DecisionsRequest(BaseModel):
+    """Schema for decisions API request."""
+
+    model: str = Field(
+        "gpt-6-luna",
+        description="Model name for decision processing.",
+        examples=["gpt-6-luna"],
+    )
+    input: list[DecisionInputMessage] = Field(
+        description="Input context messages."
+    )
+    questions: list[Question] = Field(
+        description="Questions to evaluate."
+    )
+
+
+class BaseAnswer(BaseModel):
+    """Base schema for a decision answer result."""
+
+    name: str = Field(description="Question name identifier.", examples=["is_valid"])
+    type: str = Field(description="Answer type identifier.", examples=["predicate"])
+
+
+class PredicateAnswer(BaseAnswer):
+    """Schema for predicate (boolean probability) answer."""
+
+    type: Literal["predicate"] = Field("predicate", description="Answer type discriminator.")
+    probability: float = Field(
+        description="Predicted probability for predicate question.",
+        examples=[0.85],
+    )
+
+
+class ChoiceAnswer(BaseAnswer):
+    """Schema for multiple-choice answer."""
+
+    type: Literal["choice"] = Field("choice", description="Answer type discriminator.")
+    choice: str = Field(description="Selected choice option.", examples=["Option A"])
+    probabilities: dict[str, float] = Field(
+        description="Probability distribution across choice options."
+    )
+    confidence: float = Field(
+        description="Confidence level for selected choice.", examples=[0.95]
+    )
+
+
+class ScoreAnswer(BaseAnswer):
+    """Schema for numerical/level score answer."""
+
+    type: Literal["score"] = Field("score", description="Answer type discriminator.")
+    score: float = Field(description="Evaluated numerical score.", examples=[1.5])
+    probabilities: list[float] = Field(
+        description="Probability distribution across score levels."
+    )
+
+
+class RefusalAnswer(BaseAnswer):
+    """Schema for question refusal answer."""
+
+    type: Literal["refusal"] = Field("refusal", description="Answer type discriminator.")
+    refusal: str = Field(
+        description="Reason for refusing or unable to evaluate question.",
+        examples=["Unsupported question type: unknown_type"],
+    )
+
+
+DecisionAnswer = Annotated[
+    Union[PredicateAnswer, ChoiceAnswer, ScoreAnswer, RefusalAnswer],
+    Field(discriminator="type"),
+]
+
+
+class DecisionsResponse(BaseModel):
+    """Schema for decisions API response."""
+
+    answers: list[DecisionAnswer] = Field(
+        description="List of decision answer results corresponding to requested questions."
+    )
+
+
 # --- OpenAPI Error Schema ---
 class ErrorResponse(BaseModel):
     """Schema for standard error responses.

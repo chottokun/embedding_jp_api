@@ -61,6 +61,7 @@ from .middleware import (
 )
 from .models import get_model, unload_model
 from .routers import (
+    decisions_router,
     embeddings_router,
     health_router,
     models_router,
@@ -151,6 +152,7 @@ app.include_router(health_router)
 app.include_router(models_router)
 app.include_router(embeddings_router)
 app.include_router(rerank_router)
+app.include_router(decisions_router)
 
 
 @app.exception_handler(Exception)
