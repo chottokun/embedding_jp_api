@@ -5,7 +5,7 @@ description: Pydantic モデル、リクエスト・レスポンス定義、お�
 status: stable
 generated:
   by: agent/antigravity
-  at: 2026-08-16T09:10:00Z
+  at: 2026-10-18T06:30:00Z
 tags:
   - schemas
   - pydantic
@@ -125,7 +125,77 @@ sources:
 
 ---
 
-## 3. モデル一覧エンドポイント (`GET /v1/models`)
+## 3. 意思決定エンドポイント (`POST /v1/decisions`)
+
+Logit Gate（`LOGIT_GATE_MODELS`）と `AsciiMatcher` を用いた OpenAI Decisions API 互換エンドポイントです。
+
+### リクエスト (`DecisionsRequest`)
+```json
+{
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "input": [
+    {
+      "role": "user",
+      "content": [
+        {"type": "input_text", "text": "エラーコード E-5001 が発生しました。"}
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "type": "predicate",
+      "name": "has_error",
+      "instructions": "エラーコード E-5001 に関する記述が含まれているか？"
+    },
+    {
+      "type": "choice",
+      "name": "category",
+      "instructions": "障害カテゴリを選択してください。",
+      "options": ["Network", "Database"]
+    },
+    {
+      "type": "score",
+      "name": "severity",
+      "instructions": "重要度を評価してください。",
+      "levels": [
+        {"index": 0, "description": "Low"},
+        {"index": 1, "description": "High"}
+      ]
+    }
+  ]
+}
+```
+
+### レスポンス (`DecisionsResponse`)
+```json
+{
+  "answers": [
+    {
+      "name": "has_error",
+      "type": "predicate",
+      "probability": 0.9241
+    },
+    {
+      "name": "category",
+      "type": "choice",
+      "choice": "Network",
+      "probabilities": {"Network": 0.78, "Database": 0.22},
+      "confidence": 0.78
+    },
+    {
+      "name": "severity",
+      "type": "score",
+      "score": 0.85,
+      "probabilities": [0.15, 0.85]
+    }
+  ]
+}
+```
+> ※ 未対応の `type` や、`choice` / `score` で `options` / `levels` が空または欠落している場合は、`type: "refusal"`（`RefusalAnswer`）が返却されます。
+
+---
+
+## 4. モデル一覧エンドポイント (`GET /v1/models`)
 
 ### レスポンス (`ModelList`)
 ```json
@@ -145,7 +215,7 @@ sources:
 
 ---
 
-## 4. モデルアンロードエンドポイント (`POST /v1/models/unload`)
+## 5. モデルアンロードエンドポイント (`POST /v1/models/unload`)
 
 ### リクエスト (`UnloadRequest`)
 ```json
@@ -164,7 +234,7 @@ sources:
 
 ---
 
-## 5. ヘルス・レディネス・メトリクス
+## 6. ヘルス・レディネス・メトリクス
 
 - `GET /health`, `GET /healthz`: `{"status": "ok"}`
 - `GET /ready`: `{"status": "ready", "gpu_available": true, "models_loaded": [...]}`
@@ -172,7 +242,7 @@ sources:
 
 ---
 
-## 6. 標準エラーレスポンス (`ErrorResponse`)
+## 7. 標準エラーレスポンス (`ErrorResponse`)
 
 HTTP 400, 401, 413, 429, 500, 503 時の共通レスポンス構造:
 ```json

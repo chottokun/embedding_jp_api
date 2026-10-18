@@ -198,6 +198,19 @@ curl -X POST "http://localhost:8000/v1/rerank" \
 
 ---
 
+### 2.4.1. 意思決定・ロジットルーター (Decisions API)
+
+`POST /v1/decisions`
+
+Logit Gate（`Qwen/Qwen2.5-1.5B-Instruct` 等）と ASCII Matcher を OpenAI Decisions API 互換スキーマで利用できるエンドポイントです。入力コンテキストに対して以下の質問タイプ（`questions`）を一括評価できます。
+
+* **`predicate`**: コンテキストが指示条件を満たす確率 `probability`（$0.0 \sim 1.0$）を返却。
+* **`choice`**: 候補 `options` ごとの Softmax 確率分布 `probabilities`、最良の選択肢 `choice`、および確信度 `confidence` を返却。
+* **`score`**: スコア定義 `levels`（`index`, `description`）ごとの確率分布 `probabilities` と期待値 `score` を返却。
+* **`refusal`**: 未対応の質問タイプや `options` / `levels` 欠落時に拒否理由を返却。
+
+---
+
 ### 2.5. モデル一覧取得 (Models)
 
 `GET /v1/models`
