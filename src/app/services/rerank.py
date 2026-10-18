@@ -106,8 +106,19 @@ class RerankService(BaseRerankService):
         )
 
         results = []
+        num_docs = len(request.documents)
         for item in tei_results:
             idx = item["index"]
+            if (
+                isinstance(idx, bool)
+                or not isinstance(idx, int)
+                or idx < 0
+                or idx >= num_docs
+            ):
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"TEI Proxy returned invalid document index: {idx}",
+                )
             score = item["score"]
             result_item = {"document": idx, "score": float(score)}
             if request.return_documents:

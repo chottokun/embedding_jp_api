@@ -152,3 +152,90 @@ async def test_rerank_unsupported_model_exception():
 
     assert exc_info.value.status_code == 400
     assert "not found for reranks" in exc_info.value.detail
+
+
+@pytest.mark.anyio
+async def test_rerank_tei_proxy_out_of_bounds_index_raises_500():
+    """Adversarial test: TEI proxy returning an out-of-bounds or negative document index must raise HTTPException(500) rather than silently returning wrong document or raw IndexError."""
+    mock_proxy = AsyncMock(
+        return_value=[
+            {"index": 99, "score": 0.95},
+        ]
+    )
+    service = RerankService(proxy_to_tei_func=mock_proxy)
+    req = RerankRequest(
+        query="query",
+        documents=["doc A", "doc B"],
+        model=RERANK_MODELS[0],
+        return_documents=True,
+    )
+
+    with (
+        patch("app.services.rerank.RERANK_TEI_URL", "http://tei-rerank"),
+        patch("app.main._proxy_to_tei", mock_proxy),
+    ):
+        with pytest.raises(HTTPException) as exc_info:
+            await service.create_rerank(req)
+
+    assert exc_info.value.status_code == 500
+
+
+@pytest.mark.anyio
+async def test_rerank_tei_proxy_negative_index_raises_500():
+    """Adversarial test: TEI proxy returning a negative document index (e.g., -1) must not silently index the last document in Python."""
+    mock_proxy = AsyncMock(
+        return_value=[
+            {"index": -1, "score": 0.95},
+        ]
+    )
+    service = RerankService(proxy_to_tei_func=mock_proxy)
+    req = RerankRequest(
+        query="query",
+        documents=["doc A", "doc B"],
+        model=RERANK_MODELS[0],
+        return_documents=True,
+    )
+
+    with (
+        patch("app.services.rerank.RERANK_TEI_URL", "http://tei-rerank"),
+        patch("app.main._proxy_to_tei", mock_proxy),
+    ):
+        with pytest.raises(HTTPException) as exc_info:
+            await service.create_rerank(req)
+
+    assert exc_info.value.status_code == 500
+
+
+@pytest.mark.anyio
+async def test_rerank_logit_gate_all_documents_dropped():
+    """Boundary test: When all documents fail threshold and drop_failed=True, returns empty data list without error."""
+    mock_model = MagicMock()
+    mock_model.tokenizer_lock = MagicMock()
+    mock_model.lock = MagicMock()
+    mock_model.tokenizer.encode.side_effect = lambda text, **kw: [1, 2]
+
+    mock_loader = MagicMock(return_value=mock_model)
+    service = RerankService(model_loader=mock_loader)
+
+    with (
+        patch(
+            "app.services.rerank.LogitGateService.predict_margins",
+            return_value=[{"logit_margin": -5.0}, {"logit_margin": -3.0}],
+        ),
+        patch(
+            "app.services.rerank.AsciiMatcher.score_documents",
+            return_value=[0.0, 0.0],
+        ),
+        patch("app.services.rerank.RERANK_TEI_URL", None),
+    ):
+        req = RerankRequest(
+            query="unanswerable query",
+            documents=["irrelevant 1", "irrelevant 2"],
+            model=LOGIT_GATE_MODELS[0],
+            threshold=0.9,
+            drop_failed=True,
+        )
+        res = await service.create_rerank(req)
+
+    assert res.data == []
+    assert res.usage.total_tokens > 0
