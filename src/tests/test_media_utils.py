@@ -93,3 +93,82 @@ def test_process_video(mock_open, tmp_path):
 
     assert len(result) == 16
     assert isinstance(result[0], Image.Image)
+
+
+@pytest.mark.anyio
+async def test_download_media_invalid_base64():
+    client = httpx.AsyncClient()
+    source = "data:audio/wav;base64,invalid!!!base64"
+
+    with pytest.raises(HTTPException) as excinfo:
+        await _download_media(source, client)
+    assert excinfo.value.status_code == 400
+    assert "Failed to decode base64 media" in excinfo.value.detail
+
+
+@pytest.mark.anyio
+async def test_download_media_redirect_missing_location():
+    client = httpx.AsyncClient()
+
+    with patch("app.media_utils.resolve_safe_url_async", return_value=(True, "1.2.3.4")):
+        mock_resp = MagicMock()
+        mock_resp.is_redirect = True
+        mock_resp.headers = {}  # missing Location
+
+        mock_stream_ctx = MagicMock()
+        mock_stream_ctx.__aenter__.return_value = mock_resp
+        mock_stream_ctx.__aexit__.return_value = None
+
+        with patch("httpx.AsyncClient.stream", return_value=mock_stream_ctx):
+            with pytest.raises(HTTPException) as excinfo:
+                await _download_media("http://example.com/audio.wav", client)
+            assert excinfo.value.status_code == 400
+            assert "Redirect Location header missing" in excinfo.value.detail
+
+
+@pytest.mark.anyio
+async def test_download_media_max_redirects_exceeded():
+    client = httpx.AsyncClient()
+
+    with patch("app.media_utils.resolve_safe_url_async", return_value=(True, "1.2.3.4")):
+        mock_resp = MagicMock()
+        mock_resp.is_redirect = True
+        mock_resp.headers = {"Location": "http://example.com/redirect"}
+        mock_resp.url = httpx.URL("http://example.com/start")
+
+        mock_stream_ctx = MagicMock()
+        mock_stream_ctx.__aenter__.return_value = mock_resp
+        mock_stream_ctx.__aexit__.return_value = None
+
+        with patch("httpx.AsyncClient.stream", return_value=mock_stream_ctx):
+            with pytest.raises(HTTPException) as excinfo:
+                await _download_media("http://example.com/start", client)
+            assert excinfo.value.status_code == 400
+            assert "Maximum redirects exceeded" in excinfo.value.detail
+
+
+def test_process_audio_decode_failure():
+    with patch("torchaudio.load", side_effect=RuntimeError("Corrupt audio file")):
+        with patch("soundfile.read", side_effect=RuntimeError("Cannot read soundfile")):
+            with patch("av.open", side_effect=RuntimeError("PyAV failed")):
+                with pytest.raises(HTTPException) as excinfo:
+                    _process_audio(b"corrupt audio data")
+                assert excinfo.value.status_code == 400
+                assert "Failed to process audio" in excinfo.value.detail
+
+
+def test_process_video_no_frames_extracted():
+    with patch("av.open") as mock_open:
+        mock_container = MagicMock()
+        mock_open.return_value.__enter__.return_value = mock_container
+
+        mock_stream = MagicMock()
+        mock_stream.frames = 0
+        mock_container.streams.video = [mock_stream]
+        # Return empty frame list when container.decode is called
+        mock_container.decode.return_value = []
+
+        with pytest.raises(HTTPException) as excinfo:
+            _process_video(b"empty video data")
+        assert excinfo.value.status_code == 400
+        assert "Failed to process video" in excinfo.value.detail
